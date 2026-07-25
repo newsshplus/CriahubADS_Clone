@@ -2454,18 +2454,18 @@ async function handleGetSubscriptions(env) {
 async function handleWhatsApp(request, env, path, method) {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
-  const session = await env.DB.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_" + token).first();
+  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_" + token).first();
   if (!session) return jsonResponse({ error: "Invalid session" }, 401);
   const userId = session.value;
 
   if (path === "/api/whatsapp/config" && method === "GET") {
-    const config = await env.DB.prepare("SELECT * FROM whatsapp_configs WHERE user_id = ?").bind(userId).first();
+    const config = await env.criahub_db.prepare("SELECT * FROM whatsapp_configs WHERE user_id = ?").bind(userId).first();
     return jsonResponse({ config: config || null });
   }
   if (path === "/api/whatsapp/config" && method === "POST") {
     const body = await request.json();
     const { evo_api_url, evo_api_key, instance_name } = body;
-    await env.DB.prepare(`INSERT OR REPLACE INTO whatsapp_configs (user_id, evo_api_url, evo_api_key, instance_name, status, updated_at)
+    await env.criahub_db.prepare(`INSERT OR REPLACE INTO whatsapp_configs (user_id, evo_api_url, evo_api_key, instance_name, status, updated_at)
       VALUES (?, ?, ?, ?, 'configured', datetime('now'))`).bind(userId, evo_api_url, evo_api_key, instance_name).run();
     return jsonResponse({ ok: true });
   }
@@ -2476,11 +2476,11 @@ async function handleWhatsApp(request, env, path, method) {
     const params = [userId];
     if (search) { q += " AND (name LIKE ? OR phone LIKE ?)"; params.push("%" + search + "%", "%" + search + "%"); }
     q += " ORDER BY updated_at DESC LIMIT 100";
-    const results = await env.DB.prepare(q).bind(...params).all();
+    const results = await env.criahub_db.prepare(q).bind(...params).all();
     return jsonResponse({ contacts: results.results || [] });
   }
   if (path === "/api/whatsapp/conversations" && method === "GET") {
-    const results = await env.DB.prepare(`SELECT wc.*, wco.name as contact_name FROM whatsapp_conversations wc
+    const results = await env.criahub_db.prepare(`SELECT wc.*, wco.name as contact_name FROM whatsapp_conversations wc
       LEFT JOIN whatsapp_contacts wco ON wc.contact_id = wco.id
       WHERE wc.user_id = ? ORDER BY wc.last_message_at DESC LIMIT 50`).bind(userId).all();
     return jsonResponse({ conversations: results.results || [] });
@@ -2488,27 +2488,27 @@ async function handleWhatsApp(request, env, path, method) {
   if (path === "/api/whatsapp/conversations" && method === "POST") {
     const body = await request.json();
     const { contact_id, wa_jid } = body;
-    await env.DB.prepare(`INSERT INTO whatsapp_conversations (user_id, contact_id, wa_jid, status)
+    await env.criahub_db.prepare(`INSERT INTO whatsapp_conversations (user_id, contact_id, wa_jid, status)
       VALUES (?, ?, ?, 'open')`).bind(userId, contact_id, wa_jid).run();
     return jsonResponse({ ok: true });
   }
   if (path.startsWith("/api/whatsapp/conversations/") && path.endsWith("/messages") && method === "GET") {
     const convId = path.split("/")[3];
-    const results = await env.DB.prepare("SELECT * FROM whatsapp_messages WHERE conversation_id = ? ORDER BY created_at ASC").bind(convId).all();
+    const results = await env.criahub_db.prepare("SELECT * FROM whatsapp_messages WHERE conversation_id = ? ORDER BY created_at ASC").bind(convId).all();
     return jsonResponse({ messages: results.results || [] });
   }
   if (path.startsWith("/api/whatsapp/conversations/") && path.endsWith("/messages") && method === "POST") {
     const convId = path.split("/")[3];
     const body = await request.json();
     const { content, message_type } = body;
-    await env.DB.prepare(`INSERT INTO whatsapp_messages (conversation_id, account_id, from_me, message_type, content)
+    await env.criahub_db.prepare(`INSERT INTO whatsapp_messages (conversation_id, account_id, from_me, message_type, content)
       VALUES (?, ?, 1, ?, ?)`).bind(convId, userId, message_type || "text", content).run();
-    await env.DB.prepare("UPDATE whatsapp_conversations SET last_message = ?, last_message_at = datetime('now') WHERE id = ?").bind(content, convId).run();
+    await env.criahub_db.prepare("UPDATE whatsapp_conversations SET last_message = ?, last_message_at = datetime('now') WHERE id = ?").bind(content, convId).run();
     return jsonResponse({ ok: true });
   }
   if (path.startsWith("/api/whatsapp/conversations/") && path.endsWith("/close") && method === "POST") {
     const convId = path.split("/")[3];
-    await env.DB.prepare("UPDATE whatsapp_conversations SET status = 'closed' WHERE id = ?").bind(convId).run();
+    await env.criahub_db.prepare("UPDATE whatsapp_conversations SET status = 'closed' WHERE id = ?").bind(convId).run();
     return jsonResponse({ ok: true });
   }
   return jsonResponse({ error: "Not found" }, 404);
@@ -2520,39 +2520,39 @@ async function handleWhatsApp(request, env, path, method) {
 async function handleTikTok(request, env, path, method) {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
-  const session = await env.DB.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_" + token).first();
+  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_" + token).first();
   if (!session) return jsonResponse({ error: "Invalid session" }, 401);
   const userId = session.value;
 
   if (path === "/api/tiktok/config" && method === "GET") {
-    const config = await env.DB.prepare("SELECT id, account_id, tiktok_username, tiktok_user_id, status, scopes, created_at FROM tiktok_configs WHERE user_id = ?").bind(userId).first();
+    const config = await env.criahub_db.prepare("SELECT id, account_id, tiktok_username, tiktok_user_id, status, scopes, created_at FROM tiktok_configs WHERE user_id = ?").bind(userId).first();
     return jsonResponse({ config: config || null });
   }
   if (path === "/api/tiktok/config" && method === "POST") {
     const body = await request.json();
     const { access_token, refresh_token, token_expires_at, tiktok_username, tiktok_user_id } = body;
-    await env.DB.prepare(`INSERT OR REPLACE INTO tiktok_configs (user_id, access_token, refresh_token, token_expires_at, tiktok_username, tiktok_user_id, status, updated_at)
+    await env.criahub_db.prepare(`INSERT OR REPLACE INTO tiktok_configs (user_id, access_token, refresh_token, token_expires_at, tiktok_username, tiktok_user_id, status, updated_at)
       VALUES (?, ?, ?, ?, ?, ?, 'connected', datetime('now'))`).bind(userId, access_token, refresh_token, token_expires_at, tiktok_username, tiktok_user_id).run();
     return jsonResponse({ ok: true });
   }
   if (path === "/api/tiktok/config" && method === "DELETE") {
-    await env.DB.prepare("DELETE FROM tiktok_configs WHERE user_id = ?").bind(userId).run();
+    await env.criahub_db.prepare("DELETE FROM tiktok_configs WHERE user_id = ?").bind(userId).run();
     return jsonResponse({ ok: true });
   }
   if (path === "/api/tiktok/automations" && method === "GET") {
-    const results = await env.DB.prepare("SELECT * FROM tiktok_automations WHERE user_id = ? ORDER BY created_at DESC").bind(userId).all();
+    const results = await env.criahub_db.prepare("SELECT * FROM tiktok_automations WHERE user_id = ? ORDER BY created_at DESC").bind(userId).all();
     return jsonResponse({ automations: results.results || [] });
   }
   if (path === "/api/tiktok/automations" && method === "POST") {
     const body = await request.json();
     const { name, video_id, video_url, keyword, response_template, ai_enabled } = body;
-    await env.DB.prepare(`INSERT INTO tiktok_automations (user_id, name, video_id, video_url, keyword, response_template, ai_enabled)
+    await env.criahub_db.prepare(`INSERT INTO tiktok_automations (user_id, name, video_id, video_url, keyword, response_template, ai_enabled)
       VALUES (?, ?, ?, ?, ?, ?, ?)`).bind(userId, name, video_id, video_url, keyword, response_template, ai_enabled ? 1 : 0).run();
     return jsonResponse({ ok: true });
   }
   if (path.startsWith("/api/tiktok/automations/") && method === "DELETE") {
     const autoId = path.split("/")[3];
-    await env.DB.prepare("DELETE FROM tiktok_automations WHERE id = ? AND user_id = ?").bind(autoId, userId).run();
+    await env.criahub_db.prepare("DELETE FROM tiktok_automations WHERE id = ? AND user_id = ?").bind(autoId, userId).run();
     return jsonResponse({ ok: true });
   }
   return jsonResponse({ error: "Not found" }, 404);
@@ -2564,18 +2564,18 @@ async function handleTikTok(request, env, path, method) {
 async function handleMetaAds(request, env, path, method) {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
-  const session = await env.DB.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_" + token).first();
+  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_" + token).first();
   if (!session) return jsonResponse({ error: "Invalid session" }, 401);
   const userId = session.value;
 
   if (path === "/api/meta-ads/config" && method === "GET") {
-    const config = await env.DB.prepare("SELECT id, ad_account_id, business_id, status, last_sync FROM meta_ads_configs WHERE user_id = ?").bind(userId).first();
+    const config = await env.criahub_db.prepare("SELECT id, ad_account_id, business_id, status, last_sync FROM meta_ads_configs WHERE user_id = ?").bind(userId).first();
     return jsonResponse({ config: config || null });
   }
   if (path === "/api/meta-ads/config" && method === "POST") {
     const body = await request.json();
     const { ad_account_id, access_token, business_id } = body;
-    await env.DB.prepare(`INSERT OR REPLACE INTO meta_ads_configs (user_id, ad_account_id, access_token, business_id, status, updated_at)
+    await env.criahub_db.prepare(`INSERT OR REPLACE INTO meta_ads_configs (user_id, ad_account_id, access_token, business_id, status, updated_at)
       VALUES (?, ?, ?, ?, 'connected', datetime('now'))`).bind(userId, ad_account_id, access_token, business_id).run();
     return jsonResponse({ ok: true });
   }
@@ -2583,16 +2583,16 @@ async function handleMetaAds(request, env, path, method) {
     const url = new URL(request.url);
     const dateFrom = url.searchParams.get("from") || new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
     const dateTo = url.searchParams.get("to") || new Date().toISOString().split("T")[0];
-    const results = await env.DB.prepare(`SELECT * FROM campaign_insights
+    const results = await env.criahub_db.prepare(`SELECT * FROM campaign_insights
       WHERE user_id = ? AND platform = 'meta' AND date_start >= ? AND date_start <= ?
       ORDER BY date_start DESC LIMIT 200`).bind(userId, dateFrom, dateTo).all();
-    const totals = await env.DB.prepare(`SELECT SUM(impressions) as impressions, SUM(clicks) as clicks, SUM(spend) as spend,
+    const totals = await env.criahub_db.prepare(`SELECT SUM(impressions) as impressions, SUM(clicks) as clicks, SUM(spend) as spend,
       SUM(conversions) as conversions, SUM(leads_count) as leads FROM campaign_insights
       WHERE user_id = ? AND platform = 'meta' AND date_start >= ? AND date_start <= ?`).bind(userId, dateFrom, dateTo).first();
     return jsonResponse({ insights: results.results || [], totals: totals || {} });
   }
   if (path === "/api/meta-ads/lead-forms" && method === "GET") {
-    const results = await env.DB.prepare("SELECT * FROM meta_lead_forms WHERE user_id = ? ORDER BY created_at DESC").bind(userId).all();
+    const results = await env.criahub_db.prepare("SELECT * FROM meta_lead_forms WHERE user_id = ? ORDER BY created_at DESC").bind(userId).all();
     return jsonResponse({ forms: results.results || [] });
   }
   return jsonResponse({ error: "Not found" }, 404);
@@ -2604,18 +2604,18 @@ async function handleMetaAds(request, env, path, method) {
 async function handleGA4(request, env, path, method) {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
-  const session = await env.DB.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_" + token).first();
+  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_" + token).first();
   if (!session) return jsonResponse({ error: "Invalid session" }, 401);
   const userId = session.value;
 
   if (path === "/api/ga4/config" && method === "GET") {
-    const config = await env.DB.prepare("SELECT id, property_id, property_name, service_account_email, status, last_sync FROM ga4_configs WHERE user_id = ?").bind(userId).first();
+    const config = await env.criahub_db.prepare("SELECT id, property_id, property_name, service_account_email, status, last_sync FROM ga4_configs WHERE user_id = ?").bind(userId).first();
     return jsonResponse({ config: config || null });
   }
   if (path === "/api/ga4/config" && method === "POST") {
     const body = await request.json();
     const { property_id, property_name, service_account_email, private_key } = body;
-    await env.DB.prepare(`INSERT OR REPLACE INTO ga4_configs (user_id, property_id, property_name, service_account_email, private_key, status, updated_at)
+    await env.criahub_db.prepare(`INSERT OR REPLACE INTO ga4_configs (user_id, property_id, property_name, service_account_email, private_key, status, updated_at)
       VALUES (?, ?, ?, ?, ?, 'connected', datetime('now'))`).bind(userId, property_id, property_name, service_account_email, private_key).run();
     return jsonResponse({ ok: true });
   }
@@ -2623,7 +2623,7 @@ async function handleGA4(request, env, path, method) {
     const url = new URL(request.url);
     const dateFrom = url.searchParams.get("from") || new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
     const dateTo = url.searchParams.get("to") || new Date().toISOString().split("T")[0];
-    const results = await env.DB.prepare(`SELECT * FROM ga4_data
+    const results = await env.criahub_db.prepare(`SELECT * FROM ga4_data
       WHERE user_id = ? AND date >= ? AND date <= ?
       ORDER BY date DESC LIMIT 200`).bind(userId, dateFrom, dateTo).all();
     return jsonResponse({ data: results.results || [] });
@@ -2637,7 +2637,7 @@ async function handleGA4(request, env, path, method) {
 async function handleLeads(request, env, path, method) {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
-  const session = await env.DB.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_" + token).first();
+  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_" + token).first();
   if (!session) return jsonResponse({ error: "Invalid session" }, 401);
   const userId = session.value;
 
@@ -2652,8 +2652,8 @@ async function handleLeads(request, env, path, method) {
     if (status) { q += " AND status = ?"; params.push(status); }
     if (search) { q += " AND (name LIKE ? OR email LIKE ? OR phone LIKE ?)"; params.push("%" + search + "%", "%" + search + "%", "%" + search + "%"); }
     q += " ORDER BY created_at DESC LIMIT 200";
-    const results = await env.DB.prepare(q).bind(...params).all();
-    const stats = await env.DB.prepare(`SELECT source, status, COUNT(*) as count FROM leads WHERE user_id = ? GROUP BY source, status`).bind(userId).all();
+    const results = await env.criahub_db.prepare(q).bind(...params).all();
+    const stats = await env.criahub_db.prepare(`SELECT source, status, COUNT(*) as count FROM leads WHERE user_id = ? GROUP BY source, status`).bind(userId).all();
     return jsonResponse({ leads: results.results || [], stats: stats.results || [] });
   }
   if (path === "/api/leads" && method === "POST") {
@@ -2661,34 +2661,34 @@ async function handleLeads(request, env, path, method) {
     const { source, source_id, name, email, phone, platform, campaign_id, campaign_name, form_name, tags, custom_fields } = body;
 
     // Enforce plan limits on contacts
-    const limitCheck = await checkPlanLimit(env.DB || env.criahub_db, userId, 'contacts');
+    const limitCheck = await checkPlanLimit(env.criahub_db || env.criahub_db, userId, 'contacts');
     if (!limitCheck.ok) return jsonResponse({ error: `Limite de contactos atingido: ${limitCheck.usage}/${limitCheck.limit}. Faça upgrade.`, upgrade_required: true }, 403);
 
-    await env.DB.prepare(`INSERT INTO leads (user_id, source, source_id, name, email, phone, platform, campaign_id, campaign_name, form_name, tags, custom_fields)
+    await env.criahub_db.prepare(`INSERT INTO leads (user_id, source, source_id, name, email, phone, platform, campaign_id, campaign_name, form_name, tags, custom_fields)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(userId, source, source_id, name, email, phone, platform, campaign_id, campaign_name, form_name, JSON.stringify(tags || []), JSON.stringify(custom_fields || {})).run();
     return jsonResponse({ ok: true });
   }
   if (path.startsWith("/api/leads/") && path.endsWith("/status") && method === "POST") {
     const leadId = path.split("/")[3];
     const body = await request.json();
-    await env.DB.prepare("UPDATE leads SET status = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?").bind(body.status, leadId, userId).run();
+    await env.criahub_db.prepare("UPDATE leads SET status = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?").bind(body.status, leadId, userId).run();
     return jsonResponse({ ok: true });
   }
   if (path.startsWith("/api/leads/") && path.endsWith("/activities") && method === "GET") {
     const leadId = path.split("/")[3];
-    const results = await env.DB.prepare("SELECT * FROM lead_activities WHERE lead_id = ? ORDER BY created_at DESC").bind(leadId).all();
+    const results = await env.criahub_db.prepare("SELECT * FROM lead_activities WHERE lead_id = ? ORDER BY created_at DESC").bind(leadId).all();
     return jsonResponse({ activities: results.results || [] });
   }
   if (path.startsWith("/api/leads/") && path.endsWith("/activities") && method === "POST") {
     const leadId = path.split("/")[3];
     const body = await request.json();
-    await env.DB.prepare("INSERT INTO lead_activities (lead_id, account_id, type, description, performed_by) VALUES (?, ?, ?, ?, ?)").bind(leadId, userId, body.type, body.description, body.performed_by || "user").run();
+    await env.criahub_db.prepare("INSERT INTO lead_activities (lead_id, account_id, type, description, performed_by) VALUES (?, ?, ?, ?, ?)").bind(leadId, userId, body.type, body.description, body.performed_by || "user").run();
     return jsonResponse({ ok: true });
   }
   if (path === "/api/leads/stats" && method === "GET") {
-    const total = await env.DB.prepare("SELECT COUNT(*) as total FROM leads WHERE user_id = ?").bind(userId).first();
-    const bySource = await env.DB.prepare("SELECT source, COUNT(*) as count FROM leads WHERE user_id = ? GROUP BY source").bind(userId).all();
-    const byStatus = await env.DB.prepare("SELECT status, COUNT(*) as count FROM leads WHERE user_id = ? GROUP BY status").bind(userId).all();
+    const total = await env.criahub_db.prepare("SELECT COUNT(*) as total FROM leads WHERE user_id = ?").bind(userId).first();
+    const bySource = await env.criahub_db.prepare("SELECT source, COUNT(*) as count FROM leads WHERE user_id = ? GROUP BY source").bind(userId).all();
+    const byStatus = await env.criahub_db.prepare("SELECT status, COUNT(*) as count FROM leads WHERE user_id = ? GROUP BY status").bind(userId).all();
     return jsonResponse({ total: total?.total || 0, bySource: bySource.results || [], byStatus: byStatus.results || [] });
   }
   return jsonResponse({ error: "Not found" }, 404);

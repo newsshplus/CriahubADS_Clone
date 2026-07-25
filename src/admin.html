@@ -207,10 +207,22 @@ tr:hover td{background:rgba(233,69,96,.03)}
       <a href="#" data-page="help"><span class="icon">&#10067;</span> <span>Ajuda</span></a>
     </nav>
     <div style="padding:12px 24px;border-top:1px solid var(--border)">
-      <div id="langSelector" style="display:flex;gap:4px;margin-bottom:8px;padding:4px;background:var(--input);border-radius:8px">
-        <button onclick="setAdminLang('pt')" class="admin-lang-btn" data-lang="pt" style="flex:1;padding:6px 0;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:var(--accent);color:#fff;font-family:inherit">PT</button>
-        <button onclick="setAdminLang('en')" class="admin-lang-btn" data-lang="en" style="flex:1;padding:6px 0;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;color:var(--text2);font-family:inherit">EN</button>
-        <button onclick="setAdminLang('es')" class="admin-lang-btn" data-lang="es" style="flex:1;padding:6px 0;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;color:var(--text2);font-family:inherit">ES</button>
+      <div id="langSelector" class="lang-dropdown" style="position:relative;margin-bottom:8px">
+        <button type="button" onclick="toggleAdminLangMenu(event)" id="langDropdownBtn" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--input);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">
+          <span style="display:flex;align-items:center;gap:8px"><span id="langDropdownFlag">&#127477;&#127481;</span><span id="langDropdownLabel">Português (PT)</span></span>
+          <span style="color:var(--text2);font-size:10px">&#9660;</span>
+        </button>
+        <div id="langDropdownList" style="display:none;position:absolute;bottom:calc(100% + 4px);left:0;right:0;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:50;box-shadow:0 4px 16px rgba(0,0,0,.25)">
+          <button type="button" onclick="setAdminLang('pt')" class="admin-lang-btn" data-lang="pt" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:10px 12px;border:none;background:transparent;color:var(--text);font-size:13px;text-align:left;cursor:pointer;font-family:inherit">
+            <span>&#127477;&#127481; Português (PT)</span><span class="lang-check" data-lang-check="pt" style="color:var(--accent)">&#10003;</span>
+          </button>
+          <button type="button" onclick="setAdminLang('en')" class="admin-lang-btn" data-lang="en" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:10px 12px;border:none;background:transparent;color:var(--text);font-size:13px;text-align:left;cursor:pointer;font-family:inherit;border-top:1px solid var(--border)">
+            <span>&#127468;&#127463; English</span><span class="lang-check" data-lang-check="en" style="color:var(--accent);visibility:hidden">&#10003;</span>
+          </button>
+          <button type="button" onclick="setAdminLang('es')" class="admin-lang-btn" data-lang="es" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:10px 12px;border:none;background:transparent;color:var(--text);font-size:13px;text-align:left;cursor:pointer;font-family:inherit;border-top:1px solid var(--border)">
+            <span>&#127466;&#127480; Español</span><span class="lang-check" data-lang-check="es" style="color:var(--accent);visibility:hidden">&#10003;</span>
+          </button>
+        </div>
       </div>
       <div id="themeToggle" onclick="toggleTheme()" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 12px;border-radius:8px;background:var(--input);transition:all .2s;font-size:13px;color:var(--text2)">
         <span id="themeIcon">&#9790;</span>
@@ -277,7 +289,13 @@ function updateThemeUI(theme){
 // ADMIN LANGUAGE (PT/EN/ES)
 // ============================================================
 const adminLangs=['pt','en','es'];
-let adminLang=localStorage.getItem('criahub_admin_lang')||'pt';
+function detectDefaultLang(){
+  const nav=(navigator.language||navigator.userLanguage||'pt').toLowerCase();
+  if(nav.startsWith('es'))return 'es';
+  if(nav.startsWith('pt'))return 'pt';
+  return 'en';
+}
+let adminLang=localStorage.getItem('criahub_admin_lang')||detectDefaultLang();
 
 const adminTranslations={
   pt:{
@@ -342,13 +360,40 @@ const adminTranslations={
   }
 };
 
+const adminLangMeta={
+  pt:{flag:'&#127477;&#127481;',label:'Português (PT)'},
+  en:{flag:'&#127468;&#127463;',label:'English'},
+  es:{flag:'&#127466;&#127480;',label:'Español'}
+};
+
+function toggleAdminLangMenu(ev){
+  if(ev)ev.stopPropagation();
+  const list=document.getElementById('langDropdownList');
+  if(!list)return;
+  list.style.display=list.style.display==='none'?'block':'none';
+}
+
+document.addEventListener('click',function(ev){
+  const wrap=document.getElementById('langSelector');
+  const list=document.getElementById('langDropdownList');
+  if(list&&list.style.display==='block'&&wrap&&!wrap.contains(ev.target)){
+    list.style.display='none';
+  }
+});
+
 function setAdminLang(lang){
   adminLang=lang;
   localStorage.setItem('criahub_admin_lang',lang);
-  document.querySelectorAll('.admin-lang-btn').forEach(b=>{
-    if(b.dataset.lang===lang){b.style.background='var(--accent)';b.style.color='#fff'}
-    else{b.style.background='transparent';b.style.color='var(--text2)'}
+  const meta=adminLangMeta[lang]||adminLangMeta.pt;
+  const flagEl=document.getElementById('langDropdownFlag');
+  const labelEl=document.getElementById('langDropdownLabel');
+  if(flagEl)flagEl.innerHTML=meta.flag;
+  if(labelEl)labelEl.textContent=meta.label;
+  document.querySelectorAll('.lang-check').forEach(c=>{
+    c.style.visibility=c.dataset.langCheck===lang?'visible':'hidden';
   });
+  const list=document.getElementById('langDropdownList');
+  if(list)list.style.display='none';
   applyAdminLang();
 }
 
@@ -382,7 +427,7 @@ function applyAdminLang(){
 
 // Load saved admin language
 (function(){
-  const saved=localStorage.getItem('criahub_admin_lang')||'pt';
+  const saved=localStorage.getItem('criahub_admin_lang')||detectDefaultLang();
   setAdminLang(saved);
 })();
 function authHeaders(){return{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'}}
@@ -2870,7 +2915,7 @@ async function saveSMTP(){
     smtp_pass:document.getElementById('smtpPass').value,
     smtp_from_email:document.getElementById('smtpUser').value,
     smtp_from_name:document.getElementById('smtpFromName').value,
-    smtp_use_tls:secureVal==='tls'||secureVal==='ssl'?1:0,
+    smtp_use_tls:secureVal==='ssl'?1:0,
     recipient_email:document.getElementById('smtpRecipient').value
   });
   if(r&&r.ok){toast('SMTP configurado com sucesso!','success');loadPage('smtp')}

@@ -278,7 +278,22 @@ footer a:hover{color:var(--accent2)}
     <a href="#how">Como Funciona</a>
     <a href="#faq">FAQ</a>
     <a href="#contacto">Contacto</a>
-    <button class="lang-toggle" onclick="toggleLang()" style="background:none;border:1px solid var(--border);color:var(--text2);padding:6px 12px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit">EN</button>
+    <div class="lang-dropdown" id="langSelector" style="position:relative">
+      <button type="button" class="lang-toggle" onclick="toggleLangMenu(event)" id="langDropdownBtn" style="display:flex;align-items:center;gap:6px;background:none;border:1px solid var(--border);color:var(--text2);padding:6px 12px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit">
+        <span id="langDropdownFlag">&#127477;&#127481;</span><span id="langDropdownLabel">PT</span><span style="font-size:9px">&#9660;</span>
+      </button>
+      <div id="langDropdownList" style="display:none;position:absolute;top:calc(100% + 6px);right:0;min-width:180px;background:var(--bg,#fff);border:1px solid var(--border);border-radius:8px;overflow:hidden;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.15)">
+        <button type="button" onclick="setLang('pt')" data-lang="pt" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:10px 14px;border:none;background:transparent;color:var(--text2);font-size:13px;text-align:left;cursor:pointer;font-family:inherit">
+          <span>&#127477;&#127481; Português (PT)</span><span class="lang-check" data-lang-check="pt" style="visibility:hidden">&#10003;</span>
+        </button>
+        <button type="button" onclick="setLang('en')" data-lang="en" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:10px 14px;border:none;background:transparent;color:var(--text2);font-size:13px;text-align:left;cursor:pointer;font-family:inherit;border-top:1px solid var(--border)">
+          <span>&#127468;&#127463; English</span><span class="lang-check" data-lang-check="en" style="visibility:hidden">&#10003;</span>
+        </button>
+        <button type="button" onclick="setLang('es')" data-lang="es" style="display:flex;align-items:center;justify-content:space-between;width:100%;padding:10px 14px;border:none;background:transparent;color:var(--text2);font-size:13px;text-align:left;cursor:pointer;font-family:inherit;border-top:1px solid var(--border)">
+          <span>&#127466;&#127480; Español</span><span class="lang-check" data-lang-check="es" style="visibility:hidden">&#10003;</span>
+        </button>
+      </div>
+    </div>
     <a href="/auth" class="nav-btn">Entrar</a>
   </div>
   <button class="nav-hamburger" onclick="document.querySelector('.mobile-menu').classList.toggle('open')" aria-label="Menu">
@@ -292,7 +307,12 @@ footer a:hover{color:var(--accent2)}
   <a href="#how" onclick="this.parentElement.classList.remove('open')">Como Funciona</a>
   <a href="#faq" onclick="this.parentElement.classList.remove('open')">FAQ</a>
   <a href="#contacto" onclick="this.parentElement.classList.remove('open')">Contacto</a>
-  <button onclick="toggleLang();this.parentElement.classList.remove('open')" style="background:none;border:none;color:var(--text2);font-size:16px;padding:16px 0;border-bottom:1px solid var(--border);text-align:left;font-weight:500;cursor:pointer;width:100%;text-align:left">Idioma: <strong id="mobile-lang-label">EN</strong></button>
+  <div style="padding:16px 0;border-bottom:1px solid var(--border)">
+    <div style="color:var(--text2);font-size:13px;font-weight:600;margin-bottom:8px">Idioma / Language / Idioma</div>
+    <button onclick="setLang('pt');" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--text2);font-size:15px;padding:8px 0;cursor:pointer;font-weight:500">&#127477;&#127481; Português (PT) <span class="mobile-lang-check" data-lang-check="pt" style="visibility:hidden">&#10003;</span></button>
+    <button onclick="setLang('en');" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--text2);font-size:15px;padding:8px 0;cursor:pointer;font-weight:500">&#127468;&#127463; English <span class="mobile-lang-check" data-lang-check="en" style="visibility:hidden">&#10003;</span></button>
+    <button onclick="setLang('es');" style="display:block;width:100%;text-align:left;background:none;border:none;color:var(--text2);font-size:15px;padding:8px 0;cursor:pointer;font-weight:500">&#127466;&#127480; Español <span class="mobile-lang-check" data-lang-check="es" style="visibility:hidden">&#10003;</span></button>
+  </div>
   <a href="/auth">Entrar</a>
 </div>
 
@@ -1095,15 +1115,42 @@ const esTexts={
 };
 const langs=['pt','en','es'];
 const langLabels={pt:'PT',en:'EN',es:'ES'};
-let currentLang='pt';
-function toggleLang(){
-  const idx=langs.indexOf(currentLang);
-  currentLang=langs[(idx+1)%langs.length];
+const langFlags={pt:'&#127477;&#127481;',en:'&#127468;&#127463;',es:'&#127466;&#127480;'};
+function detectDefaultLang(){
+  const nav=(navigator.language||navigator.userLanguage||'pt').toLowerCase();
+  if(nav.startsWith('es'))return 'es';
+  if(nav.startsWith('pt'))return 'pt';
+  return 'en';
+}
+let currentLang=localStorage.getItem('criahub_lp_lang')||detectDefaultLang();
+function toggleLangMenu(ev){
+  if(ev)ev.stopPropagation();
+  const list=document.getElementById('langDropdownList');
+  if(!list)return;
+  list.style.display=list.style.display==='none'?'block':'none';
+}
+document.addEventListener('click',function(ev){
+  const wrap=document.getElementById('langSelector');
+  const list=document.getElementById('langDropdownList');
+  if(list&&list.style.display==='block'&&wrap&&!wrap.contains(ev.target)){
+    list.style.display='none';
+  }
+});
+function setLang(lang){
+  currentLang=lang;
+  localStorage.setItem('criahub_lp_lang',lang);
+  applyLang();
+  const list=document.getElementById('langDropdownList');
+  if(list)list.style.display='none';
+}
+function applyLang(){
   const t=currentLang==='pt'?ptTexts:currentLang==='en'?enTexts:esTexts;
-  const btn=document.querySelector('.lang-toggle');
+  const flagEl=document.getElementById('langDropdownFlag');
+  if(flagEl)flagEl.innerHTML=langFlags[currentLang];
+  const btn=document.getElementById('langDropdownLabel');
   if(btn)btn.textContent=langLabels[currentLang];
-  const ml=document.getElementById('mobile-lang-label');
-  if(ml)ml.textContent=langLabels[currentLang];
+  document.querySelectorAll('.lang-check').forEach(c=>{c.style.visibility=c.dataset.langCheck===currentLang?'visible':'hidden'});
+  document.querySelectorAll('.mobile-lang-check').forEach(c=>{c.style.visibility=c.dataset.langCheck===currentLang?'visible':'hidden'});
   document.querySelectorAll('.nav-links a[href="#features"]').forEach(el=>el.textContent=t.navFeatures);
   document.querySelectorAll('.nav-links a[href="#demo"]').forEach(el=>el.textContent=t.navDemo);
   document.querySelectorAll('.nav-links a[href="#pricing"]').forEach(el=>el.textContent=t.navPricing);
@@ -1174,6 +1221,14 @@ function toggleLang(){
   var footerSocial=document.querySelector('.footer-social');if(footerSocial)footerSocial.textContent=t.footerClients;
   document.documentElement.lang=currentLang==='pt'?'pt-PT':currentLang==='es'?'es':'en';
 }
+document.addEventListener('DOMContentLoaded',function(){
+  if(currentLang!=='pt'){applyLang();}
+  else{
+    const flagEl=document.getElementById('langDropdownFlag');if(flagEl)flagEl.innerHTML=langFlags.pt;
+    const btn=document.getElementById('langDropdownLabel');if(btn)btn.textContent=langLabels.pt;
+    document.querySelectorAll('.lang-check,.mobile-lang-check').forEach(c=>{c.style.visibility=c.dataset.langCheck==='pt'?'visible':'hidden'});
+  }
+});
 </script>
 </body>
 </html>
