@@ -23,6 +23,12 @@ import helpTiktokHtml from "./help-tiktok.html";
 
 // ============================================================
 // Raw SMTP via TCP sockets (Cloudflare Workers compatible)
+// Uses the real cloudflare:sockets API: secureTransport 'on' for
+// implicit TLS (port 465 style) and 'starttls' + sock.startTls()
+// to upgrade the SAME connection in place (port 587 style).
+// Opening a brand-new "secure" connection after STARTTLS (the old
+// approach) is not how this API works and caused every STARTTLS
+// send to fail with "This WritableStream has been closed".
 // ============================================================
 async function sendEmail(cfg, to, subject, htmlBody) {
   const host = cfg.smtp_host;
@@ -36,12 +42,11 @@ async function sendEmail(cfg, to, subject, htmlBody) {
 
   const b64 = (s) => btoa(unescape(encodeURIComponent(s)));
 
-  function openConn(secure) {
-    const sock = connect({ hostname: host, port: Number(port), secure: !!secure });
+  function wrap(sock) {
     const writer = sock.writable.getWriter();
     const dec = new TextDecoderStream();
     const reader = sock.readable.pipeThrough(dec).getReader();
-    return { writer, reader, sock, alive: true };
+    return { sock, writer, reader, alive: true };
   }
 
   function closeConn(c) {
@@ -114,36 +119,44 @@ async function sendEmail(cfg, to, subject, htmlBody) {
 
   const tlsMode = cfg.smtp_use_tls;
   const directTls = (tlsMode === 1) || (port === 465);
-  let lastErr = null;
 
   if (directTls) {
-    const c = openConn(true);
+    // Implicit TLS from the very first byte (classic port 465 behavior)
+    const sock = connect({ hostname: host, port: Number(port) }, { secureTransport: "on" });
+    const c = wrap(sock);
     try {
-      await new Promise(d => setTimeout(d, 1000));
+      await sock.opened;
+      await readResponse(c.reader); // discard the server's initial greeting banner
       await doSend(c);
       return true;
-    } catch(e) { lastErr = e; } finally { closeConn(c); }
-  } else {
-    const c = openConn(false);
-    try {
-      await new Promise(d => setTimeout(d, 1000));
-      await smtpCmd(c, "EHLO criahub.workers.dev");
-      let starttlsOk = false;
-      try { const r = await smtpCmd(c, "STARTTLS"); starttlsOk = r.startsWith("220"); } catch(_) {}
-      if (starttlsOk) {
-        closeConn(c);
-        const tc = openConn(true);
-        try {
-          await new Promise(d => setTimeout(d, 1000));
-          await doSend(tc);
-          return true;
-        } catch(e) { lastErr = e; } finally { closeConn(tc); }
-      } else {
-        try { await doSend(c); return true; } catch(e) { lastErr = e; }
-      }
     } finally { closeConn(c); }
   }
-  throw lastErr || new Error("Falha ao enviar email");
+
+  // STARTTLS path (classic port 587 behavior): connect in plain/starttls
+  // mode, talk plaintext, then upgrade the SAME TCP connection to TLS
+  // via sock.startTls() before authenticating and sending the message.
+  const sock = connect({ hostname: host, port: Number(port) }, { secureTransport: "starttls" });
+  let c = wrap(sock);
+  try {
+    await sock.opened;
+    await readResponse(c.reader); // discard the server's initial greeting banner
+    await smtpCmd(c, "EHLO criahub.workers.dev");
+    let starttlsOk = false;
+    try {
+      const r = await smtpCmd(c, "STARTTLS");
+      starttlsOk = r.startsWith("220");
+    } catch(_) {}
+    if (starttlsOk) {
+      try { c.writer.releaseLock(); } catch(_) {}
+      try { c.reader.cancel(); } catch(_) {}
+      const secureSock = sock.startTls();
+      c = wrap(secureSock);
+    }
+    await doSend(c); // re-issues EHLO, which is required right after the TLS upgrade
+    return true;
+  } finally {
+    closeConn(c);
+  }
 }
 
 async function getUserPlanLimits(db, userId) {
