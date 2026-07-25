@@ -772,7 +772,7 @@ footer a:hover{color:var(--accent2)}
         <div style="display:flex;gap:0">
           <div style="position:relative;flex:0 0 200px">
             <div id="phoneCountryBtn" onclick="toggleCountryDropdown()" style="display:flex;align-items:center;gap:8px;padding:12px 14px;border:1px solid var(--border);border-radius:10px 0 0 10px;background:var(--bg);color:var(--text);font-size:14px;cursor:pointer;transition:border .2s;overflow:hidden;height:46px" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
-              <span id="selectedFlag" style="font-size:20px;line-height:1">&#127463;&#127479;</span>
+              <span id="selectedFlag" style="font-size:20px;line-height:1">&#127477;&#127481;</span>
               <span id="selectedCountryCode" style="font-weight:600;white-space:nowrap">+351</span>
               <svg style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;margin-left:auto;flex-shrink:0" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
             </div>
@@ -871,6 +871,56 @@ const obs=new IntersectionObserver((e)=>{e.forEach(el=>{if(el.isIntersecting){el
 document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
 document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener('click',e=>{const t=document.querySelector(a.getAttribute('href'));if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'})}})});
 
+const phoneCountries=[
+  {c:'PT',d:'+351',f:'🇵🇹',n:'Portugal'},{c:'BR',d:'+55',f:'🇧🇷',n:'Brasil'},{c:'ES',d:'+34',f:'🇪🇸',n:'España'},
+  {c:'FR',d:'+33',f:'🇫🇷',n:'França'},{c:'GB',d:'+44',f:'🇬🇧',n:'Reino Unido'},{c:'US',d:'+1',f:'🇺🇸',n:'Estados Unidos'},
+  {c:'DE',d:'+49',f:'🇩🇪',n:'Alemanha'},{c:'IT',d:'+39',f:'🇮🇹',n:'Itália'},{c:'NL',d:'+31',f:'🇳🇱',n:'Países Baixos'},
+  {c:'BE',d:'+32',f:'🇧🇪',n:'Bélgica'},{c:'CH',d:'+41',f:'🇨🇭',n:'Suíça'},{c:'AT',d:'+43',f:'🇦🇹',n:'Áustria'},
+  {c:'IE',d:'+353',f:'🇮🇪',n:'Irlanda'},{c:'LU',d:'+352',f:'🇱🇺',n:'Luxemburgo'},{c:'AO',d:'+244',f:'🇦🇴',n:'Angola'},
+  {c:'MZ',d:'+258',f:'🇲🇿',n:'Moçambique'},{c:'CV',d:'+238',f:'🇨🇻',n:'Cabo Verde'},{c:'GW',d:'+245',f:'🇬🇼',n:'Guiné-Bissau'},
+  {c:'MX',d:'+52',f:'🇲🇽',n:'México'},{c:'AR',d:'+54',f:'🇦🇷',n:'Argentina'},{c:'CO',d:'+57',f:'🇨🇴',n:'Colômbia'},
+  {c:'CL',d:'+56',f:'🇨🇱',n:'Chile'},{c:'PE',d:'+51',f:'🇵🇪',n:'Peru'},{c:'UY',d:'+598',f:'🇺🇾',n:'Uruguai'},
+  {c:'CA',d:'+1',f:'🇨🇦',n:'Canadá'},{c:'AU',d:'+61',f:'🇦🇺',n:'Austrália'},{c:'IN',d:'+91',f:'🇮🇳',n:'Índia'},
+  {c:'CN',d:'+86',f:'🇨🇳',n:'China'},{c:'JP',d:'+81',f:'🇯🇵',n:'Japão'},{c:'PL',d:'+48',f:'🇵🇱',n:'Polónia'},
+  {c:'SE',d:'+46',f:'🇸🇪',n:'Suécia'},{c:'NO',d:'+47',f:'🇳🇴',n:'Noruega'},{c:'DK',d:'+45',f:'🇩🇰',n:'Dinamarca'},
+  {c:'FI',d:'+358',f:'🇫🇮',n:'Finlândia'},{c:'RO',d:'+40',f:'🇷🇴',n:'Roménia'},{c:'GR',d:'+30',f:'🇬🇷',n:'Grécia'},
+  {c:'CZ',d:'+420',f:'🇨🇿',n:'República Checa'},{c:'MA',d:'+212',f:'🇲🇦',n:'Marrocos'},{c:'ZA',d:'+27',f:'🇿🇦',n:'África do Sul'},
+  {c:'AE',d:'+971',f:'🇦🇪',n:'Emirados Árabes Unidos'}
+];
+function renderCountryList(filter){
+  var list=document.getElementById('countryList');
+  if(!list)return;
+  var f=(filter||'').toLowerCase();
+  var items=phoneCountries.filter(function(c){return !f||c.n.toLowerCase().indexOf(f)>=0||c.d.indexOf(f)>=0||c.c.toLowerCase().indexOf(f)>=0;});
+  list.innerHTML=items.map(function(c){
+    return '<div onclick="selectCountry(\''+c.d+'\',\''+c.f+'\')" style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;font-size:14px" onmouseover="this.style.background=\'rgba(0,0,0,.04)\'" onmouseout="this.style.background=\'transparent\'"><span style="font-size:18px">'+c.f+'</span><span style="flex:1;color:var(--text)">'+c.n+'</span><span style="color:var(--text2);font-weight:600">'+c.d+'</span></div>';
+  }).join('');
+}
+function toggleCountryDropdown(ev){
+  if(ev)ev.stopPropagation();
+  var dd=document.getElementById('countryDropdown');
+  if(!dd)return;
+  var opening=dd.style.display==='none'||!dd.style.display;
+  dd.style.display=opening?'block':'none';
+  if(opening){
+    renderCountryList('');
+    var s=document.getElementById('countrySearch');
+    if(s){s.value='';setTimeout(function(){s.focus()},50);}
+  }
+}
+function filterCountries(q){renderCountryList(q);}
+function selectCountry(dial,flag){
+  var fl=document.getElementById('selectedFlag');if(fl)fl.textContent=flag;
+  var cc=document.getElementById('selectedCountryCode');if(cc)cc.textContent=dial;
+  var dd=document.getElementById('countryDropdown');if(dd)dd.style.display='none';
+}
+document.addEventListener('click',function(ev){
+  var dd=document.getElementById('countryDropdown');
+  var btn=document.getElementById('phoneCountryBtn');
+  if(dd&&dd.style.display==='block'&&!dd.contains(ev.target)&&btn&&!btn.contains(ev.target)){
+    dd.style.display='none';
+  }
+});
 let isAnnual=false;
 async function submitLPContact(e){
   e.preventDefault();
@@ -883,7 +933,7 @@ async function submitLPContact(e){
     const r=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
       name:document.getElementById('lpName').value,
       email:document.getElementById('lpEmail').value,
-      phone:document.getElementById('lpPhone').value,
+      phone:(document.getElementById('selectedCountryCode')?document.getElementById('selectedCountryCode').textContent:'')+' '+document.getElementById('lpPhone').value,
       subject:document.getElementById('lpSubject').value,
       description:document.getElementById('lpDescription').value
     })});
