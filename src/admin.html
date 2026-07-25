@@ -1799,6 +1799,7 @@ function renderHelp(m){
 }
 
 function showModal(html){document.getElementById('modalContent').innerHTML=html;document.getElementById('modalOverlay').classList.add('show')}
+const openModal = showModal;
 function closeModal(){document.getElementById('modalOverlay').classList.remove('show')}
 
 function connectAccount(){
@@ -2540,7 +2541,7 @@ async function renderWhatsApp(m){
   m.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
       <h2 style="margin:0">&#128172; WhatsApp CRM</h2>
-      <button class="btn btn-primary btn-sm" onclick="openWhatsAppConfig()">+ Configurar Evolution API</button>
+      <button class="btn btn-primary btn-sm" onclick="openWhatsAppConfig()">+ Configurar WhatsApp</button>
     </div>
     <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px">
       <div class="stat-card" style="border-left:3px solid ${cfg.enabled?'var(--success)':'var(--accent)'}">
@@ -2572,7 +2573,7 @@ async function renderWhatsApp(m){
 }
 
 function openWhatsAppConfig(){
-  openModal(`Configurar WhatsApp (Evolution API)
+  openModal(`Configurar WhatsApp (Oficial e Não Oficial)
     <div class="form-group" style="margin-top:20px"><label>URL da API</label><input id="waApiUrl" placeholder="https://api.evolution.example.com"></div>
     <div class="form-group"><label>Nome da Instância</label><input id="waInstanceName" placeholder="criahub-wa"></div>
     <div class="form-group"><label>API Key</label><input id="waApiKey" type="password" placeholder="Sua API Key"></div>

@@ -1111,6 +1111,11 @@ async function handleAdminApi(request, env, path, method) {
       return jsonResponse({ error: "Erro ao mudar plano: " + err.message }, 500);
     }
 
+    // Also update saas_users.plan_id so the user's plan is reflected on their account
+    try {
+      await env.criahub_db.prepare("UPDATE saas_users SET plan_id = ?, updated_at = datetime('now') WHERE id = ?").bind(body.plan_id, userId).run();
+    } catch (_) {}
+
     return jsonResponse({ ok: true });
   }
 
@@ -1483,8 +1488,18 @@ async function handleComment(value, igUserId, token, env) {
     }
   }
 
-  // 3. If keyword found → Send DM (private reply)
+  // 3. If keyword found → Check follower → Send DM (private reply)
   if (matchedCampaign) {
+    // Check if follower before doing anything
+    const isFollower = await checkFollow(igsid, igUserId, token);
+    if (!isFollower) {
+      console.log(`Keyword match but ${igsid} is NOT a follower, skipping DM`);
+      try {
+        await env.criahub_db.prepare("INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)").bind(commentId).run();
+      } catch (_) {}
+      return;
+    }
+
     // Check if we already sent a private reply for this contact+campaign (prevent duplicates)
     const convState = await env.criahub_db
       .prepare("SELECT stage FROM conversation_state WHERE contact_id = ? AND campaign_id = ?")
@@ -1571,14 +1586,12 @@ async function handleComment(value, igUserId, token, env) {
     return;
   }
 
-  // 4. No keyword found → Classify comment and respond publicly (if appropriate)
+  // 4. No keyword match → Check if follower → Send initial DM "Comente QUERO"
   if (campaignList.length === 0) return;
 
-  // Classify the comment using AI
+  // Check if harmful comment first (skip silently)
   const classification = await classifyComment(text, postCaption, env);
   console.log(`Comment classification: "${classification}" for: "${text.substring(0, 50)}"`);
-
-  // If harmful → Don't respond at all
   if (classification === "ignorar") {
     console.log(`Ignoring harmful comment: "${text.substring(0, 50)}"`);
     try {
@@ -1587,45 +1600,83 @@ async function handleComment(value, igUserId, token, env) {
     return;
   }
 
-  // If approved or aggressive → Generate public reply
-  const publicReply = await generatePublicReply(text, postCaption, classification, env);
-  if (!publicReply) {
+  // Check if this user already has a conversation state for any campaign (avoid spam)
+  const existingState = await env.criahub_db
+    .prepare("SELECT stage FROM conversation_state WHERE contact_id = ?")
+    .bind(contactId)
+    .first();
+  if (existingState && ["aguardando_quero", "aguardando_follow", "entregue"].includes(existingState.stage)) {
+    console.log(`Contact ${igsid} already in conversation flow, stage: ${existingState.stage}, skipping initial DM`);
     try {
       await env.criahub_db.prepare("INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)").bind(commentId).run();
     } catch (_) {}
     return;
   }
 
-  // Send private reply (DM) as public engagement
+  // Check if commenter is a REAL FOLLOWER before sending any DM
+  const following = await checkFollow(igsid, igUserId, token);
+  if (!following) {
+    console.log(`Commenter ${igsid} is NOT a follower, skipping DM`);
+    try {
+      await env.criahub_db.prepare("INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)").bind(commentId).run();
+    } catch (_) {}
+    return;
+  }
+
+  // Follower confirmed → Send initial DM via private reply
+  const targetCampaign = campaignList[0];
+  const deliveryHint = targetCampaign.delivery_content || "o conteúdo";
+  let initialMsg;
+  const aiInitial = await generateDMMessage("intro", postCaption, { keyword: targetCampaign.keyword, delivery_content: deliveryHint }, null, env);
+  if (aiInitial) {
+    initialMsg = aiInitial;
+  } else {
+    initialMsg = `Olá! 😊 Obrigado pelo teu interesse! Vi que comentaste no nosso post.\n\nPara receberes ${deliveryHint}, basta comentares QUERO neste mesmo post e envio-te tudo por mensagem privada! 📩`;
+  }
+
   try {
     const replyUrl = `https://graph.facebook.com/v21.0/${commentId}/private_replies`;
     const res = await fetch(replyUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        message: publicReply,
+        message: initialMsg,
         access_token: token
       })
     });
     const data = await res.json();
 
     if (res.ok) {
-      console.log(`Public reply sent to comment ${commentId} (${classification})`);
-      // Log public reply
+      console.log(`Initial DM sent to follower ${igsid} via comment ${commentId}`);
+      // Init conversation state
+      await env.criahub_db
+        .prepare("INSERT OR IGNORE INTO conversation_state (contact_id, campaign_id, stage) VALUES (?, ?, 'aguardando_quero')")
+        .bind(contactId, targetCampaign.id)
+        .run();
+      // Log activity
       try {
         const acc = await env.criahub_db.prepare("SELECT id FROM ig_accounts WHERE ig_user_id = ?").bind(igUserId).first();
         if (acc) {
           await env.criahub_db.prepare(`
-            INSERT INTO activity_log (ig_account_id, contact_id, event_type, event_detail, status)
-            VALUES (?, ?, 'dm_sent', ?, 'success')
-          `).bind(acc.id, contactId, `Public reply (${classification}): "${publicReply.substring(0, 80)}"`).run();
+            INSERT INTO activity_log (ig_account_id, contact_id, campaign_id, event_type, event_detail, status)
+            VALUES (?, ?, ?, 'dm_sent', ?, 'success')
+          `).bind(acc.id, contactId, targetCampaign.id, `Initial DM to @${username || '?'}: "${initialMsg.substring(0, 80)}..."`).run();
         }
       } catch (_) {}
     } else {
-      console.error(`Public reply failed: ${JSON.stringify(data)}`);
+      console.error(`Initial DM failed: ${JSON.stringify(data)}`);
+      try {
+        const acc = await env.criahub_db.prepare("SELECT id FROM ig_accounts WHERE ig_user_id = ?").bind(igUserId).first();
+        if (acc) {
+          await env.criahub_db.prepare(`
+            INSERT INTO activity_log (ig_account_id, contact_id, campaign_id, event_type, event_detail, status)
+            VALUES (?, ?, ?, 'dm_failed', ?, 'failed')
+          `).bind(acc.id, contactId, targetCampaign.id, `Error: ${JSON.stringify(data.error || data).substring(0, 100)}`).run();
+        }
+      } catch (_) {}
     }
   } catch (err) {
-    console.error(`Exception sending public reply: ${err.message}`);
+    console.error(`Exception sending initial DM: ${err.message}`);
   }
 
   // Mark processed
