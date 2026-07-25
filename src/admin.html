@@ -1,0 +1,2971 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CriaHub - Painel Admin</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f0f1a;--card:#1a1a2e;--card2:#16213e;--accent:#e94560;--accent2:#0f3460;--text:#eee;--text2:#aaa;--success:#00c853;--warning:#ffd600;--border:#2a2a4a;--input:#12122a}
+[data-theme="light"]{--bg:#f0f2f5;--card:#fff;--card2:#f8f9fa;--accent:#e94560;--accent2:#0f3460;--text:#1a1a2e;--text2:#666;--success:#00c853;--warning:#f59e0b;--border:#e0e0e0;--input:#f5f5f5}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
+a{color:var(--accent);text-decoration:none}
+
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 50%,#16213e 100%)}
+[data-theme="light"] .login-wrap{background:linear-gradient(135deg,#f0f2f5 0%,#e8e8e8 50%,#f5f5f5 100%)}
+.login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:48px 40px;width:420px;max-width:90vw;text-align:center}
+.login-box h1{font-size:28px;margin-bottom:8px;background:linear-gradient(90deg,var(--accent),#ff6b6b);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.login-box p{color:var(--text2);margin-bottom:32px;font-size:14px}
+.login-box input{width:100%;padding:14px 16px;border:1px solid var(--border);border-radius:10px;background:var(--input);color:var(--text);font-size:15px;margin-bottom:16px;outline:none;transition:border .2s}
+.login-box input:focus{border-color:var(--accent)}
+.login-box button{width:100%;padding:14px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:opacity .2s}
+.login-box button:hover{opacity:.85}
+.login-error{color:var(--accent);font-size:13px;margin-top:8px;display:none}
+
+.app{display:none;min-height:100vh}
+.sidebar{position:fixed;top:0;left:0;width:240px;height:100vh;background:var(--card);border-right:1px solid var(--border);padding:24px 0;z-index:10;display:flex;flex-direction:column}
+.sidebar .logo{padding:0 24px 24px;font-size:22px;font-weight:700;background:linear-gradient(90deg,var(--accent),#ff6b6b);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.sidebar nav{flex:1}
+.sidebar nav a{display:flex;align-items:center;gap:12px;padding:12px 24px;color:var(--text2);font-size:14px;transition:all .2s;border-left:3px solid transparent}
+.sidebar nav a:hover,.sidebar nav a.active{color:var(--text);background:rgba(233,69,96,.08);border-left-color:var(--accent)}
+[data-theme="light"] .sidebar nav a:hover,[data-theme="light"] .sidebar nav a.active{background:rgba(233,69,96,.06)}
+.sidebar nav a .icon{font-size:18px;width:24px;text-align:center}
+.sidebar .logout{padding:12px 24px;border-top:1px solid var(--border);border:none;background:transparent;color:var(--text2);cursor:pointer;font-size:13px;text-align:left;transition:all .2s}
+.sidebar .logout:hover{color:var(--accent)}
+
+.main{margin-left:240px;padding:32px 40px}
+.main h2{font-size:24px;margin-bottom:24px}
+.main h3{font-size:18px;margin-bottom:16px;color:var(--text2)}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px}
+.stat-card{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center}
+.stat-card .number{font-size:32px;font-weight:700;color:var(--accent)}
+.stat-card .label{font-size:13px;color:var(--text2);margin-top:4px}
+
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:12px 16px;font-size:12px;text-transform:uppercase;color:var(--text2);letter-spacing:.5px;border-bottom:1px solid var(--border)}
+td{padding:12px 16px;font-size:14px;border-bottom:1px solid rgba(42,42,74,.5)}
+tr:hover td{background:rgba(233,69,96,.03)}
+
+.badge{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-active{background:rgba(0,200,83,.15);color:var(--success)}
+.badge-paused{background:rgba(255,214,0,.15);color:var(--warning)}
+.badge-connected{background:rgba(0,200,83,.15);color:var(--success)}
+.badge-disconnected{background:rgba(233,69,96,.15);color:var(--accent)}
+.badge-stage{background:rgba(15,52,96,.5);color:#64b5f6}
+[data-theme="light"] .badge-stage{background:rgba(15,52,96,.1);color:#0f3460}
+[data-theme="light"] td{border-bottom-color:rgba(0,0,0,.06)}
+[data-theme="light"] tr:hover td{background:rgba(233,69,96,.03)}
+[data-theme="light"] .modal-overlay{background:rgba(0,0,0,.3)}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{opacity:.85}
+.btn-secondary{background:var(--accent2);color:#fff}
+.btn-secondary:hover{opacity:.85}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text2)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.btn-danger{background:rgba(233,69,96,.15);color:var(--accent);border:1px solid rgba(233,69,96,.3)}
+.btn-danger:hover{background:rgba(233,69,96,.25)}
+.btn-success{background:rgba(0,200,83,.15);color:var(--success);border:1px solid rgba(0,200,83,.3)}
+.btn-success:hover{background:rgba(0,200,83,.25)}
+.btn-ghost{background:transparent;border:none;color:var(--text2);padding:6px 10px}
+.btn-ghost:hover{color:var(--accent)}
+.btn-group{display:flex;gap:8px;flex-wrap:wrap}
+
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;color:var(--text2);margin-bottom:6px}
+.form-group input,.form-group textarea,.form-group select{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:var(--input);color:var(--text);font-size:14px;outline:none;transition:border .2s;font-family:inherit}
+.form-group input:focus,.form-group textarea:focus,.form-group select:focus{border-color:var(--accent)}
+.form-group textarea{resize:vertical;min-height:80px}
+.form-group small{display:block;margin-top:4px;font-size:12px;color:var(--text2)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:100;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;width:600px;max-width:90vw;max-height:85vh;overflow-y:auto}
+.modal h3{margin-bottom:20px}
+.modal-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:24px}
+
+.toast{position:fixed;top:20px;right:20px;padding:14px 20px;border-radius:10px;font-size:14px;z-index:200;animation:slideIn .3s;max-width:400px}
+.toast-success{background:rgba(0,200,83,.9);color:#fff}
+.toast-error{background:rgba(233,69,96,.9);color:#fff}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+.empty{text-align:center;padding:48px 24px;color:var(--text2)}
+.empty .icon{font-size:48px;margin-bottom:12px}
+.empty p{margin-bottom:16px}
+
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin:12px 0}
+.media-item{position:relative;border:2px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all .2s;aspect-ratio:1;background:var(--input)}
+.media-item:hover{border-color:var(--accent)}
+.media-item.selected{border-color:var(--accent);box-shadow:0 0 12px rgba(233,69,96,.3)}
+.media-item img{width:100%;height:100%;object-fit:cover}
+.media-item .media-type{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.7);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px}
+.media-item .media-caption{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.8));color:#fff;font-size:10px;padding:16px 6px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.account-card{display:flex;align-items:center;gap:16px;padding:16px 20px}
+.account-card .avatar{width:48px;height:48px;border-radius:50%;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--accent);flex-shrink:0}
+.account-card .info{flex:1}
+.account-card .info .name{font-weight:600;font-size:15px}
+.account-card .info .id{font-size:12px;color:var(--text2)}
+.account-card .actions{display:flex;gap:8px}
+
+.campaign-card{padding:20px;border-bottom:1px solid var(--border)}
+.campaign-card:last-child{border-bottom:none}
+.campaign-card .top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.campaign-card .meta{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text2)}
+.campaign-card .meta span{display:flex;align-items:center;gap:4px}
+.campaign-card .texts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.campaign-card .text-block{background:var(--input);border-radius:8px;padding:10px 12px}
+.campaign-card .text-block .lbl{font-size:10px;text-transform:uppercase;color:var(--text2);margin-bottom:4px;letter-spacing:.5px}
+.campaign-card .text-block .val{font-size:13px;color:var(--text);word-break:break-word}
+
+.hamburger{display:none;position:fixed;top:12px;left:12px;z-index:200;background:var(--card);border:1px solid var(--border);border-radius:8px;width:40px;height:40px;font-size:20px;cursor:pointer;color:var(--text);align-items:center;justify-content:center}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:49}
+
+@media(max-width:768px){
+  .hamburger{display:flex}
+  .sidebar{position:fixed;top:0;left:-260px;width:240px;transition:left .3s;z-index:100}
+  .sidebar.open{left:0}
+  .sidebar-overlay.show{display:block}
+  .sidebar .logout span{display:inline}
+  .sidebar nav a span{display:inline}
+  .main{margin-left:0;padding:60px 16px 20px}
+  .stat-grid{grid-template-columns:1fr 1fr}
+  .form-row,.form-row-3{grid-template-columns:1fr}
+  .campaign-card .texts{grid-template-columns:1fr}
+  .campaign-card .top{flex-direction:column}
+  .modal{width:95vw;padding:24px}
+  .login-box{padding:32px 24px}
+  table{font-size:13px}
+  th,td{padding:8px 10px}
+}
+@media(max-width:480px){
+  .stat-grid{grid-template-columns:1fr}
+  .btn-group{flex-direction:column}
+  .btn{width:100%;justify-content:center}
+}
+</style>
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <h1>CriaHub</h1>
+    <p>Automação Instagram - Painel Admin</p>
+    <input type="password" id="loginPassword" placeholder="Introduza a sua palavra-passe..." onkeydown="if(event.key==='Enter')doLogin()">
+    <button onclick="doLogin()">Entrar</button>
+    <div class="login-error" id="loginError">Palavra-passe incorreta</div>
+  </div>
+</div>
+
+<div class="app" id="appWrap">
+  <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()">&#9776;</button>
+  <div class="sidebar" id="sidebar">
+    <div class="logo">CriaHub</div>
+    <div id="notifBell" onclick="toggleNotifPanel()" style="display:none;position:absolute;top:16px;right:16px;cursor:pointer;font-size:20px;color:var(--text2);z-index:20">
+      &#128276;<span id="notifBadge" style="position:absolute;top:-6px;right:-8px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;width:18px;height:18px;border-radius:50%;align-items:center;justify-content:center"></span>
+    </div>
+    <div id="notifPanel" style="display:none;position:fixed;top:0;right:0;width:380px;max-width:90vw;height:100vh;background:var(--card);border-left:1px solid var(--border);z-index:200;overflow-y:auto;box-shadow:-4px 0 24px rgba(0,0,0,.3)">
+      <div style="padding:20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0">Notificações</h3>
+        <button class="btn btn-sm btn-ghost" onclick="markAllRead()">Marcar tudo como lido</button>
+      </div>
+      <div id="notifList" style="padding:12px"></div>
+    </div>
+    <div id="notifOverlay" onclick="toggleNotifPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199"></div>
+    <nav>
+      <a href="#" data-page="dashboard" class="active"><span class="icon">&#9632;</span> <span>Dashboard</span></a>
+      <div style="padding:8px 24px 4px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);font-weight:600;margin-top:8px">Instagram</div>
+      <a href="#" data-page="accounts"><span class="icon">&#9775;</span> <span>Contas IG</span></a>
+      <a href="#" data-page="campaigns"><span class="icon">&#9889;</span> <span>Automações</span></a>
+      <a href="#" data-page="contacts"><span class="icon">&#9900;</span> <span>Contatos</span></a>
+      <a href="#" data-page="activity"><span class="icon">&#128337;</span> <span>Atividade</span></a>
+      <a href="#" data-page="emails"><span class="icon">&#9993;</span> <span>Emails</span></a>
+      <div style="padding:8px 24px 4px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);font-weight:600;margin-top:8px">Multi-Canal</div>
+      <a href="#" data-page="whatsapp"><span class="icon">&#128172;</span> <span>WhatsApp</span></a>
+      <a href="#" data-page="tiktok"><span class="icon">&#127916;</span> <span>TikTok</span></a>
+      <a href="#" data-page="leads"><span class="icon">&#127919;</span> <span>Leads</span></a>
+      <div style="padding:8px 24px 4px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);font-weight:600;margin-top:8px">Análises</div>
+      <a href="#" data-page="metaads"><span class="icon">&#128200;</span> <span>Meta Ads</span></a>
+      <a href="#" data-page="ga4"><span class="icon">&#128202;</span> <span>GA4</span></a>
+      <div style="padding:8px 24px 4px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);font-weight:600;margin-top:8px">Administração</div>
+      <a href="#" data-page="finance"><span class="icon">&#128176;</span> <span>Finanças</span></a>
+      <a href="#" data-page="saasusers"><span class="icon">&#128101;</span> <span>Clientes</span></a>
+      <a href="#" data-page="notifications"><span class="icon">&#128276;</span> <span>Notificações</span></a>
+      <a href="#" data-page="smtp"><span class="icon">&#9993;</span> <span>SMTP</span></a>
+      <a href="#" data-page="settings"><span class="icon">&#9881;</span> <span>Config</span></a>
+      <a href="#" data-page="help"><span class="icon">&#10067;</span> <span>Ajuda</span></a>
+    </nav>
+    <div style="padding:12px 24px;border-top:1px solid var(--border)">
+      <div id="langSelector" style="display:flex;gap:4px;margin-bottom:8px;padding:4px;background:var(--input);border-radius:8px">
+        <button onclick="setAdminLang('pt')" class="admin-lang-btn" data-lang="pt" style="flex:1;padding:6px 0;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:var(--accent);color:#fff;font-family:inherit">PT</button>
+        <button onclick="setAdminLang('en')" class="admin-lang-btn" data-lang="en" style="flex:1;padding:6px 0;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;color:var(--text2);font-family:inherit">EN</button>
+        <button onclick="setAdminLang('es')" class="admin-lang-btn" data-lang="es" style="flex:1;padding:6px 0;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;color:var(--text2);font-family:inherit">ES</button>
+      </div>
+      <div id="themeToggle" onclick="toggleTheme()" style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:8px 12px;border-radius:8px;background:var(--input);transition:all .2s;font-size:13px;color:var(--text2)">
+        <span id="themeIcon">&#9790;</span>
+        <span id="themeLabel">Modo Claro</span>
+      </div>
+    </div>
+    <button class="logout" onclick="doLogout()"><span>&#10550;</span> <span>Sair</span></button>
+  </div>
+
+  <div class="main" id="mainContent"></div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<div id="toast" class="toast" style="display:none"></div>
+
+<script>
+const API = '';
+let TOKEN = localStorage.getItem('criahub_token') || '';
+
+async function doLogin(){
+  const pw = document.getElementById('loginPassword').value;
+  try{
+    const r = await fetch(API+'/admin/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
+    const d = await r.json();
+    if(d.ok){TOKEN=d.token;localStorage.setItem('criahub_token',TOKEN);showApp()}
+    else{document.getElementById('loginError').style.display='block'}
+  }catch(e){document.getElementById('loginError').style.display='block'}
+}
+function doLogout(){TOKEN='';localStorage.removeItem('criahub_token');location.reload()}
+
+// Theme toggle
+function toggleTheme(){
+  const current=document.documentElement.getAttribute('data-theme');
+  const next=current==='light'?'dark':'light';
+  setTheme(next);
+}
+
+function setTheme(theme){
+  document.documentElement.setAttribute('data-theme',theme);
+  localStorage.setItem('criahub_theme',theme);
+  updateThemeUI(theme);
+}
+
+function updateThemeUI(theme){
+  const icon=document.getElementById('themeIcon');
+  const label=document.getElementById('themeLabel');
+  if(icon&&label){
+    icon.innerHTML=theme==='light'?'&#9790;':'&#9728;';
+    label.textContent=theme==='light'?'Modo Escuro':'Modo Claro';
+  }
+}
+
+// Load saved theme
+(function(){
+  const saved=localStorage.getItem('criahub_theme')||'dark';
+  document.documentElement.setAttribute('data-theme',saved);
+  document.addEventListener('DOMContentLoaded',function(){updateThemeUI(saved)});
+})();
+
+// ============================================================
+// ADMIN LANGUAGE (PT/EN/ES)
+// ============================================================
+const adminLangs=['pt','en','es'];
+let adminLang=localStorage.getItem('criahub_admin_lang')||'pt';
+
+const adminTranslations={
+  pt:{
+    dashboard:'Dashboard',accounts:'Contas IG',campaigns:'Automações',contacts:'Contatos',activity:'Atividade',emails:'Emails',
+    whatsapp:'WhatsApp',tiktok:'TikTok',leads:'Leads',metaads:'Meta Ads',ga4:'GA4',
+    finance:'Finanças',clientes:'Clientes',notificacoes:'Notificações',smtp:'SMTP',config:'Config',ajuda:'Ajuda',
+    settings:'Definições',logout:'Sair',
+    themeLight:'Modo Claro',themeDark:'Modo Escuro',
+    igSection:'Instagram',multiCanal:'Multi-Canal',analyses:'Análises',adminSection:'Administração',
+    refreshing:'A atualizar...',noData:'Sem dados',save:'Guardar',cancel:'Cancelar',delete:'Eliminar',
+    test:'Testar',close:'Fechar',confirm:'Confirmar',search:'Pesquisar...',
+    connected:'Ligado',disconnected:'Desligado',active:'Ativo',inactive:'Inativo',paused:'Pausado',
+    totalAccounts:'Total Contas',activeCamps:'Automações Ativas',totalContacts:'Total Contactos',
+    contactsToday:'Contactos Hoje',dmsSent:'DMs Enviadas',dmsToday:'DMs Hoje',
+    dmsFailed:'DMs Falharam',emailsCollected:'Emails Recolhidos',
+    topAutomations:'Top Automações',conversionFunnel:'Funil de Conversão',recentActivity:'Atividade Recente',
+    noActivity:'Nenhuma atividade registrada',noConversations:'Nenhuma conversa ainda',
+    newClient:'Novo Cliente',editClient:'Editar Cliente',clientName:'Nome',clientEmail:'Email',
+    welcome:'Bem-vindo ao painel administrativo do CriaHub',
+    saasTitle:'Gestão SaaS',revenue:'Receita',monthlyReceita:'Receita Mensal',totalUsers:'Total Utilizadores',
+    freeTrial:'Trial Grátis',activeSubs:'Subs Ativas'
+  },
+  en:{
+    dashboard:'Dashboard',accounts:'IG Accounts',campaigns:'Automations',contacts:'Contacts',activity:'Activity',emails:'Emails',
+    whatsapp:'WhatsApp',tiktok:'TikTok',leads:'Leads',metaads:'Meta Ads',ga4:'GA4',
+    finance:'Finance',clientes:'Clients',notificacoes:'Notifications',smtp:'SMTP',config:'Settings',ajuda:'Help',
+    settings:'Settings',logout:'Log Out',
+    themeLight:'Light Mode',themeDark:'Dark Mode',
+    igSection:'Instagram',multiCanal:'Multi-Channel',analyses:'Analytics',adminSection:'Administration',
+    refreshing:'Refreshing...',noData:'No data',save:'Save',cancel:'Cancel',delete:'Delete',
+    test:'Test',close:'Close',confirm:'Confirm',search:'Search...',
+    connected:'Connected',disconnected:'Disconnected',active:'Active',inactive:'Inactive',paused:'Paused',
+    totalAccounts:'Total Accounts',activeCamps:'Active Automations',totalContacts:'Total Contacts',
+    contactsToday:'Contacts Today',dmsSent:'DMs Sent',dmsToday:'DMs Today',
+    dmsFailed:'DMs Failed',emailsCollected:'Emails Collected',
+    topAutomations:'Top Automations',conversionFunnel:'Conversion Funnel',recentActivity:'Recent Activity',
+    noActivity:'No activity recorded yet',noConversations:'No conversations yet',
+    newClient:'New Client',editClient:'Edit Client',clientName:'Name',clientEmail:'Email',
+    welcome:'Welcome to the CriaHub admin panel',
+    saasTitle:'SaaS Management',revenue:'Revenue',monthlyReceita:'Monthly Revenue',totalUsers:'Total Users',
+    freeTrial:'Free Trial',activeSubs:'Active Subs'
+  },
+  es:{
+    dashboard:'Panel',accounts:'Cuentas IG',campaigns:'Automatizaciones',contacts:'Contactos',activity:'Actividad',emails:'Emails',
+    whatsapp:'WhatsApp',tiktok:'TikTok',leads:'Leads',metaads:'Meta Ads',ga4:'GA4',
+    finance:'Finanzas',clientes:'Clientes',notificacoes:'Notificaciones',smtp:'SMTP',config:'Configuración',ajuda:'Ayuda',
+    settings:'Configuración',logout:'Cerrar Sesión',
+    themeLight:'Modo Claro',themeDark:'Modo Oscuro',
+    igSection:'Instagram',multiCanal:'Multi-Canal',analyses:'Analíticas',adminSection:'Administración',
+    refreshing:'Actualizando...',noData:'Sin datos',save:'Guardar',cancel:'Cancelar',delete:'Eliminar',
+    test:'Probar',close:'Cerrar',confirm:'Confirmar',search:'Buscar...',
+    connected:'Conectado',disconnected:'Desconectado',active:'Activo',inactive:'Inactivo',paused:'Pausado',
+    totalAccounts:'Total Cuentas',activeCamps:'Automatizaciones Activas',totalContacts:'Total Contactos',
+    contactsToday:'Contactos Hoy',dmsSent:'DMs Enviados',dmsToday:'DMs Hoy',
+    dmsFailed:'DMs Fallidos',emailsCollected:'Emails Recopilados',
+    topAutomations:'Top Automatizaciones',conversionFunnel:'Embudo de Conversión',recentActivity:'Actividad Reciente',
+    noActivity:'Sin actividad registrada',noConversations:'Sin conversaciones aún',
+    newClient:'Nuevo Cliente',editClient:'Editar Cliente',clientName:'Nombre',clientEmail:'Email',
+    welcome:'Bienvenido al panel administrativo de CriaHub',
+    saasTitle:'Gestión SaaS',revenue:'Ingresos',monthlyReceita:'Ingresos Mensuales',totalUsers:'Total Usuarios',
+    freeTrial:'Prueba Gratis',activeSubs:'Suscripciones Activas'
+  }
+};
+
+function setAdminLang(lang){
+  adminLang=lang;
+  localStorage.setItem('criahub_admin_lang',lang);
+  document.querySelectorAll('.admin-lang-btn').forEach(b=>{
+    if(b.dataset.lang===lang){b.style.background='var(--accent)';b.style.color='#fff'}
+    else{b.style.background='transparent';b.style.color='var(--text2)'}
+  });
+  applyAdminLang();
+}
+
+function t(key){return (adminTranslations[adminLang]||adminTranslations.pt)[key]||key}
+
+function applyAdminLang(){
+  // Update sidebar nav labels
+  const navLinks=document.querySelectorAll('.sidebar nav a');
+  navLinks.forEach(a=>{
+    const page=a.dataset.page;
+    const span=a.querySelector('span:last-child');
+    if(!span)return;
+    const map={dashboard:'dashboard',accounts:'accounts',campaigns:'campaigns',contacts:'contacts',activity:'activity',emails:'emails',whatsapp:'whatsapp',tiktok:'tiktok',leads:'leads',metaads:'metaads',ga4:'ga4',finance:'finance',saasusers:'clientes',notifications:'notificacoes',smtp:'smtp',settings:'config',help:'ajuda'};
+    if(map[page])span.textContent=t(map[page]);
+  });
+  // Update section headers
+  document.querySelectorAll('#sidebar > div[style]').forEach(d=>{
+    const txt=d.textContent.trim();
+    if(txt==='Instagram')d.textContent=t('igSection');
+    else if(txt==='Multi-Canal'||txt==='Multi-Channel')d.textContent=t('multiCanal');
+    else if(txt==='Análises'||txt==='Analytics')d.textContent=t('analyses');
+    else if(txt==='Administração'||txt==='Administration')d.textContent=t('adminSection');
+  });
+  // Update logout button
+  const logoutBtn=document.querySelector('.sidebar .logout');
+  if(logoutBtn){const span=logoutBtn.querySelector('span:last-child');if(span)span.textContent=t('logout');}
+  // Update theme label
+  const isLight=document.documentElement.getAttribute('data-theme')==='light';
+  document.getElementById('themeLabel').textContent=isLight?t('themeDark'):t('themeLight');
+}
+
+// Load saved admin language
+(function(){
+  const saved=localStorage.getItem('criahub_admin_lang')||'pt';
+  setAdminLang(saved);
+})();
+function authHeaders(){return{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'}}
+async function api(method,path,body){
+  const opts={method,headers:authHeaders()};
+  if(body)opts.body=JSON.stringify(body);
+  const r=await fetch(API+path,opts);
+  if(r.status===401){doLogout();return null}
+  try{return await r.json()}catch(_){return null}
+}
+
+let currentPage='dashboard';
+document.querySelectorAll('.sidebar nav a').forEach(a=>{
+  a.onclick=e=>{
+    e.preventDefault();
+    document.querySelector('.sidebar nav a.active')?.classList.remove('active');
+    a.classList.add('active');
+    currentPage=a.dataset.page;
+    loadPage(currentPage);
+    if(window.innerWidth<=768)toggleSidebar();
+  }
+});
+
+async function loadPage(page){
+  const m=document.getElementById('mainContent');
+  m.innerHTML='<div style="text-align:center;padding:48px"><div class="spinner" style="width:32px;height:32px"></div></div>';
+  if(page==='dashboard')await renderDashboard(m);
+  else if(page==='accounts')await renderAccounts(m);
+  else if(page==='campaigns')await renderCampaigns(m);
+  else if(page==='contacts')await renderContacts(m);
+  else if(page==='activity')await renderActivity(m);
+  else if(page==='emails')await renderEmails(m);
+  else if(page==='finance')await renderFinance(m);
+  else if(page==='saasusers')await renderSaasUsers(m);
+  else if(page==='notifications')await renderNotifications(m);
+  else if(page==='whatsapp')await renderWhatsApp(m);
+  else if(page==='tiktok')await renderTikTok(m);
+  else if(page==='leads')await renderLeads(m);
+  else if(page==='metaads')await renderMetaAds(m);
+  else if(page==='ga4')await renderGA4(m);
+  else if(page==='smtp')await renderSMTP(m);
+  else if(page==='settings')renderSettings(m);
+  else if(page==='help')renderHelp(m);
+}
+
+async function renderDashboard(m){
+  m.innerHTML='<div style="text-align:center;padding:40px"><div class="spinner"></div></div>';
+
+  const [analytics,activity,usageData]=await Promise.all([
+    api('GET','/admin/api/analytics'),
+    api('GET','/admin/api/activity?limit=10'),
+    api('GET','/api/usage')
+  ]);
+
+  const a=analytics||{};
+  const act=(activity&&activity.items)||[];
+  const u=usageData||{};
+  const ul=u.usage||{};
+  const up=u.plan||{};
+
+  const stageMap={entregue:'Entregue',aguardando_quero:'Aguardando',aguardando_follow:'Follow Pendente',follow_pendente:'Follow'};
+  const stageColor={entregue:'var(--success)',aguardando_quero:'var(--accent)',aguardando_follow:'var(--warning)',follow_pendente:'var(--warning)'};
+
+  m.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="margin:0">Dashboard</h2>
+      <button class="btn btn-outline btn-sm" onclick="loadPage('dashboard')">&#8635; Atualizar</button>
+    </div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px">
+      <div class="stat-card" style="border-left:3px solid var(--accent)">
+        <div class="number">${a.connectedAccounts||0}</div>
+        <div class="label">Contas Ativas</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid var(--success)">
+        <div class="number">${a.activeCampaigns||0}</div>
+        <div class="label">Automacoes Ativas</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid #8b5cf6">
+        <div class="number">${a.totalContacts||0}</div>
+        <div class="label">Total Contatos</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid var(--accent)">
+        <div class="number">${a.contactsToday||0}</div>
+        <div class="label">Contatos Hoje</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid var(--success)">
+        <div class="number">${a.totalDMsSent||0}</div>
+        <div class="label">DMs Enviadas</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid var(--accent)">
+        <div class="number">${a.dmsToday||0}</div>
+        <div class="label">DMs Hoje</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid var(--warning)">
+        <div class="number">${a.totalDMsFailed||0}</div>
+        <div class="label">DMs Falharam</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid #8b5cf6">
+        <div class="number">${a.totalEmails||0}</div>
+        <div class="label">Emails Coletados</div>
+      </div>
+    </div>
+
+    ${up.plan_id?`<div class="card" style="margin-bottom:24px">
+      <h3>&#128200; Uso do Plano <span class="badge badge-active" style="font-size:11px;margin-left:8px">${(up.plan_id||'free').toUpperCase()}</span></h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:16px">
+        ${[
+          {label:'Contactos',used:ul.contacts||0,max:up.max_contacts||200},
+          {label:'Autowa\u00e7\u00f5es',used:ul.automations||0,max:up.max_automations||3},
+          {label:'Contas IG',used:ul.accounts||0,max:up.max_accounts||1}
+        ].map(x=>{
+          const pct=x.max>0?Math.min(Math.round((x.used/x.max)*100),100):0;
+          const color=pct>90?'#ef4444':pct>70?'#f59e0b':'var(--success)';
+          const isUnlimited=x.max<0;
+          return `<div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+              <span style="font-size:13px;font-weight:600">${x.label}</span>
+              <span style="font-size:12px;color:var(--text2)">${isUnlimited?'Ilimitado':x.used+' / '+x.max}</span>
+            </div>
+            ${isUnlimited?'<div style="height:6px;background:var(--input);border-radius:3px"><div style="width:100%;height:100%;background:var(--success);border-radius:3px"></div></div>':
+            `<div style="height:6px;background:var(--input);border-radius:3px;overflow:hidden">
+              <div style="width:${pct}%;height:100%;background:${color};border-radius:3px;transition:width .3s"></div>
+            </div>`}
+          </div>`;
+        }).join('')}
+      </div>
+      ${up.price?`<div style="margin-top:12px;font-size:12px;color:var(--text2)">Plano: <strong>${up.plan_id?.charAt(0).toUpperCase()+up.plan_id?.slice(1)}</strong> — ${up.price}&euro;/m\u00eas</div>`:''}
+    </div>`:''}
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+      <div class="card">
+        <h3>&#128200; Top Automacoes</h3>
+        ${(!a.topCampaigns||!a.topCampaigns.length)?
+          '<div style="color:var(--text2);font-size:13px;padding:8px 0">Nenhuma atividade ainda</div>':
+          `<div style="display:flex;flex-direction:column;gap:8px">${a.topCampaigns.map((c,i)=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--input);border-radius:8px">
+              <span style="font-size:18px;font-weight:700;color:var(--accent);width:24px">#${i+1}</span>
+              <span style="font-weight:600;flex:1">${esc(c.keyword)}</span>
+              <span class="badge badge-active">${c.count} DMs</span>
+            </div>`).join('')}</div>`}
+      </div>
+      <div class="card">
+        <h3>&#128202; Funil de Conversao</h3>
+        ${(!a.stagesDist||!a.stagesDist.length)?
+          '<div style="color:var(--text2);font-size:13px;padding:8px 0">Nenhuma conversa ainda</div>':
+          `<div style="display:flex;flex-direction:column;gap:8px">${a.stagesDist.map(s=>{
+            const pct=a.totalContacts>0?Math.round((s.count/a.totalContacts)*100):0;
+            return `<div style="display:flex;align-items:center;gap:10px">
+              <span style="flex:1;font-size:13px">${stageMap[s.stage]||s.stage}</span>
+              <div style="width:120px;height:8px;background:var(--input);border-radius:4px;overflow:hidden">
+                <div style="width:${pct}%;height:100%;background:${stageColor[s.stage]||'var(--accent)'};border-radius:4px"></div>
+              </div>
+              <span style="font-size:12px;color:var(--text2);width:40px;text-align:right">${s.count}</span>
+            </div>`;
+          }).join('')}</div>`}
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>&#128337; Atividade Recente</h3>
+      ${(!act.length)?
+        '<div style="color:var(--text2);font-size:13px;padding:8px 0">Nenhuma atividade registrada</div>':
+        `<div style="display:flex;flex-direction:column;gap:6px">${act.map(item=>{
+          const icon=item.event_type==='dm_sent'?'&#9993;':item.event_type==='dm_failed'?'&#10060;':'&#128172;';
+          const color=item.status==='success'?'var(--success)':'var(--accent)';
+          return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--input);border-radius:8px;font-size:13px">
+            <span style="font-size:16px">${icon}</span>
+            <span style="flex:1;color:var(--text)">${esc(item.event_detail||item.event_type)}</span>
+            ${item.campaign_keyword?'<span class="badge" style="background:rgba(0,206,209,.12);color:var(--accent)">'+esc(item.campaign_keyword)+'</span>':''}
+            <span style="color:var(--text2);font-size:12px">${fmt(item.created_at)}</span>
+          </div>`;
+        }).join('')}</div>`}
+    </div>`;
+}
+
+async function renderAccounts(m){
+  const [accounts,clients]=await Promise.all([
+    api('GET','/admin/api/accounts'),
+    api('GET','/admin/api/clients')
+  ]);
+  const accList=accounts||[];
+
+  m.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="margin:0">Contas Instagram</h2>
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="showAddAccountManual()">+ Token Manual</button>
+        <button class="btn btn-secondary" onclick="connectAccount()">OAuth Instagram</button>
+      </div>
+    </div>
+    ${(!accList.length)?
+    `<div class="card"><div class="empty"><div class="icon">&#9775;</div><p>Nenhuma conta conectada</p><button class="btn btn-primary" onclick="showAddAccountManual()">Adicionar agora</button></div></div>`:
+    `<div class="card">${accList.map(a=>`
+      <div class="account-card">
+        <div class="avatar">@</div>
+        <div class="info">
+          <div class="name">@${a.username||'?'}</div>
+          <div class="id">ID: ${a.ig_user_id} | ${a.client_name?'Empresa: <strong>'+esc(a.client_name)+'</strong>':'<span style="color:var(--warning)">Sem empresa</span>'}</div>
+        </div>
+        <span class="badge badge-${a.status==='connected'?'active':'paused'}">${a.status}</span>
+        <button class="btn btn-outline btn-sm" onclick="showUpdateToken('${a.id}','${esc(a.username||a.ig_user_id)}')">Atualizar Token</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteAccount('${a.id}','${esc(a.username||a.ig_user_id)}')">&#10005; Excluir</button>
+      </div>
+    `).join('')}</div>`}`;
+}
+
+async function renderCampaigns(m){
+  const [campaigns,accounts]=await Promise.all([
+    api('GET','/admin/api/campaigns'),
+    api('GET','/admin/api/accounts')
+  ]);
+  const campList=campaigns||[];
+  const accList=accounts||[];
+
+  let html=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="margin:0">Automacoes</h2>
+      <div class="btn-group">
+        <button class="btn btn-secondary" onclick="checkDuplicates()">&#9888; Duplicatas</button>
+        <button class="btn btn-secondary" onclick="showBulkCreate()">&#9881; Criar em Massa</button>
+        <button class="btn btn-primary" onclick="showNewCampaign()">+ Nova Automação</button>
+      </div>
+    </div>`;
+
+  if(!campList.length){
+    html+=`<div class="card"><div class="empty"><div class="icon">&#9889;</div><p>Nenhuma automacao criada</p><button class="btn btn-primary" onclick="showNewCampaign()">Criar primeira automacao</button></div></div>`;
+  }else{
+    // Bulk actions bar
+    html+=`<div id="bulkBar" class="card" style="display:none;margin-bottom:16px;padding:12px 16px;background:rgba(0,206,209,.08);border:1px solid rgba(0,206,209,.3)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span id="bulkCount" style="font-weight:600">0 selecionada(s)</span>
+          <button class="btn btn-outline btn-sm" onclick="selectAllCampaigns()">Selecionar Todas</button>
+          <button class="btn btn-outline btn-sm" onclick="deselectAllCampaigns()">Desmarcar Todas</button>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="bulkDeleteCampaigns()">Excluir Selecionadas</button>
+      </div>
+    </div>`;
+
+    const grouped={};
+    campList.forEach(c=>{
+      const key=c.username||c.ig_user_id||'unknown';
+      if(!grouped[key])grouped[key]={account:c,list:[]};
+      grouped[key].list.push(c);
+    });
+
+    Object.entries(grouped).forEach(([username,{list}])=>{
+      html+=`<div class="card" style="margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0">@${username} (${list.length})</h3>
+        </div>`;
+      list.forEach(c=>{
+        html+=`
+        <div class="campaign-card" data-id="${c.id}">
+          <div class="top">
+            <div style="display:flex;align-items:center;gap:10px">
+              <input type="checkbox" class="campaign-checkbox" data-id="${c.id}" onchange="updateBulkBar()" style="width:18px;height:18px;cursor:pointer;accent-color:var(--accent)">
+              <div>
+                <strong style="font-size:15px">${esc(c.keyword)}</strong>
+                <span class="badge badge-${c.status==='active'?'active':'paused'}" style="margin-left:8px">${c.status}</span>
+                ${c.media_id?'<span class="badge" style="background:rgba(0,206,209,.12);color:var(--accent);margin-left:4px;font-size:11px">&#128247; Post</span>':''}
+              </div>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-outline btn-sm" onclick="testCampaignAI('${c.id}')">&#9881; Testar IA</button>
+              <button class="btn btn-outline btn-sm" onclick="editCampaign('${c.id}')">Editar</button>
+              <button class="btn btn-success btn-sm" onclick="showCloneCampaign('${c.id}')">Clonar</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteCampaign('${c.id}')">Excluir</button>
+            </div>
+          </div>
+          <div class="meta">
+            ${c.media_id?'<span>&#128247; Post vinculado: '+esc(c.media_id)+'</span>':'<span style="color:var(--warning)">&#9888; Sem post vinculado</span>'}
+          </div>
+          <div class="texts">
+            <div class="text-block"><div class="lbl">Resposta automatica</div><div class="val">${esc(c.private_reply_message)}</div></div>
+            <div class="text-block"><div class="lbl">Pedido de follow</div><div class="val">${esc(c.follow_request_message)}</div></div>
+            <div class="text-block"><div class="lbl">Conteudo entregue</div><div class="val">${esc(c.delivery_content)}</div></div>
+          </div>
+        </div>`;
+      });
+      html+=`</div>`;
+    });
+  }
+  m.innerHTML=html;
+}
+
+async function renderContacts(m){
+  const [contacts,convStates]=await Promise.all([
+    api('GET','/admin/api/contacts'),
+    api('GET','/admin/api/conversations')
+  ]);
+  const convMap={};
+  (convStates||[]).forEach(c=>{convMap[c.contact_id]=c});
+
+  m.innerHTML=`
+    <h2>Contatos</h2>
+    ${(!contacts||!contacts.length)?
+    `<div class="card"><div class="empty"><div class="icon">&#9900;</div><p>Nenhum contato registrado ainda</p></div></div>`:
+    `<div class="card"><div class="table-wrap"><table>
+      <tr><th>Username</th><th>IGSID</th><th>Estado</th><th>Primeiro contato</th></tr>
+      ${(contacts||[]).map(c=>{
+        const cs=convMap[c.id];
+        const stage=cs?cs.stage:'-';
+        const stageLabel=stage==='entregue'?'Entregue':stage==='aguardando_follow'?'Aguardando Follow':stage==='aguardando_quero'?'Aguardando "QUERO"':stage;
+        return `<tr>
+          <td><strong>@${c.username||'?'}</strong></td>
+          <td><code style="font-size:12px">${c.igsid}</code></td>
+          <td><span class="badge badge-stage">${stageLabel}</span></td>
+          <td>${fmt(c.first_seen_at)}</td>
+        </tr>`;
+      }).join('')}
+    </table></div></div>`}`;
+}
+
+async function renderActivity(m){
+  const data=await api('GET','/admin/api/activity?limit=50');
+  const items=(data&&data.items)||[];
+  const total=(data&&data.total)||0;
+
+  const eventLabels={comment_received:'Comentario Recebido',dm_sent:'DM Enviada',dm_failed:'DM Falhou',follow_checked:'Follow Verificado',email_collected:'Email Coletado'};
+  const eventIcons={comment_received:'&#128172;',dm_sent:'&#9993;',dm_failed:'&#10060;',follow_checked:'&#128100;',email_collected:'&#9993;'};
+
+  m.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="margin:0">Log de Atividade</h2>
+      <span style="color:var(--text2);font-size:13px">${total} registros totais</span>
+    </div>
+    ${!items.length?
+      `<div class="card"><div class="empty"><div class="icon">&#128337;</div><p>Nenhuma atividade registrada ainda</p><p style="font-size:13px;color:var(--text2)">As interacoes com comentarios e DMs aparecerao aqui</p></div></div>`:
+      `<div class="card"><div style="display:flex;flex-direction:column;gap:6px">${items.map(item=>{
+        const icon=eventIcons[item.event_type]||'&#128196;';
+        const label=eventLabels[item.event_type]||item.event_type;
+        const statusColor=item.status==='success'?'var(--success)':'var(--accent)';
+        return `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--input);border-radius:8px;border-left:3px solid ${statusColor}">
+          <span style="font-size:18px">${icon}</span>
+          <div style="flex:1">
+            <div style="font-weight:600;font-size:13px">${label}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px;max-width:500px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(item.event_detail||'')}</div>
+          </div>
+          ${item.campaign_keyword?'<span class="badge" style="background:rgba(0,206,209,.12);color:var(--accent)">'+esc(item.campaign_keyword)+'</span>':''}
+          ${item.contact_username?'<span style="font-size:12px;color:var(--text2)">@'+esc(item.contact_username)+'</span>':''}
+          <span style="font-size:12px;color:var(--text2);white-space:nowrap">${fmt(item.created_at)}</span>
+        </div>`;
+      }).join('')}</div></div>`}`;
+}
+
+async function renderEmails(m){
+  const emails=await api('GET','/admin/api/emails');
+  const emailList=emails||[];
+
+  m.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="margin:0">Emails Coletados</h2>
+      <div class="btn-group">
+        ${emailList.length?'<button class="btn btn-outline btn-sm" onclick="exportEmailsCSV()">&#128229; Exportar CSV</button>':''}
+      </div>
+    </div>
+    ${!emailList.length?
+      `<div class="card"><div class="empty"><div class="icon">&#9993;</div>    <p>Nenhum email recolhido ainda</p><p style="font-size:13px;color:var(--text2)">Ative o Email Gate nas automações para recolher emails</p></div></div>`:
+      `<div class="card"><div class="table-wrap"><table>
+        <tr><th>Email</th><th>Username</th><th>Automação</th><th>Data</th></tr>
+        ${emailList.map(e=>`<tr>
+          <td><strong>${esc(e.email)}</strong></td>
+          <td>@${esc(e.contact_username||'?')}</td>
+          <td><span class="badge badge-active">${esc(e.campaign_keyword||'-')}</span></td>
+          <td>${fmt(e.created_at)}</td>
+        </tr>`).join('')}
+      </table></div></div>`}`;
+}
+
+function exportEmailsCSV(){
+  api('GET','/admin/api/emails').then(data=>{
+    if(!data||!data.length){toast('Nenhum email para exportar','error');return}
+    let csv='Email,Username,Automação,Data\n';
+    data.forEach(e=>{
+      csv+=`"${e.email}","${e.contact_username||''}","${e.campaign_keyword||''}","${e.created_at}"\n`;
+    });
+    const blob=new Blob([csv],{type:'text/csv'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='criahub-emails-'+new Date().toISOString().slice(0,10)+'.csv';
+    a.click();URL.revokeObjectURL(url);
+    toast('CSV exportado!','success');
+  });
+}
+
+async function renderFinance(m){
+  m.innerHTML='<div style="text-align:center;padding:40px"><div class="spinner"></div></div>';
+  try{
+  const [finance,saasUsers]=await Promise.all([
+    api('GET','/admin/api/finance'),
+    api('GET','/admin/api/saas-users')
+  ]);
+
+  const f=finance||{};
+  const users=Array.isArray(saasUsers)?saasUsers:[];
+
+  const planDist=(f.planDistribution||[]).map(p=>`
+    <div class="stat-card" style="border-left:3px solid var(--accent)">
+      <div class="number">${p.subscribers||0}</div>
+      <div class="label">${p.name} (&euro;${p.price_eur_monthly}/mes)</div>
+    </div>
+  `).join('');
+
+  const monthlyRows=(f.monthlyRevenue||[]).map(r=>`
+    <tr><td>${r.month}</td><td style="font-weight:600;color:var(--success)">&euro;${Number(r.revenue).toFixed(2)}</td><td>${r.payments}</td></tr>
+  `).join('');
+
+  const userRows=users.map(u=>`
+    <tr>
+      <td>${escapeHtml(u.name||'-')}</td>
+      <td>${escapeHtml(u.email)}</td>
+      <td><span class="badge badge-active">${u.plan_name||'Sem plano'}</span></td>
+      <td>${u.sub_status==='active'?'<span class="badge badge-active">Ativa</span>':u.sub_status==='cancelled'?'<span class="badge badge-paused">Cancelada</span>':'<span class="badge badge-disconnected">'+(u.sub_status||'Nenhuma')+'</span>'}</td>
+      <td>${u.expires_at?new Date(u.expires_at).toLocaleDateString('pt-PT'):'-'}</td>
+      <td>
+        <button class="btn btn-sm btn-outline" onclick="assignPlan('${u.id}')">Mudar Plano</button>
+        ${u.status==='active'?`<button class="btn btn-sm btn-danger" onclick="banUser('${u.id}')">Banir</button>`:`<button class="btn btn-sm btn-success" onclick="unbanUser('${u.id}')">Desbanir</button>`}
+      </td>
+    </tr>
+  `).join('');
+
+  m.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="margin:0">Finanças SaaS</h2>
+      <button class="btn btn-outline btn-sm" onclick="loadPage('finance')">&#8635; Atualizar</button>
+    </div>
+
+    <div class="stat-grid" style="margin-bottom:24px">
+      <div class="stat-card" style="border-left:3px solid var(--success)">
+        <div class="number">&euro;${Number(f.totalRevenue||0).toFixed(2)}</div>
+        <div class="label">Receita Total</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid var(--success)">
+        <div class="number">&euro;${Number(f.monthRevenue||0).toFixed(2)}</div>
+        <div class="label">Este Mes</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid var(--accent)">
+        <div class="number">${f.activeSubscribers||0}</div>
+        <div class="label">Subscritores Ativos</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid #8b5cf6">
+        <div class="number">${f.totalUsers||0}</div>
+        <div class="label">Total Utilizadores</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:24px">
+      <h3>Distribuição por Plano</h3>
+      <div class="stat-grid" style="margin-bottom:0">${planDist||'<p style="color:var(--text2)">Sem dados</p>'}</div>
+    </div>
+
+    <div class="card" style="margin-bottom:24px">
+      <h3>Receita Mensal</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Mes</th><th>Receita</th><th>Pagamentos</th></tr>
+          ${monthlyRows||'<tr><td colspan="3" style="text-align:center;color:var(--text2)">Sem dados de receita</td></tr>'}
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Utilizadores Registados</h3>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Nome</th><th>Email</th><th>Plano</th><th>Subscrição</th><th>Expira</th><th>Acoes</th></tr>
+          ${userRows||'<tr><td colspan="6" style="text-align:center;color:var(--text2)">Nenhum utilizador registrado</td></tr>'}
+        </table>
+      </div>
+    </div>
+  `;
+  }catch(e){
+    m.innerHTML='<div class="card"><h3>Erro ao carregar finanças</h3><p style="color:var(--text2)">'+esc(e.message||'Erro desconhecido')+'</p><button class="btn btn-primary btn-sm" onclick="loadPage(\'finance\')" style="margin-top:12px">Tentar novamente</button></div>';
+  }
+}
+
+async function assignPlan(userId){
+  const plans=[
+    {id:'plan_starter',name:'Starter (€9.90/mes)'},
+    {id:'plan_pro',name:'Pro (€19.90/mes)'},
+    {id:'plan_business',name:'Business (€39.90/mes)'}
+  ];
+  const options=plans.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+
+  showModal(`
+    <h3>Mudar Plano do Utilizador</h3>
+    <div class="form-group">
+      <label>Novo Plano</label>
+      <select id="modalPlanSelect">${options}</select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmAssignPlan('${userId}')">Confirmar</button>
+    </div>
+  `);
+}
+
+async function confirmAssignPlan(userId){
+  const planId=document.getElementById('modalPlanSelect').value;
+  const r=await api('POST','/admin/api/saas-users/'+userId+'/assign-plan',{plan_id:planId});
+  if(r&&r.ok){closeModal();toast('Plano atualizado!','success');loadPage('finance')}
+  else{toast(r?.error||'Erro ao mudar plano','error')}
+}
+
+async function banUser(userId){
+  if(!confirm('Tem certeza que quer banir este utilizador?'))return;
+  const r=await api('POST','/admin/api/saas-users/'+userId+'/ban');
+  if(r&&r.ok){toast('Utilizador banido','success');loadPage('finance')}
+}
+
+async function unbanUser(userId){
+  const r=await api('POST','/admin/api/saas-users/'+userId+'/unban');
+  if(r&&r.ok){toast('Utilizador desbanido','success');loadPage('finance')}
+}
+
+// ============================================================
+// CLIENTES (SaaS Users Management)
+// ============================================================
+async function renderSaasUsers(m){
+  m.innerHTML='<div style="text-align:center;padding:40px"><div class="spinner"></div></div>';
+  try{
+    const [users,plans]=await Promise.all([
+      api('GET','/admin/api/saas-users'),
+      api('GET','/api/plans')
+    ]);
+    const list=Array.isArray(users)?users:[];
+    const planList=(plans&&plans.plans)||[
+      {id:'plan_starter',name:'Starter',price_eur_monthly:9.9},
+      {id:'plan_pro',name:'Pro',price_eur_monthly:19.9},
+      {id:'plan_business',name:'Business',price_eur_monthly:39.9}
+    ];
+
+    const userRows=list.map(u=>{
+      const subBadge=u.sub_status==='active'?'<span class="badge badge-active">Ativa</span>':
+        u.sub_status==='cancelled'?'<span class="badge badge-paused">Cancelada</span>':
+        '<span class="badge badge-disconnected">'+esc(u.sub_status||'Nenhuma')+'</span>';
+      const statusBadge=u.status==='active'?'<span class="badge badge-active">Ativo</span>':
+        u.status==='banned'?'<span class="badge badge-disconnected">Banido</span>':
+        '<span class="badge badge-paused">'+esc(u.status||'Desconhecido')+'</span>';
+      return `<tr>
+        <td style="font-weight:600">${esc(u.name||'-')}</td>
+        <td>${esc(u.email)}</td>
+        <td>${statusBadge}</td>
+        <td><span class="badge badge-stage">${esc(u.plan_name||'Sem plano')}</span></td>
+        <td>${subBadge}</td>
+        <td>${u.expires_at?new Date(u.expires_at).toLocaleDateString('pt-PT'):'-'}</td>
+        <td>
+          <div class="btn-group">
+            <button class="btn btn-sm btn-outline" onclick="editSaasUser('${u.id}','${esc(u.name)}','${esc(u.email)}')">Editar</button>
+            <button class="btn btn-sm btn-outline" onclick="assignPlanSaas('${u.id}')">Plano</button>
+            ${u.status==='active'?
+              `<button class="btn btn-sm btn-danger" onclick="banSaasUser('${u.id}')">Banir</button>`:
+              `<button class="btn btn-sm btn-success" onclick="unbanSaasUser('${u.id}')">Desbanir</button>`}
+            <button class="btn btn-sm btn-danger" onclick="deleteSaasUser('${u.id}','${esc(u.name)}')">Excluir</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+
+    m.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+        <h2 style="margin:0">Gestão de Clientes</h2>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="showNewSaasUser()">+ Novo Cliente</button>
+          <button class="btn btn-outline btn-sm" onclick="loadPage('saasusers')">&#8635; Atualizar</button>
+        </div>
+      </div>
+
+      <div class="stat-grid" style="margin-bottom:24px">
+        <div class="stat-card" style="border-left:3px solid var(--success)">
+          <div class="number">${list.filter(u=>u.status==='active').length}</div>
+          <div class="label">Clientes Ativos</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid var(--accent)">
+          <div class="number">${list.filter(u=>u.sub_status==='active').length}</div>
+          <div class="label">Subscritos</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid var(--warning)">
+          <div class="number">${list.filter(u=>u.status==='banned').length}</div>
+          <div class="label">Banidos</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid #8b5cf6">
+          <div class="number">${list.length}</div>
+          <div class="label">Total</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <tr><th>Nome</th><th>Email</th><th>Estado</th><th>Plano</th><th>Subscrição</th><th>Expira</th><th>Ações</th></tr>
+            ${userRows||'<tr><td colspan="7" style="text-align:center;color:var(--text2)">Nenhum cliente registado</td></tr>'}
+          </table>
+        </div>
+      </div>
+    `;
+  }catch(e){
+    m.innerHTML='<div class="card"><h3>Erro ao carregar clientes</h3><p style="color:var(--text2)">'+esc(e.message)+'</p></div>';
+  }
+}
+
+function showNewSaasUser(){
+  showModal(`
+    <h3>Novo Cliente</h3>
+    <div class="form-group"><label>Nome</label><input id="newUserName" placeholder="Nome completo"></div>
+    <div class="form-group"><label>Email</label><input id="newUserEmail" type="email" placeholder="email@exemplo.pt"></div>
+    <div class="form-group"><label>Password (opcional)</label><input id="newUserPass" type="password" placeholder="Deixe vazio para password temporária"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Plano</label>
+        <select id="newUserPlan">
+          <option value="">Sem plano</option>
+          <option value="plan_starter">Starter (€9.90/mês)</option>
+          <option value="plan_pro">Pro (€19.90/mês)</option>
+          <option value="plan_business">Business (€39.90/mês)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Duração trial (dias)</label>
+        <select id="newUserTrial">
+          <option value="0">Sem trial</option>
+          <option value="3" selected>3 dias (Business)</option>
+          <option value="7">7 dias</option>
+          <option value="14">14 dias</option>
+          <option value="30">30 dias</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="createSaasUser()">Criar Cliente</button>
+    </div>
+  `);
+}
+
+async function createSaasUser(){
+  const name=document.getElementById('newUserName').value.trim();
+  const email=document.getElementById('newUserEmail').value.trim();
+  const password=document.getElementById('newUserPass').value;
+  const planId=document.getElementById('newUserPlan').value;
+  const trialDays=parseInt(document.getElementById('newUserTrial').value)||0;
+  if(!name||!email){toast('Nome e email obrigatórios','error');return}
+  let expiresAt=null;
+  if(trialDays>0){const d=new Date();d.setDate(d.getDate()+trialDays);expiresAt=d.toISOString().slice(0,19).replace('T',' ')}
+  const body={name,email,plan_id:planId||undefined,expires_at:expiresAt};
+  if(password)body.password=password;
+  const r=await api('POST','/admin/api/saas-users',body);
+  if(r&&r.ok){closeModal();toast('Cliente criado!','success');loadPage('saasusers')}
+  else{toast(r?.error||'Erro ao criar cliente','error')}
+}
+
+function editSaasUser(userId,currentName,currentEmail){
+  showModal(`
+    <h3>Editar Cliente</h3>
+    <div class="form-group"><label>Nome</label><input id="editUserName" value="${esc(currentName)}"></div>
+    <div class="form-group"><label>Email</label><input id="editUserEmail" type="email" value="${esc(currentEmail)}"></div>
+    <div class="form-group"><label>Nova Password (deixe vazio para manter)</label><input id="editUserPass" type="password" placeholder="Manter password atual"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEditSaasUser('${userId}')">Guardar</button>
+    </div>
+  `);
+}
+
+async function saveEditSaasUser(userId){
+  const name=document.getElementById('editUserName').value.trim();
+  const email=document.getElementById('editUserEmail').value.trim();
+  const password=document.getElementById('editUserPass').value;
+  if(!name||!email){toast('Nome e email obrigatórios','error');return}
+  const body={name,email};
+  if(password)body.password=password;
+  const r=await api('PUT','/admin/api/saas-users/'+userId,body);
+  if(r&&r.ok){closeModal();toast('Cliente atualizado!','success');loadPage('saasusers')}
+  else{toast(r?.error||'Erro ao atualizar','error')}
+}
+
+function assignPlanSaas(userId){
+  showModal(`
+    <h3>Mudar Plano</h3>
+    <div class="form-group"><label>Novo Plano</label>
+      <select id="saasPlanSelect">
+        <option value="">Sem plano</option>
+        <option value="plan_starter">Starter (€9.90/mês)</option>
+        <option value="plan_pro">Pro (€19.90/mês)</option>
+        <option value="plan_business">Business (€39.90/mês)</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmAssignPlanSaas('${userId}')">Confirmar</button>
+    </div>
+  `);
+}
+
+async function confirmAssignPlanSaas(userId){
+  const planId=document.getElementById('saasPlanSelect').value;
+  if(!planId){toast('Selecione um plano','error');return}
+  const r=await api('POST','/admin/api/saas-users/'+userId+'/assign-plan',{plan_id:planId});
+  if(r&&r.ok){closeModal();toast('Plano atualizado!','success');loadPage('saasusers')}
+  else{toast(r?.error||'Erro ao mudar plano','error')}
+}
+
+async function banSaasUser(userId){
+  if(!confirm('Tem certeza que quer banir este cliente?'))return;
+  const r=await api('POST','/admin/api/saas-users/'+userId+'/ban');
+  if(r&&r.ok){toast('Cliente banido','success');loadPage('saasusers')}
+}
+
+async function unbanSaasUser(userId){
+  const r=await api('POST','/admin/api/saas-users/'+userId+'/unban');
+  if(r&&r.ok){toast('Cliente desbanido','success');loadPage('saasusers')}
+}
+
+async function deleteSaasUser(userId,name){
+  if(!confirm('Tem certeza que quer EXCLUIR o cliente "'+name+'"? Esta ação não pode ser desfeita.'))return;
+  const r=await api('DELETE','/admin/api/saas-users/'+userId);
+  if(r&&r.ok){toast('Cliente excluído','success');loadPage('saasusers')}
+  else{toast(r?.error||'Erro ao excluir','error')}
+}
+
+// ============================================================
+// NOTIFICAÇÕES (Push Notifications)
+// ============================================================
+async function renderNotifications(m){
+  m.innerHTML='<div style="text-align:center;padding:40px"><div class="spinner"></div></div>';
+  try{
+    const notifs=await api('GET','/admin/api/notifications');
+    const list=Array.isArray(notifs)?notifs:[];
+    const typeIcons={'info':'📢','improvement':'🔧','feature':'🚀','promo':'🎉','warning':'⚠️'};
+    const typeLabels={'info':'Informação','improvement':'Melhoria','feature':'Novo Sistema','promo':'Promoção','warning':'Aviso'};
+
+    const notifRows=list.map(n=>`<tr>
+      <td style="font-weight:600">${esc(n.title)}</td>
+      <td style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n.message)}</td>
+      <td><span class="badge badge-stage">${typeIcons[n.type]||'📢'} ${typeLabels[n.type]||n.type}</span></td>
+      <td>${n.total_sent||0}</td>
+      <td>${n.total_read||0}</td>
+      <td>${fmt(n.created_at)}</td>
+      <td>
+        <button class="btn btn-sm btn-danger" onclick="deleteNotif('${n.id}')">Excluir</button>
+      </td>
+    </tr>`).join('');
+
+    m.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
+        <h2 style="margin:0">Notificações Push</h2>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="showNewNotif()">+ Nova Notificação</button>
+          <button class="btn btn-outline btn-sm" onclick="loadPage('notifications')">&#8635; Atualizar</button>
+        </div>
+      </div>
+
+      <div class="stat-grid" style="margin-bottom:24px">
+        <div class="stat-card" style="border-left:3px solid var(--accent)">
+          <div class="number">${list.length}</div>
+          <div class="label">Total Enviadas</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid var(--success)">
+          <div class="number">${list.reduce((s,n)=>s+(n.total_read||0),0)}</div>
+          <div class="label">Lidas</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid var(--warning)">
+          <div class="number">${list.reduce((s,n)=>s+(n.total_sent||0)-((n.total_read)||0),0)}</div>
+          <div class="label">Por Ler</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <tr><th>Título</th><th>Mensagem</th><th>Tipo</th><th>Enviadas</th><th>Lidas</th><th>Data</th><th>Ação</th></tr>
+            ${notifRows||'<tr><td colspan="7" style="text-align:center;color:var(--text2)">Nenhuma notificação enviada</td></tr>'}
+          </table>
+        </div>
+      </div>
+    `;
+  }catch(e){
+    m.innerHTML='<div class="card"><h3>Erro ao carregar notificações</h3><p style="color:var(--text2)">'+esc(e.message)+'</p></div>';
+  }
+}
+
+function showNewNotif(){
+  showModal(`
+    <h3>Enviar Notificação Push</h3>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:20px">Esta notificação será enviada a todos os clientes ativos e aparecerá no painel deles.</p>
+    <div class="form-group"><label>Título</label><input id="notifTitle" placeholder="Ex: Novidade no CriaHub!"></div>
+    <div class="form-group"><label>Mensagem</label><textarea id="notifMessage" rows="4" placeholder="Descreva a notificação..."></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Tipo</label>
+        <select id="notifType">
+          <option value="info">📢 Informação</option>
+          <option value="improvement">🔧 Melhoria</option>
+          <option value="feature">🚀 Novo Sistema</option>
+          <option value="promo">🎉 Promoção</option>
+          <option value="warning">⚠️ Aviso</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Link (opcional)</label><input id="notifLink" placeholder="https://..."></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="sendNotif()">Enviar para Todos</button>
+    </div>
+  `);
+}
+
+async function sendNotif(){
+  const title=document.getElementById('notifTitle').value.trim();
+  const message=document.getElementById('notifMessage').value.trim();
+  const type=document.getElementById('notifType').value;
+  const link=document.getElementById('notifLink').value.trim()||null;
+  if(!title||!message){toast('Título e mensagem obrigatórios','error');return}
+  const r=await api('POST','/admin/api/notifications',{title,message,type,link});
+  if(r&&r.ok){closeModal();toast('Notificação enviada para '+r.sent_to+' clientes!','success');loadPage('notifications')}
+  else{toast(r?.error||'Erro ao enviar','error')}
+}
+
+async function deleteNotif(notifId){
+  if(!confirm('Tem certeza que quer excluir esta notificação?'))return;
+  const r=await api('DELETE','/admin/api/notifications/'+notifId);
+  if(r&&r.ok){toast('Notificação excluída','success');loadPage('notifications')}
+}
+
+async function renderSettings(m){
+  const config=await api('GET','/admin/api/config');
+  const groqKey=(config&&config.groq_api_key)?config.groq_api_key:'';
+  const aiEnabled=groqKey?'checked':'';
+
+  m.innerHTML=`
+    <h2>Configurações</h2>
+    <div class="card">
+      <h3>Webhook</h3>
+      <div class="form-group">
+        <label>URL do Webhook (configure no Meta Developer)</label>
+        <input type="text" value="${location.origin}" readonly style="opacity:.7">
+      </div>
+      <div class="form-group">
+        <label>Verify Token</label>
+        <input type="text" value="criahub_webhook_123" readonly style="opacity:.7">
+      </div>
+    </div>
+    <div class="card">
+      <h3>IA Generativa (Groq)</h3>
+      <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Ative a IA para gerar respostas automaticas inteligentes nos comentarios e DMs. Cada resposta sera unica e contextualizada ao post.</p>
+      <div class="form-group">
+        <label>Groq API Key</label>
+        <input type="password" id="groqApiKey" value="${esc(groqKey)}" placeholder="gsk_...">
+        <small>Obtenha em <a href="https://console.groq.com/keys" target="_blank" style="color:var(--accent)">console.groq.com/keys</a> (e gratuito!)</small>
+      </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="aiEnabled" ${aiEnabled} style="width:auto">
+          <span>Ativar respostas geradas por IA</span>
+        </label>
+        <small>Se desativado, usa as mensagens estaticas que voce escreveu</small>
+      </div>
+      <button class="btn btn-primary" onclick="saveGroqConfig()">Salvar Configuracao IA</button>
+    </div>
+    <div class="card">
+      <h3>Fluxo da Automação</h3>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+        <div style="background:var(--input);padding:12px 16px;border-radius:8px;flex:1;min-width:200px;text-align:center">
+          <div style="font-size:24px;margin-bottom:4px">&#128172;</div>
+          <div style="font-size:13px;font-weight:600">1. Comentario</div>
+          <div style="font-size:11px;color:var(--text2)">Pessoa comenta palavra-chave</div>
+        </div>
+        <div style="display:flex;align-items:center;color:var(--accent);font-size:20px">&#10132;</div>
+        <div style="background:var(--input);padding:12px 16px;border-radius:8px;flex:1;min-width:200px;text-align:center">
+          <div style="font-size:24px;margin-bottom:4px">&#9993;</div>
+          <div style="font-size:13px;font-weight:600">2. Resposta DM</div>
+          <div style="font-size:11px;color:var(--text2)">Envia mensagem privada</div>
+        </div>
+        <div style="display:flex;align-items:center;color:var(--accent);font-size:20px">&#10132;</div>
+        <div style="background:var(--input);padding:12px 16px;border-radius:8px;flex:1;min-width:200px;text-align:center">
+          <div style="font-size:24px;margin-bottom:4px">&#128100;</div>
+          <div style="font-size:13px;font-weight:600">3. Gate de Follow</div>
+          <div style="font-size:11px;color:var(--text2)">Verifica se segue a conta</div>
+        </div>
+        <div style="display:flex;align-items:center;color:var(--accent);font-size:20px">&#10132;</div>
+        <div style="background:var(--input);padding:12px 16px;border-radius:8px;flex:1;min-width:200px;text-align:center">
+          <div style="font-size:24px;margin-bottom:4px">&#127873;</div>
+          <div style="font-size:13px;font-weight:600">4. Entrega</div>
+          <div style="font-size:11px;color:var(--text2)">Envia link/conteudo</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function saveGroqConfig(){
+  const key=document.getElementById('groqApiKey').value.trim();
+  const enabled=document.getElementById('aiEnabled').checked;
+  const config={};
+  if(key)config.groq_api_key=key;
+  config.ai_enabled=enabled?'1':'0';
+  const r=await api('POST','/admin/api/config',config);
+  if(r&&r.ok){toast('Configuracao IA salva!','success')}
+  else{toast('Erro ao salvar','error')}
+}
+
+function renderHelp(m){
+  const loc=location.origin;
+  m.innerHTML=`
+    <h2>Central de Ajuda</h2>
+    <p style="color:var(--text2);margin-bottom:24px;font-size:14px">Guia completo para configurar sua automacao do zero. Siga cada passo na ordem.</p>
+
+    <div class="card" style="margin-bottom:24px">
+      <h3>&#128205; Nesta pagina</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <a href="#part1" class="btn btn-outline btn-sm" onclick="scrollToHelp('part1')" style="text-align:left">1. Criar conta no Meta for Developers</a>
+        <a href="#part2" class="btn btn-outline btn-sm" onclick="scrollToHelp('part2')" style="text-align:left">2. Criar o aplicativo Instagram</a>
+        <a href="#part3" class="btn btn-outline btn-sm" onclick="scrollToHelp('part3')" style="text-align:left">3. Configurar permissoes</a>
+        <a href="#part4" class="btn btn-outline btn-sm" onclick="scrollToHelp('part4')" style="text-align:left">4. Validar empresa (App Review)</a>
+        <a href="#part5" class="btn btn-outline btn-sm" onclick="scrollToHelp('part5')" style="text-align:left">5. Gerar token de acesso</a>
+        <a href="#part6" class="btn btn-outline btn-sm" onclick="scrollToHelp('part6')" style="text-align:left">6. Conectar conta no CriaHub</a>
+        <a href="#part7" class="btn btn-outline btn-sm" onclick="scrollToHelp('part7')" style="text-align:left">7. Configurar Webhook</a>
+        <a href="#part8" class="btn btn-outline btn-sm" onclick="scrollToHelp('part8')" style="text-align:left">8. Criar automacao</a>
+        <a href="#part9" class="btn btn-outline btn-sm" onclick="scrollToHelp('part9')" style="text-align:left">9. Como funciona o fluxo</a>
+        <a href="#part10" class="btn btn-outline btn-sm" onclick="scrollToHelp('part10')" style="text-align:left">10. Duvidas frequentes</a>
+      </div>
+    </div>
+
+    <!-- PARTE 1 -->
+    <div class="card" id="part1">
+      <h3>1. Criar conta no Meta for Developers</h3>
+      <div style="background:rgba(0,200,83,.1);border:1px solid rgba(0,200,83,.3);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px">
+        &#9989; Passo obrigatorio. Sem isso nada funciona.
+      </div>
+
+      <p style="color:var(--text2);margin-bottom:12px;font-size:14px">O Meta for Developers e o painel onde voce cria aplicativos para conectar ao Instagram. E gratuito.</p>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 1: Acesse o Meta for Developers</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:8px">Abra o navegador e va em:</p>
+        <div style="background:var(--bg);padding:10px 14px;border-radius:6px;font-family:monospace;font-size:13px;color:var(--accent);margin-bottom:8px">https://developers.facebook.com</div>
+        <p style="font-size:13px;color:var(--text2)">Clique em <strong>"Entrar com o Facebook"</strong> no canto superior direito. Use o email e senha da sua conta pessoal do Facebook.</p>
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 2: Crie uma conta de desenvolvedor</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:8px">Se e sua primeira vez, o Meta vai pedir para criar uma "conta de desenvolvedor":</p>
+        <ol style="font-size:13px;color:var(--text2);padding-left:20px;margin:0">
+          <li>Clique em <strong>"Criar conta"</strong></li>
+          <li>Coloque seu nome de exibicao (pode ser seu nome normal)</li>
+          <li>Coloque seu email</li>
+          <li>Aceite os termos</li>
+          <li>Clique em <strong>"Enviar"</strong></li>
+          <li>Confirme pelo email que vai chegar</li>
+        </ol>
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 3: Acesse o painel de apps</div>
+        <p style="font-size:13px;color:var(--text2)">Depois de criar a conta, voce volta para a pagina principal. Clique em <strong>"Meus Apps"</strong> no menu superior ou va em:</p>
+        <div style="background:var(--bg);padding:10px 14px;border-radius:6px;font-family:monospace;font-size:13px;color:var(--accent);margin-top:8px">https://developers.facebook.com/apps</div>
+      </div>
+    </div>
+
+    <!-- PARTE 2 -->
+    <div class="card" id="part2">
+      <h3>2. Criar o aplicativo Instagram</h3>
+      <div style="background:rgba(0,200,83,.1);border:1px solid rgba(0,200,83,.3);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px">
+        &#9989; Passo obrigatorio. Aqui voce cria o "app" que vai se conectar ao Instagram.
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 1: Criar novo aplicativo</div>
+        <ol style="font-size:13px;color:var(--text2);padding-left:20px;margin:0">
+          <li>No painel de apps (developers.facebook.com/apps), clique em <strong>"Criar aplicativo"</strong></li>
+          <li>Uma tela vai abrir pedindo o tipo de app</li>
+        </ol>
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 2: Escolher o tipo</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:8px">Escolha <strong>"Insetar" ou "Outro"</strong> (ou "Business" se aparecer). O importante e escolher algo que permita usar a API do Instagram.</p>
+        <p style="font-size:13px;color:var(--text2)">Na proxima tela:</p>
+        <ol style="font-size:13px;color:var(--text2);padding-left:20px;margin:0">
+          <li><strong>Nome do app:</strong> Coloque algo como "CriaHub Automação" (ou qualquer nome)</li>
+          <li><strong>Email de contato:</strong> Seu email</li>
+          <li><strong>Conta do Facebook:</strong> Escolha a pagina do Facebook vinculada a sua conta profissional do Instagram (se nao tiver, crie uma pagina simples)</li>
+          <li>Clique em <strong>"Criar aplicativo"</strong></li>
+        </ol>
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 3: Adicionar produtos</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:8px">Depois de criar o app, o painel vai abrir. Na barra lateral esquerda:</p>
+        <ol style="font-size:13px;color:var(--text2);padding-left:20px;margin:0">
+          <li>Clique em <strong>"Configurações"</strong> (engrenagem)</li>
+          <li>Procure <strong>"Produtos"</strong> no menu</li>
+          <li>Encontre <strong>"Instagram"</strong> e clique em <strong>"Configurar"</strong></li>
+          <li>Pronto! O Instagram Graph API foi adicionado ao seu app</li>
+        </ol>
+      </div>
+
+      <div style="background:rgba(255,214,0,.1);border:1px solid rgba(255,214,0,.3);border-radius:8px;padding:12px;font-size:13px">
+        &#9888; <strong>Importante:</strong> Anote o <strong>App ID</strong> e o <strong>App Secret</strong>. Eles aparecem em Configurações > Geral. Voce vai precisar deles depois.
+      </div>
+    </div>
+
+    <!-- PARTE 3 -->
+    <div class="card" id="part3">
+      <h3>3. Configurar permissoes</h3>
+      <div style="background:rgba(0,200,83,.1);border:1px solid rgba(0,200,83,.3);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px">
+        &#9989; Sem essas permissoes o bot nao funciona. Leva 2 minutos.
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 1: Ir em Configurações de Permissoes</div>
+        <ol style="font-size:13px;color:var(--text2);padding-left:20px;margin:0">
+          <li>No painel do seu app, clique em <strong>"Configurações"</strong> (engrenagem na barra lateral)</li>
+          <li>Clique em <strong>"Permissoes de Instagram"</strong></li>
+        </ol>
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 2: Ativar as permissoes necessarias</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:8px">Ative TODAS essas permissoes (clique em "Adicionar" ao lado de cada uma):</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div style="background:var(--bg);padding:8px 12px;border-radius:6px;font-size:12px">
+            <strong>instagram_basic</strong><br>
+            <span style="color:var(--text2)">Ler dados basicos da conta</span>
+          </div>
+          <div style="background:var(--bg);padding:8px 12px;border-radius:6px;font-size:12px">
+            <strong>instagram_manage_messages</strong><br>
+            <span style="color:var(--text2)">Enviar e ler DMs</span>
+          </div>
+          <div style="background:var(--bg);padding:8px 12px;border-radius:6px;font-size:12px">
+            <strong>instagram_manage_comments</strong><br>
+            <span style="color:var(--text2)">Ler e responder comentarios</span>
+          </div>
+          <div style="background:var(--bg);padding:8px 12px;border-radius:6px;font-size:12px">
+            <strong>pages_show_list</strong><br>
+            <span style="color:var(--text2)">Ver paginas do Facebook</span>
+          </div>
+          <div style="background:var(--bg);padding:8px 12px;border-radius:6px;font-size:12px">
+            <strong>pages_read_engagement</strong><br>
+            <span style="color:var(--text2)">Ler engajamento</span>
+          </div>
+          <div style="background:var(--bg);padding:8px 12px;border-radius:6px;font-size:12px">
+            <strong>pages_manage_metadata</strong><br>
+            <span style="color:var(--text2)">Gerenciar webhooks</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 3: Modo de desenvolvimento</div>
+        <p style="font-size:13px;color:var(--text2)">Enquanto o app nao esta aprovado pelo Meta, ele fica em <strong>"Modo de Desenvolvimento"</strong>. Isso e normal! Funciona para voce testar. Para sair do modo e preciso passar pelo App Review (passo 4).</p>
+      </div>
+    </div>
+
+    <!-- PARTE 4 -->
+    <div class="card" id="part4">
+      <h3>4. Validar empresa (App Review)</h3>
+      <div style="background:rgba(255,214,0,.1);border:1px solid rgba(255,214,0,.3);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px">
+        &#9888; Esse passo e necessario para usar o app em producao (com outras contas). Enquanto isso, voce pode testar com contas que voce e admin.
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">O que e o App Review?</div>
+        <p style="font-size:13px;color:var(--text2)">O Meta precisa revisar seu aplicativo antes de permitir que ele acesse dados de contas que nao sao suas. E como uma "validacao de empresa". Voce precisa:</p>
+        <ul style="font-size:13px;color:var(--text2);padding-left:20px;margin:8px 0">
+          <li>Ter uma <strong>conta de empresa verificada</strong> no Meta Business Suite</li>
+          <li>Explicar como seu app usa os dados do Instagram</li>
+          <li>Enviar um <strong>video demonstrando</strong> como o app funciona</li>
+        </ul>
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 1: Verificar empresa</div>
+        <ol style="font-size:13px;color:var(--text2);padding-left:20px;margin:0">
+          <li>Acesse <strong>business.facebook.com/settings</strong></li>
+          <li>Clique em <strong>"Centro de Seguranca"</strong></li>
+          <li>Clique em <strong>"Verificar empresa"</strong></li>
+          <li>Preencha os dados da empresa (CNPJ, endereco, etc.)</li>
+          <li>Envie os documentos (contrato social, nota fiscal, etc.)</li>
+          <li>Espere o Meta aprovar (pode levar 1-3 dias uteis)</li>
+        </ol>
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 2: Solicitar permissoes</div>
+        <ol style="font-size:13px;color:var(--text2);padding-left:20px;margin:0">
+          <li>No painel do app, va em <strong>"Configurações" > "Revisao do App"</strong></li>
+          <li>Clique em <strong>"Comecar a submeter permissoes"</strong></li>
+          <li>Para cada permissao, voce vai precisar:</li>
+          <ul style="margin:4px 0 8px 20px">
+            <li>Explicar em <strong>texto</strong> como o app usa aquela permissao</li>
+            <li>Gravar um <strong>video curto</strong> (30s a 2min) mostrando o app funcionando</li>
+            <li>Mostrar <strong>prints de tela</strong> do app em acao</li>
+          </ul>
+          <li>Clique em <strong>"Enviar para revisao"</strong></li>
+        </ol>
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 3: Aguardar aprovacao</div>
+        <p style="font-size:13px;color:var(--text2)">O Meta revisa em ate <strong>5 dias uteis</strong>. Voce recebe email quando for aprovado. Se recusarem, leia o motivo e tente novamente com as correcoes sugeridas.</p>
+      </div>
+
+      <div style="background:rgba(0,200,83,.1);border:1px solid rgba(0,200,83,.3);border-radius:8px;padding:12px;margin-top:12px;font-size:13px">
+        &#128161; <strong>Dica:</strong> Enquanto o app nao e aprovado, voce pode testar adicionando contas como "usuarios de teste" em <strong>"Configurações" > "Roles"</strong>. As contas de teste funcionam normalmente mesmo em modo de desenvolvimento.
+      </div>
+    </div>
+
+    <!-- PARTE 5 -->
+    <div class="card" id="part5">
+      <h3>5. Gerar token de acesso</h3>
+      <div style="background:rgba(0,200,83,.1);border:1px solid rgba(0,200,83,.3);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px">
+        &#9989; Esse token e o que permite o CriaHub acessar sua conta do Instagram.
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 1: Acessar o Graph API Explorer</div>
+        <ol style="font-size:13px;color:var(--text2);padding-left:20px;margin:0">
+          <li>Va em <strong>developers.facebook.com/tools/explorer</strong></li>
+          <li>No canto superior direito, selecione seu <strong>aplicativo</strong> (o que voce criou)</li>
+          <li>Selecione <strong>"Gerar token de acesso"</strong> no dropdown</li>
+        </ol>
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 2: Selecionar permissoes do token</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:8px">Na tela de gerar token, marque:</p>
+        <ul style="font-size:13px;color:var(--text2);padding-left:20px;margin:0">
+          <li><strong>instagram_basic</strong></li>
+          <li><strong>instagram_manage_messages</strong></li>
+          <li><strong>instagram_manage_comments</strong></li>
+          <li><strong>pages_show_list</strong></li>
+          <li><strong>pages_read_engagement</strong></li>
+          <li><strong>pages_manage_metadata</strong></li>
+        </ul>
+        <p style="font-size:13px;color:var(--text2);margin-top:8px">Clique em <strong>"Gerar token de acesso"</strong>. O Meta vai pedir para voce autorizar o acesso a sua conta.</p>
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 3: Obter token de longa duracao</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:8px">O token gerado acima dura apenas <strong>1 hora</strong>. Para converter para longa duracao (60 dias):</p>
+        <ol style="font-size:13px;color:var(--text2);padding-left:20px;margin:0">
+          <li>Cole o token no campo "Access Token" do Graph API Explorer</li>
+          <li>Na barra de endereco, mude a URL para:</li>
+          <div style="background:var(--bg);padding:10px 14px;border-radius:6px;font-family:monospace;font-size:11px;color:var(--accent);margin:8px 0;word-break:break-all">
+            GET https://graph.facebook.com/v21.0/oauth/access_token?grant_type=ig_exchange_token&client_secret=SEU_APP_SECRET&access_token=SEU_TOKEN_CURTO
+          </div>
+          <li>Clique em <strong>"Enviar"</strong> (Play)</li>
+          <li>A resposta vai ter o <strong>"access_token"</strong> de longa duracao</li>
+          <li>Cole esse token no campo de token manual do CriaHub</li>
+        </ol>
+      </div>
+
+      <div style="background:rgba(255,214,0,.1);border:1px solid rgba(255,214,0,.3);border-radius:8px;padding:12px;font-size:13px">
+        &#9888; <strong>Importante:</strong> O token de longa duracao dura <strong>60 dias</strong>. Depois disso, voce precisa gerar um novo. O CriaHub avisa quando estiver perto de expirar.
+      </div>
+    </div>
+
+    <!-- PARTE 6 -->
+    <div class="card" id="part6">
+      <h3>6. Conectar conta no CriaHub</h3>
+      <div style="background:rgba(0,200,83,.1);border:1px solid rgba(0,200,83,.3);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px">
+        &#9989; Ja temos tudo pronto. Agora e so conectar!
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Metodo 1: Token Manual (mais facil)</div>
+        <ol style="font-size:13px;color:var(--text2);padding-left:20px;margin:0">
+          <li>No menu lateral, clique em <strong>"Contas"</strong></li>
+          <li>Clique em <strong>"+ Token Manual"</strong></li>
+          <li>Preencha:</li>
+          <ul style="margin:4px 0 8px 20px">
+            <li><strong>Nome da Empresa:</strong> Nome da empresa dona da conta</li>
+            <li><strong>IG User ID:</strong> O numero da conta (obtido no passo anterior)</li>
+            <li><strong>Username:</strong> O @ da conta (opcional)</li>
+            <li><strong>Access Token:</strong> O token de longa duracao</li>
+          </ul>
+          <li>Clique em <strong>"Adicionar Conta"</strong></li>
+          <li>Pronto! A conta aparece na lista</li>
+        </ol>
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Metodo 2: OAuth (automatico)</div>
+        <ol style="font-size:13px;color:var(--text2);padding-left:20px;margin:0">
+          <li>No menu lateral, clique em <strong>"Contas"</strong></li>
+          <li>Clique em <strong>"OAuth Instagram"</strong></li>
+          <li>Preencha nome e email do cliente</li>
+          <li>Clique em <strong>"Conectar"</strong></li>
+          <li>Uma janela do Instagram vai abrir</li>
+          <li>Faca login com a conta do Instagram que quer conectar</li>
+          <li>Autorize o acesso</li>
+          <li>Pronto! A conta e conectada automaticamente</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- PARTE 7 -->
+    <div class="card" id="part7">
+      <h3>7. Configurar Webhook</h3>
+      <div style="background:rgba(0,200,83,.1);border:1px solid rgba(0,200,83,.3);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px">
+        &#9989; O webhook e como o Instagram avisa o CriaHub quando alguem comenta ou envia mensagem.
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 1: Configurar webhook no Meta Developer</div>
+        <ol style="font-size:13px;color:var(--text2);padding-left:20px;margin:0">
+          <li>No painel do app, va em <strong>"Configurações" > "Webhooks"</strong></li>
+          <li>Clique em <strong>"Editar" ao lado de "Instagram"</strong></li>
+          <li>Preencha:</li>
+          <ul style="margin:4px 0 8px 20px">
+            <li><strong>URL de callback:</strong> <span style="color:var(--accent)">${loc}</span></li>
+            <li><strong>Token de verificacao:</strong> <span style="color:var(--accent)">criahub_webhook_123</span></li>
+          </ul>
+          <li>Clique em <strong>"Confirmar e salvar"</strong></li>
+          <li>O Meta vai enviar um ping para testar. Se tudo certo, aparece verde.</li>
+        </ol>
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 2: Ativar os campos do webhook</div>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:8px">Depois de salvar, ative esses campos:</p>
+        <ul style="font-size:13px;color:var(--text2);padding-left:20px;margin:0">
+          <li><strong>comments</strong> (comentarios em posts)</li>
+          <li><strong>messages</strong> (mensagens diretas)</li>
+          <li><strong>standby</strong> (mensagens na fila)</li>
+        </ul>
+      </div>
+
+      <div style="background:rgba(0,200,83,.1);border:1px solid rgba(0,200,83,.3);border-radius:8px;padding:12px;font-size:13px">
+        &#128161; <strong>Dica:</strong> Para testar se o webhook esta funcionando, va em <strong>"Configurações"</strong> neste painel. A URL do webhook e o token estao la. Voce pode colar a URL no navegador e deve ver uma mensagem de erro (porque e GET e nao POST), mas isso confirma que o servidor esta rodando.
+      </div>
+    </div>
+
+    <!-- PARTE 8 -->
+    <div class="card" id="part8">
+      <h3>8. Criar automacao</h3>
+      <div style="background:rgba(0,200,83,.1);border:1px solid rgba(0,200,83,.3);border-radius:8px;padding:12px;margin-bottom:16px;font-size:13px">
+        &#9989; Agora vamos criar sua primeira automacao!
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px;margin-bottom:12px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 1: Criar automacao</div>
+        <ol style="font-size:13px;color:var(--text2);padding-left:20px;margin:0">
+          <li>No menu lateral, clique em <strong>"Automacoes"</strong></li>
+          <li>Clique em <strong>"+ Nova Automação"</strong></li>
+          <li>Escolha a conta Instagram / empresa</li>
+          <li>Defina a <strong>palavra-chave</strong> (ex: ACESSO, QUERO, LINK)</li>
+          <li>Escreva as mensagens:</li>
+          <ul style="margin:4px 0 8px 20px">
+            <li><strong>Resposta automatica:</strong> O que o bot envia quando alguem comenta</li>
+            <li><strong>Pedido de follow:</strong> O que o bot envia quando a pessoa nao segue</li>
+            <li><strong>Conteudo:</strong> O link ou mensagem de entrega</li>
+          </ul>
+          <li>Opcionalmente, vincule a um post/reel clicando em "Carregar posts"</li>
+          <li>Clique em <strong>"Criar Automação"</strong></li>
+        </ol>
+      </div>
+
+      <div style="background:var(--input);border-radius:8px;padding:16px">
+        <div style="font-weight:600;margin-bottom:8px">&#128073; Passo 2: Publicar o post</div>
+        <p style="font-size:13px;color:var(--text2)">Depois de criar a automacao, va no Instagram e publique um post ou reel. Nos comentarios desse post, as pessoas vao comentar a palavra-chave e o bot responde automaticamente!</p>
+      </div>
+    </div>
+
+    <!-- PARTE 9 -->
+    <div class="card" id="part9">
+      <h3>9. Como funciona o fluxo completo</h3>
+      <p style="color:var(--text2);margin-bottom:16px;font-size:14px">Entenda passo a passo o que acontece quando alguem interage:</p>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--accent);color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:14px">1</div>
+          <div style="flex:1">
+            <div style="font-weight:600;margin-bottom:4px">Alguem comenta "ACESSO" no seu post</div>
+            <div style="font-size:13px;color:var(--text2)">O Instagram avisa o CriaHub pelo webhook. O bot verifica se a palavra-chave esta configurada na automacao.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--accent);color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:14px">2</div>
+          <div style="flex:1">
+            <div style="font-weight:600;margin-bottom:4px">Bot envia mensagem privada (DM)</div>
+            <div style="font-size:13px;color:var(--text2)">Exemplo: "Fala ai! Recebemos seu comentario. Se quiser o conteudo completo, responda QUERO aqui mesmo."</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--accent);color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:14px">3</div>
+          <div style="flex:1">
+            <div style="font-weight:600;margin-bottom:4px">Pessoa responde "QUERO"</div>
+            <div style="font-size:13px;color:var(--text2)">O bot verifica se essa pessoa ja segue sua conta profissional.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--success);color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:14px">&#10003;</div>
+          <div style="flex:1">
+            <div style="font-weight:600;margin-bottom:4px">Se JA SEGUE: Envia o link/conteudo</div>
+            <div style="font-size:13px;color:var(--text2)">Exemplo: O bot envia "www.criahub.global" e a automacao termina.</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--warning);color:#000;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:14px">!</div>
+          <div style="flex:1">
+            <div style="font-weight:600;margin-bottom:4px">Se NAO SEGUE: Pede para seguir</div>
+            <div style="font-size:13px;color:var(--text2)">Exemplo: "Voce precisa seguir nosso perfil para receber o conteudo. Segue la e depois responde PRONTO aqui."</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div style="background:var(--accent);color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:14px">4</div>
+          <div style="flex:1">
+            <div style="font-weight:600;margin-bottom:4px">Pessoa clica em seguir e responde "PRONTO"</div>
+            <div style="font-size:13px;color:var(--text2)">O bot verifica novamente se agora a pessoa segue. Se sim, envia o conteudo. Se nao, pede de novo.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARTE 10 -->
+    <div class="card" id="part10">
+      <h3>10. Duvidas frequentes</h3>
+
+      <div style="margin-bottom:16px">
+        <div style="font-weight:600;margin-bottom:4px;color:var(--accent)">&#10067; O token expira? O que faco?</div>
+        <div style="font-size:13px;color:var(--text2)">Sim, dura 60 dias. Quando expirar, gere um novo no Graph API Explorer e atualize na secao "Contas" deste painel. O CriaHub avisa quando estiver perto de expirar.</div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <div style="font-weight:600;margin-bottom:4px;color:var(--accent)">&#10067; A pessoa precisa seguir para sempre?</div>
+        <div style="font-size:13px;color:var(--text2)">Nao. O bot verifica so no momento da interacao. Se a pessoa deixar de seguir depois, nao afecta nada.</div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <div style="font-weight:600;margin-bottom:4px;color:var(--accent)">&#10067; Posso ter varias automacoes na mesma conta?</div>
+        <div style="font-size:13px;color:var(--text2)">Sim! Cada automacao tem uma palavra-chave diferente. Voce pode ter "ACESSO" para um conteudo e "EBOOK" para outro, tudo na mesma conta.</div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <div style="font-weight:600;margin-bottom:4px;color:var(--accent)">&#10067; Funciona com contas pessoais?</div>
+        <div style="font-size:13px;color:var(--text2)">Nao. So funciona com contas <strong>profissionais</strong> (Business ou Creator). Se sua conta e pessoal, va no Instagram > Configurações > Conta > Mudar para conta profissional.</div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <div style="font-weight:600;margin-bottom:4px;color:var(--accent)">&#10067; O bot envia DM para qualquer pessoa?</div>
+        <div style="font-size:13px;color:var(--text2)">Nao. So envia DM para quem comentar a palavra-chave que voce configurou. E so quem comentou no post que voce vinculou (ou todos os posts, se nao vincular nenhum).</div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <div style="font-weight:600;margin-bottom:4px;color:var(--accent)">&#10067; Posso clonar automacao para outra conta?</div>
+        <div style="font-size:13px;color:var(--text2)">Sim! Na secao "Automacoes", clique em "Clonar" ao lado da automacao que quer copiar. Escolha a conta de destino e pronto!</div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <div style="font-weight:600;margin-bottom:4px;color:var(--accent)">&#10067; Como veio quantas pessoas interagiram?</div>
+        <div style="font-size:13px;color:var(--text2)">Na secao "Contatos" voce ve todas as pessoas que interagiram. Na secao "Dashboard" ve o resumo com numeros.</div>
+      </div>
+
+      <div>
+        <div style="font-weight:600;margin-bottom:4px;color:var(--accent)">&#10067; O app fica aprovado para sempre?</div>
+        <div style="font-size:13px;color:var(--text2)">Sim, depois que o Meta aprova no App Review, fica aprovado. So precisa aprovar uma vez. Se voce adicionar novas permissoes depois, precisa aprovar de novo.</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:24px;text-align:center">
+      <h3>&#128172; Ainda com duvidas?</h3>
+      <p style="color:var(--text2);font-size:14px;margin-top:8px">Se algo nao esta funcionando, va em <strong>"Config"</strong> e veja se o webhook esta configurado corretamente. Se a automacao nao responde, verifique se o token nao expirou na secao "Contas".</p>
+    </div>`;
+}
+
+function showModal(html){document.getElementById('modalContent').innerHTML=html;document.getElementById('modalOverlay').classList.add('show')}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('show')}
+
+function connectAccount(){
+  showModal(`
+    <h3>Conectar Conta Instagram (OAuth)</h3>
+    <p style="color:var(--text2);margin-bottom:16px;font-size:14px">Autorize uma conta profissional do Instagram.</p>
+    <div class="form-group">
+      <label>Nome do Cliente/Empresa</label>
+      <input type="text" id="clientName" placeholder="Ex: Joao Silva">
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="clientEmail" placeholder="email@exemplo.com">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="createAndConnect()">Conectar</button>
+    </div>`);
+}
+
+async function createAndConnect(){
+  const name=document.getElementById('clientName').value;
+  const email=document.getElementById('clientEmail').value;
+  if(!name||!email){toast('Preencha nome e email','error');return}
+  const r=await api('POST','/admin/api/clients',{name,email});
+  if(r&&r.connect_url){window.open(r.connect_url,'_blank');closeModal();toast('Conta conectada! Atualizando...','success');setTimeout(()=>loadPage('accounts'),2000)}
+  else{toast(r?.error||'Erro ao criar','error')}
+}
+
+function showAddAccountManual(){
+  showModal(`
+    <h3>Adicionar Conta Instagram (Token Manual)</h3>
+    <p style="color:var(--text2);margin-bottom:16px;font-size:14px">Cole o token de acesso da conta Instagram que voce quer adicionar.</p>
+    <div class="form-group">
+      <label>Nome da Empresa/Cliente</label>
+      <input type="text" id="manualClientName" placeholder="Ex: Minha Empresa">
+    </div>
+    <div class="form-group">
+      <label>IG User ID (numero da conta)</label>
+      <input type="text" id="manualIgUserId" placeholder="Ex: 17841404499028851">
+      <small>Encontre no Graph API Explorer ou Meta Developer</small>
+    </div>
+    <div class="form-group">
+      <label>Username (opcional)</label>
+      <input type="text" id="manualUsername" placeholder="Ex: minhaconta">
+    </div>
+    <div class="form-group">
+      <label>Access Token</label>
+      <textarea id="manualToken" rows="3" placeholder="Cole o token aqui..."></textarea>
+      <small>Token de longa duracao (60 dias) ou curta duracao</small>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="addAccountManual()">Adicionar Conta</button>
+    </div>`);
+}
+
+async function addAccountManual(){
+  const clientName=document.getElementById('manualClientName').value.trim();
+  const igUserId=document.getElementById('manualIgUserId').value.trim();
+  const username=document.getElementById('manualUsername').value.trim();
+  const token=document.getElementById('manualToken').value.trim();
+  if(!igUserId){toast('IG User ID obrigatorio','error');return}
+  if(!token){toast('Access Token obrigatorio','error');return}
+
+  const body={
+    ig_user_id:igUserId,
+    access_token:token,
+    username:username||undefined
+  };
+  if(clientName)body.client_name=clientName;
+
+  const r=await api('POST','/admin/api/accounts/manual',body);
+  if(r&&r.ok){closeModal();toast('Conta adicionada! @'+(r.username||igUserId),'success');loadPage('accounts')}
+  else{toast(r?.error||'Erro ao adicionar conta','error')}
+}
+
+async function disconnectAccount(id){
+  if(!confirm('Desconectar esta conta?'))return;
+  const r=await api('DELETE','/admin/api/accounts/'+id);
+  if(r&&r.ok){toast('Conta desconectada','success');loadPage('accounts')}
+}
+
+async function deleteAccount(id,username){
+  if(!confirm('Tem certeza que deseja EXCLUIR a conta @'+username+'? Esta acao nao pode ser desfeita.'))return;
+  const r=await api('DELETE','/admin/api/accounts/'+id);
+  if(r&&r.ok){toast('Conta excluida com sucesso','success');loadPage('accounts')}
+  else{toast(r?.error||'Erro ao excluir','error')}
+}
+
+function showUpdateToken(accountId,username){
+  showModal(`
+    <h3>Atualizar Token - @${esc(username)}</h3>
+    <p style="color:var(--text2);margin-bottom:16px;font-size:14px">Cole o novo token de longa duracao para renovar o acesso.</p>
+    <div class="form-group">
+      <label>Novo Access Token</label>
+      <textarea id="updateTokenValue" rows="3" placeholder="Cole o novo token aqui..."></textarea>
+      <small>Gere um novo token no Graph API Explorer (veja a Central de Ajuda)</small>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="updateToken('${accountId}')">Atualizar Token</button>
+    </div>`);
+}
+
+async function updateToken(accountId){
+  const token=document.getElementById('updateTokenValue').value.trim();
+  if(!token){toast('Cole o novo token','error');return}
+  const r=await api('POST','/admin/api/accounts/'+accountId+'/update-token',{access_token:token});
+  if(r&&r.ok){closeModal();toast('Token atualizado com sucesso!','success');loadPage('accounts')}
+  else{toast(r?.error||'Erro ao atualizar token','error')}
+}
+
+async function showNewCampaign(){
+  const accounts=await api('GET','/admin/api/accounts');
+  const accList=(accounts||[]).filter(a=>a.status==='connected');
+
+  if(!accList.length){
+    toast('Conecte uma conta Instagram primeiro','error');
+    loadPage('accounts');
+    return;
+  }
+
+  showModal(`
+    <h3>Nova Automação</h3>
+    <div class="form-group">
+      <label>Conta Instagram / Empresa</label>
+      <select id="campAccount" onchange="onNewCampaignAccountChange()">
+        ${accList.map(a=>`<option value="${a.ig_user_id}">@${a.username||a.ig_user_id} ${a.client_name?'('+esc(a.client_name)+')':''}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Palavra-chave do comentario</label>
+      <input type="text" id="campKeyword" placeholder="Ex: ACESSO" style="text-transform:uppercase">
+      <small>A pessoa deve comentar essa palavra no post</small>
+    </div>
+    <div class="form-group">
+      <label>Vincular a um post/reel (opcional)</label>
+      <div id="mediaPickerArea">
+        <button class="btn btn-outline btn-sm" onclick="loadMediaPicker()" type="button">Carregar posts da conta</button>
+      </div>
+      <div id="mediaGrid"></div>
+      <input type="hidden" id="campMediaId">
+    </div>
+    <div class="form-group">
+      <label>Mensagem automatica (DM)</label>
+      <textarea id="campReply" placeholder="Fala ai! Recebemos seu comentario. Responda QUERO aqui."></textarea>
+      <small>Enviada como resposta privada ao comentario</small>
+    </div>
+    <div class="form-group">
+      <label>Mensagem de pedido de follow</label>
+      <textarea id="campFollow" placeholder="Voce precisa seguir nosso perfil para receber o conteudo."></textarea>
+    </div>
+    <div class="form-group">
+      <label>Link/Conteudo a entregar</label>
+      <input type="text" id="campContent" placeholder="https://www.criahub.global">
+      <small>Link que sera enviado quando a pessoa seguir</small>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="createCampaign()">Criar Automação</button>
+    </div>`);
+  if(accList.length)loadMediaPicker();
+}
+
+function onNewCampaignAccountChange(){
+  document.getElementById('mediaGrid').innerHTML='';
+  document.getElementById('campMediaId').value='';
+  loadMediaPicker();
+}
+
+async function loadMediaPicker(){
+  const igUserId=document.getElementById('campAccount')?.value;
+  if(!igUserId)return;
+  const grid=document.getElementById('mediaGrid');
+  grid.innerHTML='<div style="text-align:center;padding:16px"><div class="spinner"></div> Carregando posts...</div>';
+  const media=await api('GET','/admin/api/media/'+igUserId);
+  if(!media){
+    grid.innerHTML='<div style="color:var(--accent);font-size:13px;padding:8px 0">Erro ao conectar. Faca login novamente.</div>';
+    return;
+  }
+  if(media.error){
+    const errMsg=media.details?.message||media.error||'Erro desconhecido';
+    if(errMsg.includes('Invalid')||errMsg.includes('expired')||errMsg.includes('token')){
+      grid.innerHTML='<div style="color:var(--accent);font-size:13px;padding:8px 0">&#9888; Token expirado ou invalido. Va em <strong>Contas</strong> e clique em <strong>"Atualizar Token"</strong> para renovar.</div>';
+    }else{
+      grid.innerHTML='<div style="color:var(--accent);font-size:13px;padding:8px 0">&#9888; '+esc(errMsg)+'</div>';
+    }
+    return;
+  }
+  if(!media.length){
+    grid.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px 0">Nenhum post encontrado. Publique algo no Instagram primeiro.</div>';
+    return;
+  }
+  grid.innerHTML='<div class="media-grid">'+media.map(item=>{
+    const img=item.thumbnail_url||item.media_url||'';
+    const type=item.media_type==='VIDEO'?'&#9654; Reel':'&#128247; Post';
+    const caption=item.caption?esc(item.caption.substring(0,40)):'Sem legenda';
+    return `<div class="media-item" data-id="${esc(item.id)}" onclick="selectMedia(this,'${esc(item.id)}')">
+      ${img?'<img src="'+esc(img)+'" alt="" loading="lazy">':''}
+      <div class="media-type">${type}</div>
+      <div class="media-caption">${caption}</div>
+    </div>`;
+  }).join('')+'</div>';
+}
+
+function selectMedia(el,mediaId){
+  document.querySelectorAll('.media-item').forEach(i=>i.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('campMediaId').value=mediaId;
+}
+
+async function createCampaign(){
+  const kw=document.getElementById('campKeyword').value.trim();
+  const reply=document.getElementById('campReply').value.trim();
+  const follow=document.getElementById('campFollow').value.trim();
+  const content=document.getElementById('campContent').value.trim();
+  const acc=document.getElementById('campAccount').value;
+  const mediaId=document.getElementById('campMediaId').value.trim();
+  if(!kw){toast('Palavra-chave obrigatoria','error');return}
+  if(!acc){toast('Selecione uma conta','error');return}
+  const r=await api('POST','/admin/api/campaigns',{
+    ig_user_id:acc,keyword:kw,
+    private_reply_message:reply||undefined,
+    follow_request_message:follow||undefined,
+    delivery_content:content||undefined,
+    media_id:mediaId||undefined
+  });
+  if(r&&r.campaign_id){closeModal();toast('Automação criada!','success');loadPage('campaigns')}
+  else{toast(r?.error||'Erro ao criar','error')}
+}
+
+async function editCampaign(id){
+  const [campaigns,accounts]=await Promise.all([
+    api('GET','/admin/api/campaigns'),
+    api('GET','/admin/api/accounts')
+  ]);
+  const c=(campaigns||[]).find(x=>x.id===id);
+  if(!c)return;
+  const accList=accounts||[];
+
+  showModal(`
+    <h3>Editar Automação</h3>
+    <div class="form-group">
+      <label>Conta Instagram</label>
+      <select id="editCampAccount" onchange="onEditCampaignAccountChange('${esc(c.media_id||'')}')" disabled>
+        ${accList.map(a=>`<option value="${a.ig_user_id}" ${a.ig_user_id===c.ig_user_id?'selected':''}>@${a.username||a.ig_user_id}</option>`).join('')}
+      </select>
+      <small>Nao e possivel trocar a conta. Clone a automacao para outra conta.</small>
+    </div>
+    <div class="form-group">
+      <label>Palavra-chave</label>
+      <input type="text" id="editKeyword" value="${esc(c.keyword)}" style="text-transform:uppercase">
+    </div>
+    <div class="form-group">
+      <label>Vincular a um post/reel (opcional)</label>
+      <div id="editMediaPickerArea">
+        <button class="btn btn-outline btn-sm" onclick="loadEditMediaPicker('${esc(c.media_id||'')}')" type="button">Carregar posts da conta</button>
+      </div>
+      <div id="editMediaGrid"></div>
+      <input type="hidden" id="editMediaId" value="${esc(c.media_id||'')}">
+    </div>
+    <div class="form-group">
+      <label>Mensagem automatica</label>
+      <textarea id="editReply">${esc(c.private_reply_message)}</textarea>
+    </div>
+    <div class="form-group">
+      <label>Pedido de follow</label>
+      <textarea id="editFollow">${esc(c.follow_request_message)}</textarea>
+    </div>
+    <div class="form-group">
+      <label>Conteudo/Link</label>
+      <input type="text" id="editContent" value="${esc(c.delivery_content)}">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-danger btn-sm" onclick="deleteCampaign('${id}')">Excluir</button>
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveCampaign('${id}')">Salvar</button>
+    </div>`);
+  loadEditMediaPicker(c.media_id||'');
+}
+
+async function loadEditMediaPicker(currentMediaId){
+  const igUserId=document.getElementById('editCampAccount')?.value;
+  if(!igUserId)return;
+  const grid=document.getElementById('editMediaGrid');
+  grid.innerHTML='<div style="text-align:center;padding:16px"><div class="spinner"></div> Carregando posts...</div>';
+  const media=await api('GET','/admin/api/media/'+igUserId);
+  if(!media){
+    grid.innerHTML='<div style="color:var(--accent);font-size:13px;padding:8px 0">Erro ao conectar.</div>';
+    return;
+  }
+  if(media.error){
+    const errMsg=media.details?.message||media.error||'Erro';
+    if(errMsg.includes('Invalid')||errMsg.includes('expired')||errMsg.includes('token')){
+      grid.innerHTML='<div style="color:var(--accent);font-size:13px;padding:8px 0">&#9888; Token expirado. Atualize em <strong>Contas</strong>.</div>';
+    }else{
+      grid.innerHTML='<div style="color:var(--accent);font-size:13px;padding:8px 0">&#9888; '+esc(errMsg)+'</div>';
+    }
+    return;
+  }
+  if(!media.length){
+    grid.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px 0">Nenhum post encontrado.</div>';
+    return;
+  }
+  grid.innerHTML='<div class="media-grid">'+media.map(item=>{
+    const img=item.thumbnail_url||item.media_url||'';
+    const type=item.media_type==='VIDEO'?'&#9654; Reel':'&#128247; Post';
+    const caption=item.caption?esc(item.caption.substring(0,40)):'Sem legenda';
+    const sel=item.id===currentMediaId?'selected':'';
+    return `<div class="media-item ${sel}" data-id="${esc(item.id)}" onclick="selectEditMedia(this,'${esc(item.id)}')">
+      ${img?'<img src="'+esc(img)+'" alt="" loading="lazy">':''}
+      <div class="media-type">${type}</div>
+      <div class="media-caption">${caption}</div>
+    </div>`;
+  }).join('')+'</div>';
+}
+
+function selectEditMedia(el,mediaId){
+  document.querySelectorAll('#editMediaGrid .media-item').forEach(i=>i.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('editMediaId').value=mediaId;
+}
+
+async function saveCampaign(id){
+  const kw=document.getElementById('editKeyword').value.trim();
+  const reply=document.getElementById('editReply').value.trim();
+  const follow=document.getElementById('editFollow').value.trim();
+  const content=document.getElementById('editContent').value.trim();
+  const mediaId=document.getElementById('editMediaId')?.value.trim()||'';
+  const r=await api('PUT','/admin/api/campaigns/'+id,{
+    keyword:kw,
+    private_reply_message:reply,
+    follow_request_message:follow,
+    delivery_content:content,
+    media_id:mediaId||null
+  });
+  if(r&&r.ok){closeModal();toast('Automação atualizada!','success');loadPage('campaigns')}
+  else{toast(r?.error||'Erro ao salvar','error')}
+}
+
+async function deleteCampaign(id){
+  if(!confirm('Tem certeza que deseja excluir esta automacao?'))return;
+  const r=await api('DELETE','/admin/api/campaigns/'+id);
+  if(r&&r.ok){toast('Automação excluida','success');loadPage('campaigns')}
+}
+
+async function showCloneCampaign(sourceId){
+  const [campaigns,accounts]=await Promise.all([
+    api('GET','/admin/api/campaigns'),
+    api('GET','/admin/api/accounts')
+  ]);
+  const source=(campaigns||[]).find(c=>c.id===sourceId);
+  if(!source)return;
+  const otherAccounts=(accounts||[]).filter(a=>a.ig_user_id!==source.ig_user_id);
+
+  showModal(`
+    <h3>Clonar Automação</h3>
+    <p style="color:var(--text2);margin-bottom:16px;font-size:14px">
+      Clonar <strong>"${esc(source.keyword)}"</strong> de <strong>@${esc(source.username||'?')}</strong> para outra conta:
+    </p>
+    <div class="form-group">
+      <label>Conta de destino</label>
+      <select id="cloneTargetAccount">
+        ${otherAccounts.map(a=>`<option value="${a.ig_user_id}">@${a.username||a.ig_user_id}</option>`).join('')}
+        ${!otherAccounts.length?'<option value="">Nenhuma outra conta disponivel</option>':''}
+      </select>
+    </div>
+    <div style="background:var(--input);border-radius:8px;padding:12px;margin-bottom:16px">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Sera copiado:</div>
+      <div style="font-size:13px">Palavra-chave: <strong>${esc(source.keyword)}</strong></div>
+      <div style="font-size:13px">Resposta: ${esc(source.private_reply_message).substring(0,60)}...</div>
+      <div style="font-size:13px">Conteudo: ${esc(source.delivery_content)}</div>
+      ${source.media_id?'<div style="font-size:13px">Post: '+esc(source.media_id)+'</div>':''}
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-success" onclick="cloneCampaign('${sourceId}')">Clonar</button>
+    </div>`);
+}
+
+async function cloneCampaign(sourceId){
+  const targetUserId=document.getElementById('cloneTargetAccount').value;
+  if(!targetUserId){toast('Selecione uma conta de destino','error');return}
+  const r=await api('POST','/admin/api/campaigns/'+sourceId+'/clone',{ig_user_id:targetUserId});
+  if(r&&r.ok){closeModal();toast('Automação clonada com sucesso!','success');loadPage('campaigns')}
+  else{toast(r?.error||'Erro ao clonar','error')}
+}
+
+async function testCampaignAI(campaignId){
+  showModal(`
+    <h3>Testar IA - Geracao de Respostas</h3>
+    <div class="form-group">
+      <label>Simular comentario</label>
+      <input type="text" id="testComment" value="Quero saber mais" placeholder="Digite um comentario para testar">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Fechar</button>
+      <button class="btn btn-primary" onclick="runAITest('${campaignId}')">Gerar Respostas IA</button>
+    </div>
+    <div id="aiTestResults" style="margin-top:16px"></div>`);
+}
+
+async function runAITest(campaignId){
+  const comment=document.getElementById('testComment').value.trim()||"Quero saber mais";
+  const resultsDiv=document.getElementById('aiTestResults');
+  resultsDiv.innerHTML='<div style="text-align:center;padding:16px"><div class="spinner"></div> Gerando respostas com IA...</div>';
+
+  const r=await api('POST','/admin/api/campaigns/'+campaignId+'/test-ai',{comment:comment});
+  if(!r){resultsDiv.innerHTML='<div style="color:var(--accent)">Erro ao conectar.</div>';return}
+  if(r.error){resultsDiv.innerHTML='<div style="color:var(--accent)">'+esc(r.error)+'</div>';return}
+
+  let html='';
+  if(r.postCaption){
+    html+=`<div style="background:var(--input);padding:10px 14px;border-radius:8px;margin-bottom:12px">
+      <div style="font-size:11px;text-transform:uppercase;color:var(--text2);margin-bottom:4px">Caption do Post</div>
+      <div style="font-size:13px">${esc(r.postCaption).substring(0,200)}${r.postCaption.length>200?'...':''}</div>
+    </div>`;
+  }
+  if(r.campaign){
+    html+=`<div style="background:var(--input);padding:10px 14px;border-radius:8px;margin-bottom:12px">
+      <div style="font-size:11px;text-transform:uppercase;color:var(--text2);margin-bottom:4px">Mensagens Estaticas (fallback)</div>
+      <div style="font-size:12px">Reply: ${esc(r.campaign.reply).substring(0,80)}</div>
+      <div style="font-size:12px">Follow: ${esc(r.campaign.follow).substring(0,80)}</div>
+      <div style="font-size:12px">Entrega: ${esc(r.campaign.delivery).substring(0,80)}</div>
+    </div>`;
+  }
+
+  // Classification result
+  const classLabel={aprovado:'Aprovado',agressivo:'Agressivo',ignorar:'Ignorar'};
+  const classColor={aprovado:'var(--accent)',agressivo:'#e6a50f',ignorar:'var(--accent)'};
+  const classBg={aprovado:'rgba(0,206,209,.12)',agressivo:'rgba(230,165,15,.12)',ignorar:'rgba(220,60,60,.12)'};
+  html+=`<div style="background:${classBg[r.classification]||'var(--input)'};padding:10px 14px;border-radius:8px;margin-bottom:12px;border:1px solid ${classColor[r.classification]||'var(--border)'}">
+    <div style="font-size:11px;text-transform:uppercase;color:var(--text2);margin-bottom:4px">Classificacao do Comentario</div>
+    <div style="font-weight:600;font-size:14px;color:${classColor[r.classification]||'var(--text)'}">${classLabel[r.classification]||r.classification||'N/A'}</div>
+    <div style="font-size:12px;color:var(--text2);margin-top:4px">${r.classification==='aprovado'?'Comentario aprovado - sera respondido profissionalmente':r.classification==='agressivo'?'Tom detectado - resposta educada e empatica sera enviada':'Comentario ignorado - conteudo inadequado'}</div>
+  </div>`;
+
+  html+=`<div style="font-weight:600;margin-bottom:12px">Respostas Geradas pela IA:</div>`;
+
+  const tests=[
+    {label:'Resposta ao Comentario (DM)',value:r.commentReply,icon:'&#128172;'},
+    {label:'DM - Pessoa pediu "QUERO"',value:r.dmQuero,icon:'&#9993;'},
+    {label:'DM - Pedido de Follow',value:r.dmFollow,icon:'&#128100;'},
+    {label:'DM - Entrega do Conteudo',value:r.dmEntrega,icon:'&#127873;'},
+    {label:'Resposta Publica (sem palavra-chave)',value:r.publicReply,icon:'&#128172;'}
+  ];
+
+  tests.forEach(t=>{
+    const val=t.value||'(sem resposta - IA desativada ou erro)';
+    const isAI=t.value?'badge-active':'badge-paused';
+    html+=`<div style="background:var(--input);padding:12px 14px;border-radius:8px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span>${t.icon}</span>
+        <span style="font-weight:600;font-size:13px">${t.label}</span>
+        <span class="badge ${isAI}">${t.value?'IA':'Estatico'}</span>
+      </div>
+      <div style="font-size:13px;color:var(--text);white-space:pre-wrap">${esc(val)}</div>
+    </div>`;
+  });
+
+  html+=`<div style="text-align:center;margin-top:12px"><button class="btn btn-outline btn-sm" onclick="runAITest('${campaignId}')">&#8635; Gerar Novamente</button></div>`;
+  resultsDiv.innerHTML=html;
+}
+
+// === BULK SELECTION & DELETE ===
+function updateBulkBar(){
+  const checked=document.querySelectorAll('.campaign-checkbox:checked');
+  const count=checked.length;
+  const bar=document.getElementById('bulkBar');
+  const countEl=document.getElementById('bulkCount');
+  if(bar){
+    bar.style.display=count>0?'block':'none';
+    if(countEl)countEl.textContent=count+' selecionada(s)';
+  }
+}
+
+function selectAllCampaigns(){
+  document.querySelectorAll('.campaign-checkbox').forEach(cb=>{cb.checked=true});
+  updateBulkBar();
+}
+
+function deselectAllCampaigns(){
+  document.querySelectorAll('.campaign-checkbox').forEach(cb=>{cb.checked=false});
+  updateBulkBar();
+}
+
+async function bulkDeleteCampaigns(){
+  const checked=document.querySelectorAll('.campaign-checkbox:checked');
+  const ids=Array.from(checked).map(cb=>cb.dataset.id);
+  if(!ids.length){toast('Nenhuma selecionada','error');return}
+  if(!confirm('Excluir '+ids.length+' automacao(es)? Esta acao nao pode ser desfeita.'))return;
+
+  const r=await api('POST','/admin/api/campaigns/bulk-delete',{ids:ids});
+  if(r&&r.ok){
+    toast(r.deleted+' automacao(es) excluida(s)!','success');
+    loadPage('campaigns');
+  }else{
+    toast(r?.error||'Erro ao excluir','error');
+  }
+}
+
+// === DUPLICATE DETECTION ===
+async function checkDuplicates(){
+  const r=await api('GET','/admin/api/campaigns/duplicates');
+  const dupes=(r&&r.duplicates)||[];
+
+  if(!dupes.length){
+    showModal(`
+      <h3>Duplicatas</h3>
+      <div style="text-align:center;padding:24px 0">
+        <div style="font-size:48px;margin-bottom:12px">&#10003;</div>
+        <p style="font-size:15px;color:var(--text2)">Nenhuma automacao duplicada encontrada!</p>
+        <p style="font-size:13px;color:var(--text2)">Cada post tem apenas uma automacao vinculada.</p>
+      </div>
+      <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal()">Fechar</button></div>`);
+    return;
+  }
+
+  let html=`
+    <h3>Duplicatas Encontradas</h3>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:16px">${dupes.length} post(s) tem mais de uma automacao vinculada. Escolha quais manter e quais excluir.</p>`;
+
+  for(const group of dupes){
+    const ids=group.ids?group.ids.split(','):[];
+    const keywords=group.keywords?group.keywords.split(','):[];
+    const dates=group.dates?group.dates.split(','):[];
+    html+=`<div style="background:var(--input);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:11px;text-transform:uppercase;color:var(--text2)">Post ID:</span>
+        <code style="font-size:12px;color:var(--accent)">${esc(group.media_id)}</code>
+        <span class="badge" style="background:rgba(230,165,15,.15);color:#e6a50f">${group.count} automacoes</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">`;
+    ids.forEach((id,i)=>{
+      const kw=keywords[i]||'?';
+      const dt=dates[i]||'';
+      html+=`<div style="display:flex;justify-content:space-between;align-items:center;background:var(--card);padding:8px 12px;border-radius:8px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="radio" name="keep_${group.media_id}" value="${id}" ${i===0?'checked':''} style="accent-color:var(--accent)">
+          <div>
+            <strong style="font-size:13px">${esc(kw)}</strong>
+            <span style="font-size:11px;color:var(--text2);margin-left:8px">${esc(dt)}</span>
+          </div>
+        </div>
+        <span style="font-size:11px;color:var(--text2)">${i===0?'Manter':'Excluir'}</span>
+      </div>`;
+    });
+    html+=`</div></div>`;
+  }
+
+  html+=`<div class="modal-actions">
+    <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+    <button class="btn btn-danger" onclick="resolveDuplicates()">Resolver Duplicatas</button>
+  </div>`;
+
+  showModal(html);
+}
+
+async function resolveDuplicates(){
+  const r=await api('GET','/admin/api/campaigns/duplicates');
+  const dupes=(r&&r.duplicates)||[];
+  let deleted=0;
+
+  for(const group of dupes){
+    const ids=group.ids?group.ids.split(','):[];
+    const radio=document.querySelector(`input[name="keep_${group.media_id}"]:checked`);
+    if(!radio)continue;
+    const keepId=radio.value;
+    const toDelete=ids.filter(id=>id!==keepId);
+    if(toDelete.length){
+      const dr=await api('POST','/admin/api/campaigns/bulk-delete',{ids:toDelete});
+      if(dr&&dr.ok)deleted+=dr.deleted;
+    }
+  }
+
+  if(deleted>0){
+    toast(deleted+' duplicata(s) excluida(s)!','success');
+  }else{
+    toast('Nenhuma duplicata excluida','info');
+  }
+  closeModal();
+  loadPage('campaigns');
+}
+
+// === BULK CREATE ===
+async function showBulkCreate(){
+  const accounts=await api('GET','/admin/api/accounts');
+  const accList=(accounts||[]).filter(a=>a.status==='connected');
+  if(!accList.length){toast('Conecte uma conta primeiro','error');loadPage('accounts');return}
+
+  showModal(`
+    <h3>Criar Automacoes em Massa</h3>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Selecione uma conta, carregue os posts e escolha quantos quiser. A IA gera as respostas automaticamente para cada post.</p>
+    <div class="form-group">
+      <label>Conta Instagram / Empresa</label>
+      <select id="bulkAccount" onchange="loadBulkPosts()">
+        ${accList.map(a=>`<option value="${a.ig_user_id}">@${a.username||a.ig_user_id} ${a.client_name?'('+esc(a.client_name)+')':''}</option>`).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Palavra-chave padrao</label>
+      <input type="text" id="bulkKeyword" value="ACESSO" style="text-transform:uppercase">
+    </div>
+    <div class="form-group">
+      <label>Link/Conteudo a entregar</label>
+      <input type="text" id="bulkDelivery" value="www.criahub.global">
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button class="btn btn-outline btn-sm" onclick="loadBulkPosts()">&#8635; Carregar Posts</button>
+      <button class="btn btn-outline btn-sm" onclick="bulkSelectAll()">&#9745; Selecionar Todos</button>
+      <button class="btn btn-outline btn-sm" onclick="bulkDeselectAll()">&#9744; Desmarcar Todos</button>
+      <span id="bulkCount" style="font-size:13px;color:var(--text2);display:flex;align-items:center"></span>
+    </div>
+    <div id="bulkPostsGrid" style="max-height:400px;overflow-y:auto"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" id="bulkCreateBtn" onclick="executeBulkCreate()" disabled>Criar Automacoes (0)</button>
+    </div>`);
+  loadBulkPosts();
+}
+
+async function loadBulkPosts(){
+  const igUserId=document.getElementById('bulkAccount')?.value;
+  if(!igUserId)return;
+  const grid=document.getElementById('bulkPostsGrid');
+  grid.innerHTML='<div style="text-align:center;padding:16px"><div class="spinner"></div> Carregando posts...</div>';
+
+  const media=await api('GET','/admin/api/media/'+igUserId);
+  if(!media||media.error||!media.length){
+    grid.innerHTML='<div style="color:var(--text2);font-size:13px;padding:8px 0">Nenhum post encontrado ou token invalido.</div>';
+    return;
+  }
+
+  grid.innerHTML='<div class="media-grid" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr))">'+media.map(item=>{
+    const img=item.thumbnail_url||item.media_url||'';
+    const type=item.media_type==='VIDEO'?'&#9654; Reel':'&#128247; Post';
+    const caption=item.caption?esc(item.caption.substring(0,50)):'Sem legenda';
+    return `<div class="media-item" data-id="${esc(item.id)}" data-caption="${esc(item.caption||'')}" onclick="toggleBulkItem(this)" style="aspect-ratio:1;cursor:pointer">
+      ${img?'<img src="'+esc(img)+'" alt="" loading="lazy">':''}
+      <div class="media-type">${type}</div>
+      <div class="media-caption">${caption}</div>
+      <div class="bulk-check" style="position:absolute;top:6px;left:6px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;font-size:14px;border:2px solid var(--border)"></div>
+    </div>`;
+  }).join('')+'</div>';
+  updateBulkCount();
+}
+
+function toggleBulkItem(el){
+  el.classList.toggle('selected');
+  const check=el.querySelector('.bulk-check');
+  check.textContent=el.classList.contains('selected')?'\u2713':'';
+  check.style.borderColor=el.classList.contains('selected')?'var(--accent)':'var(--border)';
+  check.style.background=el.classList.contains('selected')?'var(--accent)':'rgba(0,0,0,.6)';
+  updateBulkCount();
+}
+
+function bulkSelectAll(){
+  document.querySelectorAll('#bulkPostsGrid .media-item').forEach(el=>{
+    el.classList.add('selected');
+    const check=el.querySelector('.bulk-check');
+    check.textContent='\u2713';
+    check.style.borderColor='var(--accent)';
+    check.style.background='var(--accent)';
+  });
+  updateBulkCount();
+}
+
+function bulkDeselectAll(){
+  document.querySelectorAll('#bulkPostsGrid .media-item').forEach(el=>{
+    el.classList.remove('selected');
+    const check=el.querySelector('.bulk-check');
+    check.textContent='';
+    check.style.borderColor='var(--border)';
+    check.style.background='rgba(0,0,0,.6)';
+  });
+  updateBulkCount();
+}
+
+function updateBulkCount(){
+  const count=document.querySelectorAll('#bulkPostsGrid .media-item.selected').length;
+  document.getElementById('bulkCount').textContent=count+' selecionado(s)';
+  const btn=document.getElementById('bulkCreateBtn');
+  if(btn){
+    btn.disabled=count===0;
+    btn.textContent='Criar Automacoes ('+count+')';
+  }
+}
+
+async function executeBulkCreate(){
+  const selected=document.querySelectorAll('#bulkPostsGrid .media-item.selected');
+  if(!selected.length){toast('Selecione ao menos um post','error');return}
+
+  const igUserId=document.getElementById('bulkAccount').value;
+  const keyword=document.getElementById('bulkKeyword').value.trim()||'ACESSO';
+  const delivery=document.getElementById('bulkDelivery').value.trim()||'www.criahub.global';
+
+  const posts=[];
+  selected.forEach(el=>{
+    posts.push({
+      media_id:el.dataset.id,
+      keyword:keyword,
+      caption:el.dataset.caption||null
+    });
+  });
+
+  const btn=document.getElementById('bulkCreateBtn');
+  btn.disabled=true;
+  btn.innerHTML='<div class="spinner" style="width:16px;height:16px"></div> Criando '+posts.length+' automacoes com IA...';
+
+  const r=await api('POST','/admin/api/campaigns/bulk',{
+    ig_user_id:igUserId,
+    default_keyword:keyword,
+    delivery_content:delivery,
+    posts:posts
+  });
+
+  if(r&&r.ok){
+    closeModal();
+    toast(r.created+' automacoes criadas com IA!'+(r.errors?' ('+r.errors+' erros)':''),'success');
+    loadPage('campaigns');
+  }else{
+    toast(r?.error||'Erro ao criar em massa','error');
+    btn.disabled=false;
+    btn.textContent='Criar Automacoes ('+selected.length+')';
+  }
+}
+
+// ============================================================
+// WHATSAPP CRM
+// ============================================================
+async function renderWhatsApp(m){
+  const [configs,contacts]=await Promise.all([
+    api('GET','/api/whatsapp/config'),
+    api('GET','/api/whatsapp/contacts')
+  ]);
+  const cfg=configs&&configs.config?configs.config:{};
+  const ctcs=contacts&&contacts.contacts?contacts.contacts:[];
+  m.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="margin:0">&#128172; WhatsApp CRM</h2>
+      <button class="btn btn-primary btn-sm" onclick="openWhatsAppConfig()">+ Configurar Evolution API</button>
+    </div>
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px">
+      <div class="stat-card" style="border-left:3px solid ${cfg.enabled?'var(--success)':'var(--accent)'}">
+        <div class="number">${cfg.enabled?'&#10004; Ativo':'&#10006; Inativo'}</div>
+        <div class="label">Estado</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid #8b5cf6">
+        <div class="number">${ctcs.length}</div>
+        <div class="label">Contatos</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid var(--accent)">
+        <div class="number">${cfg.api_url?esc(cfg.api_url.split('/')[2]||cfg.api_url):'-'}</div>
+        <div class="label">Servidor</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Contatos WhatsApp</h3>
+      ${!ctcs.length?'<div class="empty"><div class="icon">&#128172;</div><p>Nenhum contato ainda. Os contatos são adicionados automaticamente quando recebem mensagens.</p></div>':
+      `<div class="table-wrap"><table>
+        <thead><tr><th>Telefone</th><th>Nome</th><th>Conversa</th><th>Última Mensagem</th></tr></thead>
+        <tbody>${ctcs.map(c=>`<tr>
+          <td><strong>${esc(c.phone||c.wa_id||'-')}</strong></td>
+          <td>${esc(c.name||'-')}</td>
+          <td><span class="badge badge-${c.is_group?'paused':'active'}">${c.is_group?'Grupo':'Individual'}</span></td>
+          <td style="font-size:12px;color:var(--text2)">${fmt(c.last_message_at)}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>`}
+    </div>`;
+}
+
+function openWhatsAppConfig(){
+  openModal(`Configurar WhatsApp (Evolution API)
+    <div class="form-group" style="margin-top:20px"><label>URL da API</label><input id="waApiUrl" placeholder="https://api.evolution.example.com"></div>
+    <div class="form-group"><label>Nome da Instância</label><input id="waInstanceName" placeholder="criahub-wa"></div>
+    <div class="form-group"><label>API Key</label><input id="waApiKey" type="password" placeholder="Sua API Key"></div>
+    <div class="form-row"><div class="form-group"><label>Número</label><input id="waPhone" placeholder="5511999999999"></div>
+    <div class="form-group"><label>Token Webhook</label><input id="waWebhookToken" placeholder="criahub_wa_123"></div></div>
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveWhatsAppConfig()">Guardar</button></div>`);
+}
+
+async function saveWhatsAppConfig(){
+  const r=await api('POST','/api/whatsapp/config',{
+    api_url:document.getElementById('waApiUrl').value,
+    instance_name:document.getElementById('waInstanceName').value,
+    api_key:document.getElementById('waApiKey').value,
+    phone:document.getElementById('waPhone').value,
+    webhook_token:document.getElementById('waWebhookToken').value,
+    enabled:true
+  });
+  if(r&&r.ok){closeModal();toast('WhatsApp configurado!','success');loadPage('whatsapp')}
+  else toast(r?.error||'Erro ao guardar','error');
+}
+
+// ============================================================
+// TIKTOK
+// ============================================================
+async function renderTikTok(m){
+  const [configs,autos]=await Promise.all([
+    api('GET','/api/tiktok/config'),
+    api('GET','/api/tiktok/automations')
+  ]);
+  const cfg=configs&&configs.config?configs.config:{};
+  const auts=autos&&autos.automations?autos.automations:[];
+  m.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="margin:0">&#127916; TikTok</h2>
+      <button class="btn btn-primary btn-sm" onclick="openTikTokConfig()">+ Configurar</button>
+    </div>
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px">
+      <div class="stat-card" style="border-left:3px solid ${cfg.enabled?'var(--success)':'var(--accent)'}">
+        <div class="number">${cfg.enabled?'&#10004; Ativo':'&#10006; Inativo'}</div>
+        <div class="label">Estado</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid #8b5cf6">
+        <div class="number">${auts.length}</div>
+        <div class="label">Automações</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Automações TikTok</h3>
+      ${!auts.length?'<div class="empty"><div class="icon">&#127916;</div><p>Nenhuma automação TikTok configurada.</p><button class="btn btn-primary btn-sm" onclick="openTikTokAutomation()">+ Criar Automação</button></div>':
+      `<div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="openTikTokAutomation()">+ Criar Automação</button></div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Regra</th><th>Gatilho</th><th>Resposta</th><th>Estado</th></tr></thead>
+        <tbody>${auts.map(a=>`<tr>
+          <td><strong>${esc(a.keyword||a.name||'-')}</strong></td>
+          <td><span class="badge badge-stage">${esc(a.trigger_type||'comment')}</span></td>
+          <td style="max-width:300px;font-size:12px;word-break:break-word">${esc((a.response_template||'').substring(0,80))}</td>
+          <td><span class="badge badge-${a.enabled?'active':'paused'}">${a.enabled?'Ativo':'Inativo'}</span></td>
+        </tr>`).join('')}</tbody>
+      </table></div>`}
+    </div>`;
+}
+
+function openTikTokConfig(){
+  openModal(`Configurar TikTok
+    <div class="form-group" style="margin-top:20px"><label>Access Token (API for Business)</label><input id="ttToken" type="password" placeholder="TikTok Access Token"></div>
+    <div class="form-group"><label>Open ID</label><input id="ttOpenId" placeholder="Seu Open ID"></div>
+    <div class="form-row"><div class="form-group"><label>Polling Interval (min)</label><input id="ttPolling" type="number" value="5" min="1"></div>
+    <div class="form-group"><label>Modo</label><select id="ttMode"><option value="api">API Comments</option><option value="connector">Browser Connector</option><option value="both">Ambos</option></select></div></div>
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveTikTokConfig()">Guardar</button></div>`);
+}
+
+async function saveTikTokConfig(){
+  const r=await api('POST','/api/tiktok/config',{
+    access_token:document.getElementById('ttToken').value,
+    open_id:document.getElementById('ttOpenId').value,
+    polling_interval:parseInt(document.getElementById('ttPolling').value)||5,
+    mode:document.getElementById('ttMode').value,
+    enabled:true
+  });
+  if(r&&r.ok){closeModal();toast('TikTok configurado!','success');loadPage('tiktok')}
+  else toast(r?.error||'Erro ao guardar','error');
+}
+
+function openTikTokAutomation(){
+  openModal(`Nova Automação TikTok
+    <div class="form-group" style="margin-top:20px"><label>Palavra-chave / Gatilho</label><input id="ttAutoKeyword" placeholder="ex: PREÇO, ACESSO, INFO"></div>
+    <div class="form-group"><label>Tipo de Gatilho</label><select id="ttAutoTrigger"><option value="comment">Comentário</option><option value="mention">Menção</option><option value="dm">DM</option></select></div>
+    <div class="form-group"><label>Texto de Resposta</label><textarea id="ttAutoResponse" rows="3" placeholder="Olá! Obrigado pelo interesse. Enviando as informações..."></textarea></div>
+    <div class="form-row"><div class="form-group"><label>ID do Post/Vídeo</label><input id="ttAutoMediaId" placeholder="Opcional"></div>
+    <div class="form-group"><label>ID da Conta</label><input id="ttAutoAccountId" placeholder="Opcional"></div></div>
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveTikTokAutomation()">Criar</button></div>`);
+}
+
+async function saveTikTokAutomation(){
+  const r=await api('POST','/api/tiktok/automations',{
+    keyword:document.getElementById('ttAutoKeyword').value,
+    trigger_type:document.getElementById('ttAutoTrigger').value,
+    response_template:document.getElementById('ttAutoResponse').value,
+    media_id:document.getElementById('ttAutoMediaId').value||null,
+    ig_user_id:document.getElementById('ttAutoAccountId').value||null,
+    enabled:true
+  });
+  if(r&&r.ok){closeModal();toast('Automação TikTok criada!','success');loadPage('tiktok')}
+  else toast(r?.error||'Erro ao criar','error');
+}
+
+// ============================================================
+// LEADS CENTRALIZADOS
+// ============================================================
+async function renderLeads(m){
+  const [leadsData,stats]=await Promise.all([
+    api('GET','/api/leads'),
+    api('GET','/api/leads/stats')
+  ]);
+  const leads=leadsData&&leadsData.leads?leadsData.leads:[];
+  const st=stats&&stats.stats?stats.stats:{total:0,by_platform:{},by_status:{},by_funnel:{}};
+  m.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="margin:0">&#127919; Leads Centralizados</h2>
+      <button class="btn btn-primary btn-sm" onclick="openNewLead()">+ Novo Lead</button>
+    </div>
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px">
+      <div class="stat-card" style="border-left:3px solid var(--accent)"><div class="number">${st.total||0}</div><div class="label">Total Leads</div></div>
+      <div class="stat-card" style="border-left:3px solid var(--success)"><div class="number">${st.by_status?.new||0}</div><div class="label">Novos</div></div>
+      <div class="stat-card" style="border-left:3px solid #8b5cf6"><div class="number">${st.by_status?.contacted||0}</div><div class="label">Contactados</div></div>
+      <div class="stat-card" style="border-left:3px solid var(--warning)"><div class="number">${st.by_status?.qualified||0}</div><div class="label">Qualificados</div></div>
+      <div class="stat-card" style="border-left:3px solid var(--success)"><div class="number">${st.by_status?.converted||0}</div><div class="label">Convertidos</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+      <div class="card"><h3>&#128202; Por Plataforma</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">${Object.entries(st.by_platform||{}).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--input);border-radius:8px;font-size:13px"><span>${esc(k)}</span><strong>${v}</strong></div>`).join('')||'<div style="color:var(--text2);font-size:13px">Sem dados</div>'}</div>
+      </div>
+      <div class="card"><h3>&#127919; Por Funil</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">${Object.entries(st.by_funnel||{}).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--input);border-radius:8px;font-size:13px"><span>${esc(k)}</span><strong>${v}</strong></div>`).join('')||'<div style="color:var(--text2);font-size:13px">Sem dados</div>'}</div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Últimos Leads</h3>
+      ${!leads.length?'<div class="empty"><div class="icon">&#127919;</div><p>Nenhum lead registado ainda.</p></div>':
+      `<div class="table-wrap"><table>
+        <thead><tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Plataforma</th><th>Status</th><th>Data</th></tr></thead>
+        <tbody>${leads.slice(0,50).map(l=>`<tr>
+          <td><strong>${esc(l.name||'-')}</strong></td>
+          <td>${esc(l.email||'-')}</td>
+          <td>${esc(l.phone||'-')}</td>
+          <td><span class="badge badge-stage">${esc(l.platform||'-')}</span></td>
+          <td><span class="badge badge-${l.status==='converted'?'active':l.status==='qualified'?'paused':'stage'}">${esc(l.status||'new')}</span></td>
+          <td style="font-size:12px;color:var(--text2)">${fmt(l.created_at)}</td>
+        </tr>`).join('')}</tbody>
+      </table></div>`}
+    </div>`;
+}
+
+function openNewLead(){
+  openModal(`Novo Lead
+    <div class="form-group" style="margin-top:20px"><label>Nome</label><input id="leadName" placeholder="Nome do lead"></div>
+    <div class="form-row"><div class="form-group"><label>Email</label><input id="leadEmail" type="email" placeholder="email@exemplo.com"></div>
+    <div class="form-group"><label>Telefone</label><input id="leadPhone" placeholder="+351 912 345 678"></div></div>
+    <div class="form-row"><div class="form-group"><label>Plataforma</label><select id="leadPlatform"><option value="whatsapp">WhatsApp</option><option value="instagram">Instagram</option><option value="tiktok">TikTok</option><option value="meta_forms">Meta Forms</option><option value="website">Website</option><option value="other">Outro</option></select></div>
+    <div class="form-group"><label>Funil</label><select id="leadFunnel"><option value="topo">Topo</option><option value="meio">Meio</option><option value="fundo">Fundo</option></select></div></div>
+    <div class="form-group"><label>Notas</label><textarea id="leadNotes" rows="3" placeholder="Notas sobre o lead..."></textarea></div>
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveNewLead()">Criar Lead</button></div>`);
+}
+
+async function saveNewLead(){
+  const r=await api('POST','/api/leads',{
+    name:document.getElementById('leadName').value,
+    email:document.getElementById('leadEmail').value,
+    phone:document.getElementById('leadPhone').value,
+    platform:document.getElementById('leadPlatform').value,
+    funnel_stage:document.getElementById('leadFunnel').value,
+    notes:document.getElementById('leadNotes').value,
+    status:'new'
+  });
+  if(r&&r.ok){closeModal();toast('Lead criado!','success');loadPage('leads')}
+  else toast(r?.error||'Erro ao criar lead','error');
+}
+
+// ============================================================
+// META ADS
+// ============================================================
+async function renderMetaAds(m){
+  const [configs,insights,forms]=await Promise.all([
+    api('GET','/api/meta-ads/config'),
+    api('GET','/api/meta-ads/insights'),
+    api('GET','/api/meta-ads/lead-forms')
+  ]);
+  const cfg=configs&&configs.config?configs.config:{};
+  const ins=insights&&insights.insights?insights.insights:[];
+  const fms=forms&&forms.forms?forms.forms:[];
+  m.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="margin:0">&#128200; Meta Ads</h2>
+      <button class="btn btn-primary btn-sm" onclick="openMetaAdsConfig()">+ Configurar</button>
+    </div>
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px">
+      <div class="stat-card" style="border-left:3px solid ${cfg.enabled?'var(--success)':'var(--accent)'}">
+        <div class="number">${cfg.enabled?'&#10004; Ativo':'&#10006; Inativo'}</div>
+        <div class="label">Estado</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid #8b5cf6"><div class="number">${ins.length}</div><div class="label">Campanhas</div></div>
+      <div class="stat-card" style="border-left:3px solid var(--accent)"><div class="number">${fms.length}</div><div class="label">Lead Forms</div></div>
+    </div>
+    <div class="card">
+      <h3>Insights de Campanhas</h3>
+      ${!ins.length?'<div class="empty"><div class="icon">&#128200;</div><p>Nenhum insight disponível. Configure a API do Meta Ads para ver dados.</p></div>':
+      `<div class="table-wrap"><table>
+        <thead><tr><th>Campanha</th><th>Impressões</th><th>Cliques</th><th>CTR</th><th>Gasto</th><th>Leads</th></tr></thead>
+        <tbody>${ins.map(i=>`<tr>
+          <td><strong>${esc(i.campaign_name||i.name||'-')}</strong></td>
+          <td>${(i.impressions||0).toLocaleString()}</td>
+          <td>${(i.clicks||0).toLocaleString()}</td>
+          <td>${i.ctr?i.ctr+'%':'-'}</td>
+          <td>€${(i.spend||0).toFixed(2)}</td>
+          <td><span class="badge badge-active">${i.leads||0}</span></td>
+        </tr>`).join('')}</tbody>
+      </table></div>`}
+    </div>
+    <div class="card">
+      <h3>Lead Forms</h3>
+      ${!fms.length?'<div style="color:var(--text2);font-size:13px">Nenhum lead form encontrado.</div>':
+      `<div class="table-wrap"><table>
+        <thead><tr><th>Nome</th><th>Plataforma</th><th>Leads</th><th>Status</th></tr></thead>
+        <tbody>${fms.map(f=>`<tr>
+          <td><strong>${esc(f.name||'-')}</strong></td>
+          <td>${esc(f.platform||'facebook')}</td>
+          <td>${f.lead_count||0}</td>
+          <td><span class="badge badge-active">${esc(f.status||'active')}</span></td>
+        </tr>`).join('')}</tbody>
+      </table></div>`}
+    </div>`;
+}
+
+function openMetaAdsConfig(){
+  openModal(`Configurar Meta Ads API
+    <div class="form-group" style="margin-top:20px"><label>App ID</label><input id="maAppId" placeholder="24263426736668733" value="24263426736668733"></div>
+    <div class="form-group"><label>App Secret</label><input id="maAppSecret" type="password" placeholder="App Secret"></div>
+    <div class="form-group"><label>Access Token</label><input id="maToken" type="password" placeholder="Long-lived Access Token"></div>
+    <div class="form-group"><label>Ad Account ID</label><input id="maAdAccount" placeholder="act_123456789"></div>
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveMetaAdsConfig()">Guardar</button></div>`);
+}
+
+async function saveMetaAdsConfig(){
+  const r=await api('POST','/api/meta-ads/config',{
+    app_id:document.getElementById('maAppId').value,
+    app_secret:document.getElementById('maAppSecret').value,
+    access_token:document.getElementById('maToken').value,
+    ad_account_id:document.getElementById('maAdAccount').value,
+    enabled:true
+  });
+  if(r&&r.ok){closeModal();toast('Meta Ads configurado!','success');loadPage('metaads')}
+  else toast(r?.error||'Erro ao guardar','error');
+}
+
+// ============================================================
+// GA4 ANALYTICS
+// ============================================================
+async function renderGA4(m){
+  const [configs,analytics]=await Promise.all([
+    api('GET','/api/ga4/config'),
+    api('GET','/api/ga4/analytics')
+  ]);
+  const cfg=configs&&configs.config?configs.config:{};
+  const anl=analytics&&analytics.data?analytics.data:{};
+  m.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="margin:0">&#128202; Google Analytics 4</h2>
+      <button class="btn btn-primary btn-sm" onclick="openGA4Config()">+ Configurar</button>
+    </div>
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px">
+      <div class="stat-card" style="border-left:3px solid ${cfg.enabled?'var(--success)':'var(--accent)'}">
+        <div class="number">${cfg.enabled?'&#10004; Ativo':'&#10006; Inativo'}</div>
+        <div class="label">Estado</div>
+      </div>
+      <div class="stat-card" style="border-left:3px solid #8b5cf6"><div class="number">${anl.activeUsers||anl.totalUsers||0}</div><div class="label">Utilizadores Ativos</div></div>
+      <div class="stat-card" style="border-left:3px solid var(--accent)"><div class="number">${anl.sessions||0}</div><div class="label">Sessões</div></div>
+      <div class="stat-card" style="border-left:3px solid var(--success)"><div class="number">${anl.conversions||0}</div><div class="label">Conversões</div></div>
+    </div>
+    <div class="card">
+      <h3>Dados Recentes</h3>
+      ${Object.keys(anl).length?`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+        ${Object.entries(anl).map(([k,v])=>`<div style="padding:12px;background:var(--input);border-radius:8px"><div style="font-size:11px;text-transform:uppercase;color:var(--text2);margin-bottom:4px;letter-spacing:.5px">${esc(k)}</div><div style="font-size:18px;font-weight:700">${typeof v==='number'?v.toLocaleString():esc(String(v))}</div></div>`).join('')}
+      </div>`:'<div class="empty"><div class="icon">&#128202;</div><p>Configure a propriedade GA4 para ver dados analíticos.</p></div>'}
+    </div>`;
+}
+
+function openGA4Config(){
+  openModal(`Configurar Google Analytics 4
+    <div class="form-group" style="margin-top:20px"><label>Property ID</label><input id="ga4PropertyId" placeholder="123456789"></div>
+    <div class="form-group"><label>Service Account JSON (credenciais)</label><textarea id="ga4ServiceAccount" rows="4" placeholder='{"type":"service_account","project_id":"...",...}'></textarea></div>
+    <div class="form-group"><label>Período de Análise</label><select id="ga4Period"><option value="7d">Últimos 7 dias</option><option value="30d" selected>Últimos 30 dias</option><option value="90d">Últimos 90 dias</option></select></div>
+    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveGA4Config()">Guardar</button></div>`);
+}
+
+async function saveGA4Config(){
+  const r=await api('POST','/api/ga4/config',{
+    property_id:document.getElementById('ga4PropertyId').value,
+    service_account_json:document.getElementById('ga4ServiceAccount').value,
+    period:document.getElementById('ga4Period').value,
+    enabled:true
+  });
+  if(r&&r.ok){closeModal();toast('GA4 configurado!','success');loadPage('ga4')}
+  else toast(r?.error||'Erro ao guardar','error');
+}
+
+// ============================================================
+// SMTP CONFIG
+// ============================================================
+async function renderSMTP(m){
+  const r=await api('GET','/admin/api/smtp');
+  const cfg=r&&r.smtp?r.smtp:{};
+  m.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="margin:0">&#9993; Configuração SMTP</h2>
+    </div>
+    <div class="card">
+      <h3>Servidor SMTP</h3>
+      <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Configure o servidor de email para envio automático de mensagens de contacto e notificações.</p>
+      <div class="form-row"><div class="form-group"><label>Servidor SMTP</label><input id="smtpHost" placeholder="smtp.nextsolutions.pt" value="${esc(cfg.smtp_host||'')}"></div>
+      <div class="form-group"><label>Porta</label><input id="smtpPort" type="number" placeholder="587" value="${esc(cfg.smtp_port||'587')}"></div></div>
+      <div class="form-row"><div class="form-group"><label>Email / Utilizador</label><input id="smtpUser" placeholder="email@exemplo.com" value="${esc(cfg.smtp_user||'')}"></div>
+      <div class="form-group"><label>Palavra-passe</label><input id="smtpPass" type="password" placeholder="Palavra-passe SMTP" value="${esc(cfg.smtp_pass||'')}"></div></div>
+      <div class="form-row"><div class="form-group"><label>Nome do Remetente</label><input id="smtpFromName" placeholder="CriaHub" value="${esc(cfg.smtp_from_name||'CriaHub')}"></div>
+      <div class="form-group"><label>Email do Destinatário</label><input id="smtpRecipient" placeholder="contacto@criahub.global" value="${esc(cfg.recipient_email||'')}"></div></div>
+      <div class="form-group"><label>Segurança</label><select id="smtpSecure"><option value="tls" ${cfg.smtp_use_tls===1?'selected':''}>TLS</option><option value="ssl" ${cfg.smtp_port===465?'selected':''}>SSL</option><option value="none">Nenhuma</option></select></div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn btn-primary" onclick="saveSMTP()">Guardar Configuração</button>
+        <button class="btn btn-outline" onclick="testSMTP()">✉ Testar Envio</button>
+      </div>
+    </div>`;
+}
+
+async function saveSMTP(){
+  const secureVal=document.getElementById('smtpSecure').value;
+  const portVal=parseInt(document.getElementById('smtpPort').value)||587;
+  const r=await api('POST','/admin/api/smtp',{
+    smtp_host:document.getElementById('smtpHost').value,
+    smtp_port:portVal,
+    smtp_user:document.getElementById('smtpUser').value,
+    smtp_pass:document.getElementById('smtpPass').value,
+    smtp_from_email:document.getElementById('smtpUser').value,
+    smtp_from_name:document.getElementById('smtpFromName').value,
+    smtp_use_tls:secureVal==='tls'||secureVal==='ssl'?1:0,
+    recipient_email:document.getElementById('smtpRecipient').value
+  });
+  if(r&&r.ok){toast('SMTP configurado com sucesso!','success');loadPage('smtp')}
+  else toast(r?.error||'Erro ao guardar','error');
+}
+
+async function testSMTP(){
+  const r=await api('POST','/admin/api/smtp/test',{});
+  if(r&&r.ok)toast('Email de teste enviado! Verifique a caixa de entrada.','success');
+  else toast(r?.error||'Erro ao enviar email de teste','error');
+}
+
+function fmt(s){if(!s)return'-';try{return new Date(s).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'})}catch(e){return s}}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function escapeHtml(s){return esc(s)}
+function toast(msg,type){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast toast-'+type;t.style.display='block';
+  setTimeout(()=>{t.style.display='none'},4000);
+}
+
+if(TOKEN)showApp();
+else document.getElementById('loginWrap').style.display='flex';
+
+function showApp(){document.getElementById('loginWrap').style.display='none';document.getElementById('appWrap').style.display='block';applyAdminLang();loadPage('dashboard');loadNotifications()}
+
+// ============================================================
+// NOTIFICAÇÕES (Client-Facing Panel)
+// ============================================================
+async function loadNotifications(){
+  const bell=document.getElementById('notifBell');
+  if(!bell)return;
+  try{
+    const r=await api('GET','/api/notifications');
+    if(!r)return;
+    const notifs=r.notifications||[];
+    const unread=r.unread||0;
+    bell.style.display='flex';
+    const badge=document.getElementById('notifBadge');
+    if(unread>0){badge.textContent=unread;badge.style.display='flex'}
+    else{badge.style.display='none'}
+    const list=document.getElementById('notifList');
+    if(!notifs.length){
+      list.innerHTML='<div style="text-align:center;padding:40px;color:var(--text2)">Sem notificações</div>';
+      return;
+    }
+    const typeIcons={'info':'📢','improvement':'🔧','feature':'🚀','promo':'🎉','warning':'⚠️'};
+    list.innerHTML=notifs.map(n=>{
+      const bg=n.read?'transparent':'rgba(108,92,231,.06)';
+      return `<div onclick="markRead('${n.user_notif_id}',this)" style="padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s;background:${bg};border-left:3px solid ${n.read?'transparent':'var(--accent)'}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:16px">${typeIcons[n.type]||'📢'}</span>
+          <strong style="font-size:14px;flex:1">${esc(n.title)}</strong>
+          <span style="font-size:11px;color:var(--text2)">${fmt(n.created_at)}</span>
+        </div>
+        <p style="font-size:13px;color:var(--text2);margin:0;line-height:1.5">${esc(n.message)}</p>
+        ${n.link?`<a href="${esc(n.link)}" target="_blank" style="font-size:12px;color:var(--accent);margin-top:6px;display:inline-block">Ver mais &rarr;</a>`:''}
+      </div>`;
+    }).join('');
+  }catch(_){}
+}
+
+function toggleNotifPanel(){
+  const panel=document.getElementById('notifPanel');
+  const overlay=document.getElementById('notifOverlay');
+  const isOpen=panel.style.display==='block';
+  panel.style.display=isOpen?'none':'block';
+  overlay.style.display=isOpen?'none':'block';
+  if(!isOpen)loadNotifications();
+}
+
+async function markRead(userNotifId,el){
+  try{
+    await api('POST','/api/notifications/'+userNotifId+'/read');
+    el.style.background='transparent';
+    el.style.borderLeftColor='transparent';
+    const badge=document.getElementById('notifBadge');
+    const current=parseInt(badge.textContent)||1;
+    if(current<=1){badge.style.display='none'}
+    else{badge.textContent=current-1}
+  }catch(_){}
+}
+
+async function markAllRead(){
+  try{
+    await api('POST','/api/notifications/read-all');
+    document.getElementById('notifBadge').style.display='none';
+    document.querySelectorAll('#notifList > div').forEach(d=>{
+      d.style.background='transparent';
+      d.style.borderLeftColor='transparent';
+    });
+    toast('Todas as notificações marcadas como lidas','success');
+  }catch(_){}
+}
+function toggleSidebar(){const s=document.getElementById('sidebar');const o=document.getElementById('sidebarOverlay');s.classList.toggle('open');o.classList.toggle('show')}
+</script>
+</body>
+</html>

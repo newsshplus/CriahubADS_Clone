@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Política de Privacidade — CriaHub</title>
+    <style>
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6c5ce7;
+            --primary-dark: #5a4bd1;
+            --primary-light: #a29bfe;
+            --bg: #f8f9fc;
+            --surface: #ffffff;
+            --text: #2d3436;
+            --text-secondary: #636e72;
+            --border: #e0e0e0;
+            --footer-bg: #2d3436;
+            --footer-text: #b2bec3;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            font-size: 16px;
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: var(--primary-dark);
+        }
+
+        /* ── NAV ── */
+        nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 3px rgba(0,0,0,.04);
+        }
+
+        .nav-inner {
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .nav-brand {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+
+        .nav-brand span {
+            color: var(--text);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            font-size: .9rem;
+            font-weight: 500;
+            transition: color .2s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--primary);
+        }
+
+        .nav-toggle {
+            display: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        .nav-toggle span {
+            display: block;
+            width: 22px;
+            height: 2px;
+            background: var(--text);
+            margin: 5px 0;
+            border-radius: 2px;
+            transition: .3s;
+        }
+
+        /* ── HERO ── */
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, #8b7cf7 100%);
+            color: #fff;
+            padding: 80px 24px 60px;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 2.4rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .hero p {
+            font-size: 1.05rem;
+            opacity: .88;
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        .hero .date-badge {
+            display: inline-block;
+            margin-top: 20px;
+            background: rgba(255,255,255,.18);
+            padding: 6px 18px;
+            border-radius: 20px;
+            font-size: .85rem;
+            backdrop-filter: blur(4px);
+        }
+
+        /* ── LAYOUT ── */
+        .page-wrapper {
+            max-width: 1120px;
+            margin: 0 auto;
+            display: flex;
+            gap: 40px;
+            padding: 48px 24px 80px;
+            align-items: flex-start;
+        }
+
+        .toc {
+            flex: 0 0 260px;
+            position: sticky;
+            top: 88px;
+        }
+
+        .toc-title {
+            font-size: .75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .toc ul {
+            list-style: none;
+            border-left: 2px solid var(--border);
+        }
+
+        .toc li a {
+            display: block;
+            padding: 6px 0 6px 16px;
+            font-size: .85rem;
+            color: var(--text-secondary);
+            border-left: 2px solid transparent;
+            margin-left: -2px;
+            transition: all .2s;
+        }
+
+        .toc li a:hover,
+        .toc li a.active {
+            color: var(--primary);
+            border-left-color: var(--primary);
+            background: rgba(108,92,231,.04);
+        }
+
+        .content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .content section {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 36px 40px;
+            margin-bottom: 28px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0,0,0,.03);
+        }
+
+        .content section:target {
+            animation: highlight 1.5s ease;
+        }
+
+        @keyframes highlight {
+            0% { box-shadow: 0 0 0 3px rgba(108,92,231,.25); }
+            100% { box-shadow: 0 1px 3px rgba(0,0,0,.03); }
+        }
+
+        .content h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .content h2 .num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: #fff;
+            border-radius: 8px;
+            font-size: .8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .content h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin: 20px 0 10px;
+            color: var(--text);
+        }
+
+        .content p,
+        .content li {
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            font-size: .95rem;
+        }
+
+        .content ul,
+        .content ol {
+            padding-left: 24px;
+            margin-bottom: 12px;
+        }
+
+        .content li {
+            margin-bottom: 6px;
+        }
+
+        .highlight-box {
+            background: rgba(108,92,231,.06);
+            border-left: 4px solid var(--primary);
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 16px 0;
+        }
+
+        .highlight-box p {
+            margin-bottom: 0;
+            color: var(--text);
+        }
+
+        .contact-card {
+            background: var(--bg);
+            border: 1px dashed var(--primary-light);
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 16px 0;
+        }
+
+        .contact-card p {
+            margin-bottom: 4px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: var(--primary);
+            color: #fff;
+            font-size: .7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            vertical-align: middle;
+            margin-left: 8px;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            background: var(--footer-bg);
+            color: var(--footer-text);
+            padding: 48px 24px 32px;
+        }
+
+        .footer-inner {
+            max-width: 1120px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 40px;
+        }
+
+        .footer-brand {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        .footer-brand span {
+            color: var(--primary-light);
+        }
+
+        footer p {
+            font-size: .88rem;
+            line-height: 1.6;
+        }
+
+        footer h4 {
+            color: #fff;
+            font-size: .85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        footer ul {
+            list-style: none;
+        }
+
+        footer ul li {
+            margin-bottom: 8px;
+        }
+
+        footer ul a {
+            color: var(--footer-text);
+            font-size: .88rem;
+            transition: color .2s;
+        }
+
+        footer ul a:hover {
+            color: #fff;
+        }
+
+        .footer-bottom {
+            max-width: 1120px;
+            margin: 32px auto 0;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255,255,255,.08);
+            text-align: center;
+            font-size: .8rem;
+            color: rgba(255,255,255,.35);
+        }
+
+        /* ── MOBILE ── */
+        @media (max-width: 900px) {
+            .page-wrapper {
+                flex-direction: column;
+                padding: 32px 16px 60px;
+            }
+
+            .toc {
+                flex: none;
+                position: static;
+                width: 100%;
+            }
+
+            .toc ul {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 4px 12px;
+                border-left: none;
+            }
+
+            .toc li a {
+                border-left: none;
+                padding: 4px 10px;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                font-size: .78rem;
+                margin-left: 0;
+            }
+
+            .toc li a:hover,
+            .toc li a.active {
+                background: rgba(108,92,231,.08);
+                border-color: var(--primary-light);
+            }
+
+            .content section {
+                padding: 24px 20px;
+            }
+
+            .footer-inner {
+                grid-template-columns: 1fr;
+                gap: 28px;
+            }
+
+            .hero h1 {
+                font-size: 1.7rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 64px;
+                left: 0;
+                right: 0;
+                background: var(--surface);
+                flex-direction: column;
+                padding: 16px 24px;
+                border-bottom: 1px solid var(--border);
+                box-shadow: 0 4px 12px rgba(0,0,0,.06);
+            }
+
+            .nav-links.open {
+                display: flex;
+            }
+
+            .nav-toggle {
+                display: block;
+            }
+
+            .hero {
+                padding: 56px 20px 40px;
+            }
+
+            .hero h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════ NAV ═══════════════ -->
+<nav>
+    <div class="nav-inner">
+        <a href="/" class="nav-brand">Cria<span>Hub</span></a>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="/">Início</a></li>
+            <li><a href="/#funcionalidades">Funcionalidades</a></li>
+            <li><a href="/#precos">Preços</a></li>
+            <li><a href="/terms.html">Termos</a></li>
+            <li><a href="/privacy.html" class="active">Privacidade</a></li>
+            <li><a href="/#contacto">Contacto</a></li>
+        </ul>
+        <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</nav>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<header class="hero">
+    <h1>Política de Privacidade</h1>
+    <p>Como recolhemos, utilizamos e protegemos os seus dados pessoais em conformidade com o RGPD.</p>
+    <div class="date-badge">Última atualização: Julho 2026</div>
+</header>
+
+<!-- ═══════════════ PAGE ═══════════════ -->
+<div class="page-wrapper">
+
+    <!-- TABLE OF CONTENTS -->
+    <aside class="toc">
+        <div class="toc-title">Índice</div>
+        <ul>
+            <li><a href="#s1">1. Responsável</a></li>
+            <li><a href="#s2">2. Dados recolhidos</a></li>
+            <li><a href="#s3">3. Finalidades e bases legais</a></li>
+            <li><a href="#s4">4. Partilha de dados</a></li>
+            <li><a href="#s5">5. Transferências internacionais</a></li>
+            <li><a href="#s6">6. Conservação</a></li>
+            <li><a href="#s7">7. Direitos dos titulares</a></li>
+            <li><a href="#s8">8. Cookies</a></li>
+            <li><a href="#s9">9. Segurança</a></li>
+            <li><a href="#s10">10. Menores</a></li>
+            <li><a href="#s11">11. Alterações</a></li>
+            <li><a href="#s12">12. Reclamações</a></li>
+        </ul>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+        <!-- 1 ──────────────────────────────────────────────── -->
+        <section id="s1">
+            <h2><span class="num">1</span> Identificação do Responsável pelo Tratamento</h2>
+            <p>O responsável pelo tratamento dos seus dados pessoais é:</p>
+            <div class="contact-card">
+                <p><strong>Empresa:</strong> CriaHub</p>
+                <p><strong>Endereço:</strong> Portugal</p>
+                <p><strong>E-mail:</strong> <a href="mailto:contacto@criahub.global">contacto@criahub.global</a></p>
+                <p><strong>Website:</strong> <a href="https://criahub.global" target="_blank" rel="noopener">criahub.global</a></p>
+            </div>
+            <p>A CriaHub compromete-se a tratar os seus dados pessoais em conformidade com o Regulamento Geral sobre a Proteção de Dados (RGPD — Regulamento (UE) 2016/679) e a legisgação nacional aplicável, nomeadamente a Lei n.º 58/2019, de 8 de agosto.</p>
+            <p>Para qualquer questão relativa ao tratamento dos seus dados, pode contactar o nosso Encarregado de Proteção de Dados (DPO) através do endereço eletrónico <a href="mailto:contacto@criahub.global">contacto@criahub.global</a>.</p>
+        </section>
+
+        <!-- 2 ──────────────────────────────────────────────── -->
+        <section id="s2">
+            <h2><span class="num">2</span> Dados Pessoais Recolhidos</h2>
+            <p>Na prestação dos nossos serviços de automação para Instagram, TikTok e WhatsApp, podemos recolher as seguintes categorias de dados pessoais:</p>
+
+            <h3>2.1 Dados de Identificação</h3>
+            <ul>
+                <li>Nome completo</li>
+                <li>Endereço de e-mail</li>
+                <li>Número de telefone (quando fornecido)</li>
+            </ul>
+
+            <h3>2.2 Dados de Pagamento</h3>
+            <ul>
+                <li>Informação de faturação (nome, morada fiscal)</li>
+                <li>Dados de cartão de crédito/débito (processados pelo nosso prestador de pagamento — a CriaHub não armazena dados de cartão)</li>
+                <li>Histórico de transações e faturas</li>
+            </ul>
+
+            <h3>2.3 Dados de Redes Sociais e Plataformas</h3>
+            <ul>
+                <li>Credenciais de ligação a Instagram, TikTok e WhatsApp (token de acesso, API keys)</li>
+                <li>ID de utilizador e nome de utilizador nas plataformas</li>
+                <li>Dados de perfis públicos associados às contas ligadas</li>
+                <li>Mensagens e interações processadas através da automação</li>
+            </ul>
+
+            <h3>2.4 Dados de Utilização</h3>
+            <ul>
+                <li>Endereço IP</li>
+                <li>Tipo de navegador e sistema operativo</li>
+                <li>Páginas visitadas, duração da sessão e padrões de utilização</li>
+                <li>Registos de acesso e ações realizadas na plataforma</li>
+                <li>Dados de geolocalização aproximada</li>
+            </ul>
+
+            <h3>2.5 Dados de Comunicação</h3>
+            <ul>
+                <li>Conteúdo de mensagens enviadas para o nosso e-mail ou formulários de contacto</li>
+                <li>Registos de suporte ao cliente</li>
+            </ul>
+        </section>
+
+        <!-- 3 ──────────────────────────────────────────────── -->
+        <section id="s3">
+            <h2><span class="num">3</span> Finalidades e Bases Legais do Tratamento</h2>
+            <p>Tratamos os seus dados pessoais com base nas seguintes finalidades e fundamentos jurídicos:</p>
+
+            <h3>3.1 Execução de Contrato <span class="badge">Art. 6.º, n.º 1, al. b) RGPD</span></h3>
+            <ul>
+                <li>Prestação dos serviços de automação contratados</li>
+                <li>Gestão da sua conta e autenticação</li>
+                <li>Processamento de pagamentos e faturação</li>
+                <li>Suporte técnico e comunicações relacionadas com o serviço</li>
+                <li>Envio de notificações operacionais (ex.: alterações ao serviço, atualizações de segurança)</li>
+            </ul>
+
+            <h3>3.2 Consentimento <span class="badge">Art. 6.º, n.º 1, al. a) RGPD</span></h3>
+            <ul>
+                <li>Envio de comunicações de marketing e novidades</li>
+                <li>Instalação de cookies não essenciais</li>
+                <li>Publicação de testemunhos ou depoimentos</li>
+            </ul>
+            <p>O consentimento pode ser retirado a qualquer momento, sem comprometer a licitude do tratamento anteriormente efetuado.</p>
+
+            <h3>3.3 Interesse Legítimo <span class="badge">Art. 6.º, n.º 1, al. f) RGPD</span></h3>
+            <ul>
+                <li>Prevenção e deteção de fraude e uso abusivo da plataforma</li>
+                <li>Garantia da segurança da informação e dos sistemas</li>
+                <li>Análise estatística e melhoria dos nossos serviços</li>
+                <li>Cumprimento de obrigações legais e regulamentares</li>
+            </ul>
+            <div class="highlight-box">
+                <p><strong>Nota:</strong> Em todos os casos de tratamento com base em interesse legítimo, realizámos uma avaliação de impacto para assegurar que os seus direitos e liberdades fundamentais prevalecem sobre os nossos interesses.</p>
+            </div>
+        </section>
+
+        <!-- 4 ──────────────────────────────────────────────── -->
+        <section id="s4">
+            <h2><span class="num">4</span> Partilha de Dados com Terceiros</h2>
+            <p>Os seus dados pessoais podem ser partilhados com os seguintes terceiros, exclusivamente para as finalidades indicadas:</p>
+
+            <h3>4.1 Plataformas de Redes Sociais</h3>
+            <ul>
+                <li><strong>Meta Platforms (Instagram):</strong> Dados de ligação e interações são processados de acordo com a política de privacidade da Meta. Ao ligar a sua conta Instagram, autoriza a CriaHub a aceder aos dados necessários para a prestação do serviço.</li>
+                <li><strong>TikTok / ByteDance:</strong> Dados de ligação e interações são processados de acordo com a política de privacidade do TikTok.</li>
+                <li><strong>WhatsApp (Meta Platforms):</strong> Mensagens e dados de ligação são processados através da API oficial do WhatsApp Business.</li>
+            </ul>
+
+            <h3>4.2 Processadores de Pagamento</h3>
+            <ul>
+                <li><strong>Stripe:</strong> Processamento seguro de pagamentos. Os dados de cartão são tratados diretamente pela Stripe e nunca são armazenados nos nossos servidores.</li>
+            </ul>
+
+            <h3>4.3 Infraestrutura e Serviços</h3>
+            <ul>
+                <li><strong>Evolution API:</strong> Serviço utilizado para a integração e automação do WhatsApp Business.</li>
+                <li><strong>Cloudflare:</strong> CDN, proteção contra ataques DDoS e otimização de desempenho.</li>
+                <li><strong>Provedores de hospedagem cloud:</strong> Servidores localizados na União Europeia (UE/EEE) utilizados para armazenamento e processamento de dados.</li>
+            </ul>
+
+            <h3>4.4 Autoridades Competentes</h3>
+            <p>Podemos partilhar dados pessoais com autoridades judiciais, administrativas ou regulamentares quando exista uma obrigação legal ou uma ordem judicial válida.</p>
+
+            <div class="highlight-box">
+                <p><strong>Compromisso:</strong> Todos os subcontratantes são obrigados contratualmente a garantir um nível de proteção de dados adequado ao previsto no RGPD.</p>
+            </div>
+        </section>
+
+        <!-- 5 ──────────────────────────────────────────────── -->
+        <section id="s5">
+            <h2><span class="num">5</span> Transferências Internacionais de Dados</h2>
+            <p>Alguns dos nossos subcontratantes podem estar localizados fora da União Europeia / Espaço Económico Europeu. Nestes casos, as transferências de dados são realizadas com as seguintes garantias:</p>
+            <ul>
+                <li><strong>Cláusulas Contratuais Padrão (SCC):</strong> Aprovadas pela Comissão Europeia, nos termos do artigo 46.º, n.º 2, al. c) do RGPD.</li>
+                <li><strong>Decisão de adequação:</strong> Quando aplicável, com base na lista de países com decisão de adequação da Comissão Europeia.</li>
+                <li><strong>Normas Corporativas Vinculantes (BCR):</strong> Quando adotadas pelo subcontratante.</li>
+            </ul>
+            <p>Pode solicitar uma cópia das garantias aplicáveis a cada transferência internacional contactando-nos através de <a href="mailto:contacto@criahub.global">contacto@criahub.global</a>.</p>
+        </section>
+
+        <!-- 6 ──────────────────────────────────────────────── -->
+        <section id="s6">
+            <h2><span class="num">6</span> Prazo de Conservação dos Dados</h2>
+            <p>Os seus dados pessoais são conservados apenas pelo tempo necessário para cumprir as finalidades para as quais foram recolhidos:</p>
+
+            <table style="width:100%; border-collapse:collapse; margin:16px 0; font-size:.9rem;">
+                <thead>
+                    <tr style="background:var(--bg); text-align:left;">
+                        <th style="padding:10px 14px; border:1px solid var(--border); font-weight:600;">Categoria de Dados</th>
+                        <th style="padding:10px 14px; border:1px solid var(--border); font-weight:600;">Prazo de Conservação</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="padding:10px 14px; border:1px solid var(--border);">Dados de conta</td>
+                        <td style="padding:10px 14px; border:1px solid var(--border);">Durante a vigência do contrato + 3 anos após a resolução</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px 14px; border:1px solid var(--border);">Dados de pagamento</td>
+                        <td style="padding:10px 14px; border:1px solid var(--border);">5 anos (obrigação fiscal e contabilística)</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px 14px; border:1px solid var(--border);">Dados de redes sociais / API tokens</td>
+                        <td style="padding:10px 14px; border:1px solid var(--border);">Durante a vigência da ligação + 30 dias após remoção</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px 14px; border:1px solid var(--border);">Registos de acesso (logs)</td>
+                        <td style="padding:10px 14px; border:1px solid var(--border);">12 meses</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px 14px; border:1px solid var(--border);">Dados de marketing</td>
+                        <td style="padding:10px 14px; border:1px solid var(--border);">Até revogação do consentimento</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px 14px; border:1px solid var(--border);">Dados de comunicação / suporte</td>
+                        <td style="padding:10px 14px; border:1px solid var(--border);">2 anos após o último contacto</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>Findos os prazos de conservação, os dados são eliminados de forma segura ou anonimizados de modo a já não serem considerados dados pessoais.</p>
+        </section>
+
+        <!-- 7 ──────────────────────────────────────────────── -->
+        <section id="s7">
+            <h2><span class="num">7</span> Direitos dos Titulares dos Dados</h2>
+            <p>Nos termos do RGPD, tem os seguintes direitos relativamente aos seus dados pessoais:</p>
+
+            <ul>
+                <li><strong>Direito de acesso (art. 15.º):</strong> Solicitar confirmação de quais dados pessoais tratamos e obter uma cópia desses dados.</li>
+                <li><strong>Direito de retificação (art. 16.º):</strong> Solicitar a correção de dados pessoais inexatos ou incompletos.</li>
+                <li><strong>Direito à eliminação (art. 17.º):</strong> Solicitar a eliminação dos seus dados pessoais quando: os dados já não são necessários para a finalidade original; retira o consentimento; se opõe ao tratamento; ou os dados foram tratados ilicitamente.</li>
+                <li><strong>Direito à portabilidade (art. 20.º):</strong> Receber os seus dados pessoais num formato estruturado, de uso comum e legível por máquina, e transmiti-los a outro responsável.</li>
+                <li><strong>Direito de oposição (art. 21.º):</strong> Opor-se ao tratamento dos seus dados com base em interesse legítimo, incluindo a perfilização.</li>
+                <li><strong>Direito à limitação do tratamento (art. 18.º):</strong> Solicitar a limitação do tratamento em determinadas circunstâncias, como durante a verificação da exatidão dos dados ou do exercício de direitos.</li>
+                <li><strong>Direito de não sujeição a decisões automatizadas (art. 22.º):</strong> Não ser submetido a decisões baseadas exclusivamente em tratamento automatizado, incluindo perfilização, que produza efeitos jurídicos ou o afete significativamente.</li>
+            </ul>
+
+            <div class="highlight-box">
+                <p><strong>Como exercer os seus direitos:</strong> Envie um pedido fundamentado para <a href="mailto:contacto@criahub.global">contacto@criahub.global</a>. Responderemos no prazo máximo de 30 dias (prorrogável por mais 60 dias em casos de complexidade). Pode ser solicitada prova de identificação para efeitos de verificação.</p>
+            </div>
+
+            <p>Tem também o direito de apresentar uma reclamação junto da autoridade de controlo competente (ver secção 12).</p>
+        </section>
+
+        <!-- 8 ──────────────────────────────────────────────── -->
+        <section id="s8">
+            <h2><span class="num">8</span> Cookies e Tecnologias de Rastreamento</h2>
+            <p>A nossa plataforma utiliza cookies e tecnologias semelhantes para diversas finalidades:</p>
+
+            <h3>8.1 Cookies Essenciais</h3>
+            <p>Necessários para o funcionamento da plataforma. Não podem ser desativados.</p>
+            <ul>
+                <li>Sessão de autenticação</li>
+                <li>Segurança e prevenção de CSRF</li>
+                <li>Preferências de cookies</li>
+            </ul>
+
+            <h3>8.2 Cookies Funcionais</h3>
+            <p>Permitem funcionalidades melhoradas e personalização.</p>
+            <ul>
+                <li>Lembrar preferências de idioma e região</li>
+                <li>Guardar definições da interface</li>
+            </ul>
+
+            <h3>8.3 Cookies Analíticos</h3>
+            <p>Ajudam-nos a compreender como os utilizadores interagem com a plataforma.</p>
+            <ul>
+                <li>Estatísticas de utilização (anónimas)</li>
+                <li>Desempenho da plataforma</li>
+            </ul>
+
+            <h3>8.4 Cookies de Marketing</h3>
+            <p>Utilizados para publicidade direcionada (apenas com o seu consentimento).</p>
+
+            <p>Pode gerir as suas preferências de cookies a qualquer momento através do painel de definições da sua conta ou através do nosso banner de cookies apresentado no primeiro acesso.</p>
+            <p>Para mais detalhes, consulte a nossa <a href="/cookies.html">Política de Cookies</a>.</p>
+        </section>
+
+        <!-- 9 ──────────────────────────────────────────────── -->
+        <section id="s9">
+            <h2><span class="num">9</span> Segurança dos Dados</h2>
+            <p>A CriaHub implementa medidas técnicas e organizacionais adequadas para proteger os seus dados pessoais contra acesso não autorizado, alteração, divulgação ou destruição, incluindo:</p>
+            <ul>
+                <li><strong>Encriptação:</strong> Todos os dados são transmitidos via TLS 1.3. Dados sensíveis em repouso são encriptados com AES-256.</li>
+                <li><strong>Controlo de acesso:</strong> Acesso restrito por base no princípio do menor privilégio, com autenticação multifator (MFA) obrigatória para acesso administrativo.</li>
+                <li><strong>Segmentação de rede:</strong> Ambientes de produção isolados e monitorizados.</li>
+                <li><strong>Monitorização:</strong> Registos de auditoria e sistemas de deteção de intrusão.</li>
+                <li><strong>Avaliações periódicas:</strong> Testes de vulnerabilidade e avaliações de impacto na proteção de dados (DPIA) quando aplicável.</li>
+                <li><strong>Formação:</strong> Todos os colaboradores com acesso a dados pessoais recebem formação regular sobre proteção de dados.</li>
+            </ul>
+            <div class="highlight-box">
+                <p><strong>Incidentes de segurança:</strong> Em caso de violação de dados que implique um risco para os seus direitos e liberdades, seremos notificados e comunicaremos a situação à autoridade de controlo (CNPD) no prazo de 72 horas e a si sem dilatação indevida, nos termos dos artigos 33.º e 34.º do RGPD.</p>
+            </div>
+        </section>
+
+        <!-- 10 ─────────────────────────────────────────────── -->
+        <section id="s10">
+            <h2><span class="num">10</span> Menores de Idade</h2>
+            <p>O serviço da CriaHub é destinado a pessoas com idade igual ou superior a 16 anos. Não recolhemos deliberadamente dados pessoais de menores de 16 anos.</p>
+            <p>Se tomarmos conhecimento de que recolhemos dados de um menor de 16 anos sem o consentimento verificável do titular da responsabilidade parental, eliminaremos esses dados imediatamente.</p>
+            <p>Se é titular da responsabilidade parental e acredita que o seu filho nos forneceu dados pessoais sem o seu consentimento, contacte-nos através de <a href="mailto:contacto@criahub.global">contacto@criahub.global</a>.</p>
+        </section>
+
+        <!-- 11 ─────────────────────────────────────────────── -->
+        <section id="s11">
+            <h2><span class="num">11</span> Alterações a esta Política</h2>
+            <p>A CriaHub reserva-se o direito de alterar esta Política de Privacidade a qualquer momento. As alterações serão publicadas nesta página com a data de "Última atualização" atualizada.</p>
+            <p>Para alterações substanciais que afetem significativamente o tratamento dos seus dados, notificaremos os utilizadores registados por e-mail com pelo menos 30 dias de antecedência à entrada em vigor das alterações.</p>
+            <p>Recomendamos que consulte periodicamente esta política para se manter informado sobre como protegemos os seus dados.</p>
+        </section>
+
+        <!-- 12 ─────────────────────────────────────────────── -->
+        <section id="s12">
+            <h2><span class="num">12</span> Reclamações</h2>
+            <p>Se considerar que o tratamento dos seus dados pessoais viola o RGPD, tem o direito de apresentar uma reclamação junto da autoridade de controlo competente:</p>
+
+            <div class="contact-card">
+                <p><strong>Comissão Nacional de Proteção de Dados (CNPD)</strong></p>
+                <p>Av. D. Carlos I, 134 — 1.º</p>
+                <p>1200-651 Lisboa, Portugal</p>
+                <p><strong>Telefone:</strong> +351 213 928 400</p>
+                <p><strong>E-mail:</strong> <a href="mailto:cnpd@cnpd.pt">cnpd@cnpd.pt</a></p>
+                <p><strong>Website:</strong> <a href="https://www.cnpd.pt" target="_blank" rel="noopener">www.cnpd.pt</a></p>
+            </div>
+
+            <p>Antes de apresentar uma reclamação junto da CNPD, recomendamos que nos contacte primeiro através de <a href="mailto:contacto@criahub.global">contacto@criahub.global</a>, de forma a podermos tratar do seu pedido de forma célere e eficaz.</p>
+        </section>
+
+    </main>
+</div>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer>
+    <div class="footer-inner">
+        <div>
+            <div class="footer-brand">Cria<span>Hub</span></div>
+            <p>Automação inteligente para Instagram, TikTok e WhatsApp. Potencialize a sua presença digital com a CriaHub.</p>
+        </div>
+        <div>
+            <h4>Legal</h4>
+            <ul>
+                <li><a href="/terms.html">Termos de Serviço</a></li>
+                <li><a href="/privacy.html">Política de Privacidade</a></li>
+                <li><a href="/cookies.html">Política de Cookies</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4>Contacto</h4>
+            <ul>
+                <li><a href="mailto:contacto@criahub.global">contacto@criahub.global</a></li>
+                <li><a href="https://criahub.global" target="_blank" rel="noopener">criahub.global</a></li>
+                <li>Portugal</li>
+            </ul>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        &copy; 2026 CriaHub. Todos os direitos reservados.
+    </div>
+</footer>
+
+</body>
+</html>

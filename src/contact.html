@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contacto — CriaHub</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--white:#f8f9fc;--purple:#6c5ce7;--purple-light:#a29bfe;--purple-dark:#5a4bd1;--text:#2d3436;--text-light:#636e72;--border:#dfe6e9;--card:#ffffff;--shadow:0 2px 12px rgba(108,92,231,.08)}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--white);color:var(--text);line-height:1.6}
+  a{color:var(--purple);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* NAV */
+  nav{background:var(--card);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+  .logo{font-size:1.4rem;font-weight:700;color:var(--purple)}
+  .logo span{color:var(--text)}
+  nav ul{list-style:none;display:flex;gap:1.5rem}
+  nav ul li a{color:var(--text-light);font-size:.9rem;font-weight:500;transition:color .2s}
+  nav ul li a:hover{color:var(--purple);text-decoration:none}
+  .hamburger{display:none;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text)}
+
+  /* HERO */
+  .hero{text-align:center;padding:4rem 2rem 3rem}
+  .hero h1{font-size:2.4rem;margin-bottom:.5rem}
+  .hero h1 span{color:var(--purple)}
+  .hero p{color:var(--text-light);max-width:540px;margin:0 auto;font-size:1.05rem}
+
+  /* CONTAINER */
+  .container{max-width:1000px;margin:0 auto;padding:0 2rem 4rem}
+
+  /* SECTION */
+  section{margin-bottom:3rem}
+  section h2{font-size:1.4rem;margin-bottom:1.2rem;color:var(--purple)}
+
+  /* CARDS */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:2rem;box-shadow:var(--shadow)}
+  .card h3{margin-bottom:.5rem;font-size:1.1rem}
+  .card p{color:var(--text-light);font-size:.95rem}
+  .card .icon{font-size:1.8rem;margin-bottom:.8rem;display:block}
+
+  /* FORM */
+  form{display:grid;gap:1rem}
+  label{font-size:.9rem;font-weight:600;display:block;margin-bottom:.25rem}
+  input,textarea,select{width:100%;padding:.75rem 1rem;border:1px solid var(--border);border-radius:8px;font-size:.95rem;font-family:inherit;transition:border .2s}
+  input:focus,textarea:focus,select:focus{outline:none;border-color:var(--purple)}
+  textarea{resize:vertical;min-height:140px}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  button[type="submit"]{background:var(--purple);color:#fff;border:none;padding:.85rem 2rem;border-radius:8px;font-size:1rem;font-weight:600;cursor:pointer;transition:background .2s}
+  button[type="submit"]:hover{background:var(--purple-dark)}
+
+  /* FAQ */
+  .faq-item{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.2rem 1.5rem;margin-bottom:.8rem;box-shadow:var(--shadow)}
+  .faq-item strong{color:var(--purple);display:block;margin-bottom:.3rem}
+
+  /* HOURS */
+  .hours{background:var(--purple);color:#fff;border-radius:12px;padding:1.5rem 2rem;display:inline-block;margin-top:.5rem}
+  .hours span{font-weight:700}
+
+  /* FOOTER */
+  footer{background:var(--card);border-top:1px solid var(--border);text-align:center;padding:2rem;font-size:.85rem;color:var(--text-light)}
+  footer a{color:var(--purple)}
+
+  /* RESPONSIVE */
+  @media(max-width:640px){
+    nav ul{display:none;flex-direction:column;position:absolute;top:100%;left:0;right:0;background:var(--card);border-bottom:1px solid var(--border);padding:1rem 2rem;gap:1rem}
+    nav ul.open{display:flex}
+    .hamburger{display:block}
+    .hero h1{font-size:1.8rem}
+    .form-row{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Cria<span>Hub</span></div>
+  <button class="hamburger" onclick="document.querySelector('nav ul').classList.toggle('open')" aria-label="Menu">&#9776;</button>
+  <ul>
+    <li><a href="#">Início</a></li>
+    <li><a href="#">Plataforma</a></li>
+    <li><a href="#">Preços</a></li>
+    <li><a href="contact.html">Contacto</a></li>
+    <li><a href="help-tiktok.html">Ajuda TikTok</a></li>
+  </ul>
+</nav>
+
+<div class="hero">
+  <h1>Fala <span>Connosco</span></h1>
+  <p>Temos o prazer em ajudar. Escolhe o método que preferires ou envia-nos uma mensagem diretamente.</p>
+</div>
+
+<div class="container">
+
+  <!-- CONTACT METHODS -->
+  <section>
+    <h2>Métodos de Contacto</h2>
+    <div class="cards">
+      <div class="card">
+        <span class="icon">&#9993;</span>
+        <h3>Email</h3>
+        <p>Envia-nos um email e respondemos num prazo máximo de 24h.</p>
+        <p style="margin-top:.6rem"><a href="mailto:contacto@criahub.global"><strong>contacto@criahub.global</strong></a></p>
+      </div>
+      <div class="card">
+        <span class="icon">&#128172;</span>
+        <h3>Formulário</h3>
+        <p>Preenche o formulário abaixo e entraremos em contacto contigo o mais brevemente possível.</p>
+      </div>
+      <div class="card">
+        <span class="icon">&#128336;</span>
+        <h3>Horário de Resposta</h3>
+        <p>Estamos disponíveis de Segunda a Sexta-feira.</p>
+        <div class="hours"><span>9h – 18h</span> (WET / Hora de Lisboa)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FORM -->
+  <section>
+    <h2>Formulário de Contacto</h2>
+    <div class="card">
+      <form id="contactForm" onsubmit="submitContact(event)">
+        <div class="form-row">
+          <div>
+            <label for="nome">Nome completo</label>
+            <input type="text" id="nome" name="name" placeholder="O teu nome" required>
+          </div>
+          <div>
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="email@exemplo.pt" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div>
+            <label for="telefone">Telefone</label>
+            <input type="tel" id="telefone" name="phone" placeholder="+351 912 345 678">
+          </div>
+          <div>
+            <label for="assunto">Assunto</label>
+            <select id="assunto" name="subject" required>
+              <option value="" disabled selected>Seleciona um assunto</option>
+              <option value="suporte">Suporte técnico</option>
+              <option value="planos">Questão sobre planos</option>
+              <option value="conta">Problema com conta</option>
+              <option value="parceria">Parceria / Colaboração</option>
+              <option value="sugestao">Sugestão de melhoria</option>
+              <option value="outro">Outro</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label for="descricao">Descrição</label>
+          <textarea id="descricao" name="description" placeholder="Descreve o teu pedido em detalhe..." rows="8" required></textarea>
+        </div>
+        <div><button type="submit">Enviar Mensagem</button></div>
+        <div id="formMessage" style="display:none;margin-top:.5rem;padding:.75rem 1rem;border-radius:8px;font-size:.9rem;"></div>
+      </form>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section>
+    <h2>Perguntas Frequentes (FAQ)</h2>
+
+    <div class="faq-item">
+      <strong>Onde está a sede da CriaHub?</strong>
+      <p>A CriaHub tem a sua sede em Lisboa, Portugal. Trabalhamos de forma remota com equipas distribuídas pela Europa. Para visitas presenciais, contacto-nos previamente por email para agendar uma reunião.</p>
+    </div>
+
+    <div class="faq-item">
+      <strong>Preciso de suporte técnico. O que devo fazer?</strong>
+      <p>Primeiro, consulta o nosso <a href="help-tiktok.html">Centro de Ajuda</a> para guias detalhados. Se o problema persistir, envia um email para <a href="mailto:contacto@criahub.global">contacto@criahub.global</a> com uma descrição do problema, prints de ecrã e o teu endereço de email associado à conta CriaHub. Respondemos em horário laboral (Seg-Sex, 9h-18h WET).</p>
+    </div>
+
+    <div class="faq-item">
+      <strong>Como posso propor uma parceria?</strong>
+      <p>Adoramos ouvir novas ideias de parceria! Envia um email para <a href="mailto:contacto@criahub.global">contacto@criahub.global</a> com o assunto "Parceria" e inclui: descrição da empresa, proposta de valor, e como imaginas a colaboração. A nossa equipa de negócios responde dentro de 48h úteis.</p>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  &copy; 2026 CriaHub. Todos os direitos reservados. | <a href="mailto:contacto@criahub.global">contacto@criahub.global</a>
+</footer>
+
+<script>
+  function submitContact(e) {
+    e.preventDefault();
+    var msg = document.getElementById('formMessage');
+    msg.style.display = 'none';
+
+    var data = {
+      name: document.getElementById('nome').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      phone: document.getElementById('telefone').value.trim(),
+      subject: document.getElementById('assunto').value,
+      description: document.getElementById('descricao').value.trim()
+    };
+
+    fetch('/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    .then(function (res) {
+      if (!res.ok) throw new Error('Erro ao enviar.');
+      return res.json();
+    })
+    .then(function () {
+      msg.style.display = 'block';
+      msg.style.background = '#e8f8f0';
+      msg.style.color = '#1a7a4c';
+      msg.textContent = 'Mensagem enviada com sucesso! Entraremos em contacto brevemente.';
+      document.getElementById('contactForm').reset();
+    })
+    .catch(function (err) {
+      msg.style.display = 'block';
+      msg.style.background = '#fdecea';
+      msg.style.color = '#b71c1c';
+      msg.textContent = 'Ocorreu um erro ao enviar a mensagem. Tenta novamente ou envia um email para contacto@criahub.global.';
+    });
+  }
+</script>
+
+</body>
+</html>

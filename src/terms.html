@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Termos de Serviço — CriaHub</title>
+    <style>
+        :root {
+            --purple: #6c5ce7;
+            --purple-dark: #5a4bd1;
+            --purple-light: #a29bfe;
+            --bg: #f8f9fc;
+            --white: #ffffff;
+            --text: #2d3436;
+            --text-muted: #636e72;
+            --border: #dfe6e9;
+            --green: #00b894;
+            --red: #d63031;
+            --shadow: 0 2px 12px rgba(108, 92, 231, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+            font-size: 16px;
+        }
+
+        a {
+            color: var(--purple);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        a:hover {
+            color: var(--purple-dark);
+            text-decoration: underline;
+        }
+
+        /* ── NAV ── */
+        nav {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 0 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+        }
+
+        .nav-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--purple);
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--purple);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: 900;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 0.92rem;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--purple);
+            text-decoration: none;
+        }
+
+        .hamburger {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        /* ── HERO ── */
+        .hero {
+            background: linear-gradient(135deg, var(--purple) 0%, #a29bfe 100%);
+            color: #fff;
+            padding: 4rem 2rem 3rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .hero p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        /* ── MAIN ── */
+        main {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .toc {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.8rem 2rem;
+            margin-bottom: 3rem;
+            box-shadow: var(--shadow);
+        }
+
+        .toc h2 {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+            color: var(--purple);
+        }
+
+        .toc ol {
+            padding-left: 1.4rem;
+        }
+
+        .toc li {
+            margin-bottom: 0.4rem;
+        }
+
+        .toc a {
+            color: var(--text);
+            font-size: 0.93rem;
+        }
+
+        section {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem 2.2rem;
+            margin-bottom: 1.8rem;
+            box-shadow: var(--shadow);
+        }
+
+        section h2 {
+            font-size: 1.3rem;
+            color: var(--purple);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--bg);
+        }
+
+        section h3 {
+            font-size: 1.05rem;
+            color: var(--text);
+            margin-top: 1.4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        section p,
+        section li {
+            color: var(--text);
+            font-size: 0.95rem;
+            margin-bottom: 0.6rem;
+        }
+
+        section ul,
+        section ol {
+            padding-left: 1.6rem;
+            margin-bottom: 0.8rem;
+        }
+
+        section li {
+            margin-bottom: 0.35rem;
+        }
+
+        /* ── PRICING TABLE ── */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 1rem;
+            margin: 1.2rem 0;
+        }
+
+        .plan-card {
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 1.4rem;
+            text-align: center;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .plan-card.highlight {
+            border-color: var(--purple);
+            background: linear-gradient(180deg, #f5f3ff 0%, #fff 100%);
+        }
+
+        .plan-card h4 {
+            font-size: 1rem;
+            color: var(--purple);
+            margin-bottom: 0.3rem;
+        }
+
+        .plan-card .price {
+            font-size: 1.7rem;
+            font-weight: 800;
+            color: var(--text);
+            margin: 0.4rem 0;
+        }
+
+        .plan-card .price span {
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: var(--text-muted);
+        }
+
+        .plan-card .annual {
+            font-size: 0.82rem;
+            color: var(--green);
+            font-weight: 600;
+            margin-bottom: 0.6rem;
+        }
+
+        .plan-card ul {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+            font-size: 0.85rem;
+        }
+
+        .plan-card ul li {
+            padding: 0.25rem 0;
+            padding-left: 1.2rem;
+            position: relative;
+            color: var(--text-muted);
+        }
+
+        .plan-card ul li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        /* ── CONTACT BOX ── */
+        .contact-box {
+            background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+            border-left: 4px solid var(--purple);
+            border-radius: 0 12px 12px 0;
+            padding: 1.4rem 1.8rem;
+            margin: 1rem 0;
+        }
+
+        .contact-box p {
+            margin: 0.3rem 0;
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            background: var(--white);
+            border-top: 1px solid var(--border);
+            padding: 2.5rem 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.88rem;
+        }
+
+        footer .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 1.8rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        footer a {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        footer a:hover {
+            color: var(--purple);
+        }
+
+        footer .footer-brand {
+            font-weight: 700;
+            color: var(--purple);
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 700px) {
+            .nav-links {
+                display: none;
+                position: absolute;
+                top: 64px;
+                left: 0;
+                right: 0;
+                background: var(--white);
+                flex-direction: column;
+                padding: 1rem 2rem 1.5rem;
+                border-bottom: 1px solid var(--border);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+                gap: 0.8rem;
+            }
+
+            .nav-links.open {
+                display: flex;
+            }
+
+            .hamburger {
+                display: block;
+            }
+
+            .hero h1 {
+                font-size: 1.5rem;
+            }
+
+            section {
+                padding: 1.4rem 1.2rem;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════ NAV ═══════════ -->
+<nav>
+    <div class="nav-inner">
+        <a href="#" class="logo">
+            <div class="logo-icon">C</div>
+            CriaHub
+        </a>
+        <button class="hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="Menu">☰</button>
+        <ul class="nav-links">
+            <li><a href="#">Início</a></li>
+            <li><a href="#">Preços</a></li>
+            <li><a href="#">Suporte</a></li>
+            <li><a href="terms.html" class="active">Termos de Serviço</a></li>
+            <li><a href="#">Privacidade</a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- ═══════════ HERO ═══════════ -->
+<header class="hero">
+    <h1>Termos de Serviço</h1>
+    <p>Última atualização: Julho 2026 &nbsp;·&nbsp; CriaHub</p>
+</header>
+
+<!-- ═══════════ MAIN ═══════════ -->
+<main>
+
+    <!-- ÍNDICE -->
+    <div class="toc">
+        <h2>Índice</h2>
+        <ol>
+            <li><a href="#aceitacao">Aceitação dos Termos</a></li>
+            <li><a href="#servico">Descrição do Serviço</a></li>
+            <li><a href="#contas">Contas e Registo</a></li>
+            <li><a href="#planos">Planos e Pagamento</a></li>
+            <li><a href="#teste">Período de Teste Gratuito</a></li>
+            <li><a href="#cancelamento">Cancelamento e Reembolso</a></li>
+            <li><a href="#uso-aceitavel">Uso Aceitável</a></li>
+            <li><a href="#propriedade">Propriedade Intelectual</a></li>
+            <li><a href="#responsabilidade">Limitação de Responsabilidade</a></li>
+            <li><a href="#garantias">Isenção de Garantias</a></li>
+            <li><a href="#indenizacao">Indemnização</a></li>
+            <li><a href="#terceiros">Ligação a Terceiros</a></li>
+            <li><a href="#suspensao">Suspensão e Terminação</a></li>
+            <li><a href="#alteracoes">Alterações aos Termos</a></li>
+            <li><a href="#lei">Lei Aplicável e Foro</a></li>
+            <li><a href="#disputas">Resolução de Disputas</a></li>
+            <li><a href="#contacto">Contacto</a></li>
+        </ol>
+    </div>
+
+    <!-- ═══ 1. ACEITAÇÃO ═══ -->
+    <section id="aceitacao">
+        <h2>1. Aceitação dos Termos</h2>
+        <p>Ao aceder, registar-se ou utilizar o CriaHub (<em>criahub.global</em>), o utilizador declara ter lido, compreendido e aceitado integralmente os presentes Termos de Serviço ("<strong>Termos</strong>").</p>
+        <p>Se não concordar com algum dos presentes Termos, deve cessar imediatamente a utilização do Serviço.</p>
+        <p>Estes Termos constituem um acordo juridicamente vinculativo entre si ("<strong>Utilizador</strong>") e CriaHub, Lda., sociedade portuguesa com sede em Lisboa ("<strong>CriaHub</strong>", "<strong>nós</strong>" ou "<strong>Empresa</strong>").</p>
+        <p>Ao criar uma conta, confirma ser maior de 18 anos ou ter capacidade legal para celebrar contratos na sua jurisdição.</p>
+        <p>Reservamo-nos o direito de alterar estes Termos a qualquer momento, sendo que a versão atualizada será sempre publicada em <em>criahub.global/terms</em>. A utilização continuada do Serviço após a publicação de alterações constitui aceitação das mesmas.</p>
+    </section>
+
+    <!-- ═══ 2. DESCRIÇÃO DO SERVIÇO ═══ -->
+    <section id="servico">
+        <h2>2. Descrição do Serviço</h2>
+        <p>O CriaHub é uma plataforma de automação SaaS (<em>Software as a Service</em>) que permite automatizar a gestão de redes sociais e canais de comunicação, nomeadamente:</p>
+        <ul>
+            <li><strong>Instagram</strong> — Resposta automática a DMs, comentários, gestão de histórias, agendamento de conteúdos e automação de interações;</li>
+            <li><strong>TikTok</strong> — Automação de mensagens diretas, respostas a comentários e gestão de perfis;</li>
+            <li><strong>WhatsApp</strong> — Envio e receção de mensagens automáticas via WhatsApp Business API (através da Evolution API), incluindo chatbots, catálogos e fluxos de atendimento;</li>
+            <li><strong>Inteligência Artificial</strong> — Geração automática de respostas contextualizadas, sugestões de conteúdo e análise de interações utilizando modelos de IA.</li>
+        </ul>
+        <p>O Serviço é prestado exclusivamente em formato digital, através de navegador web e/ou aplicação móvel, e inclui painel de controlo, analytics e integrações com plataformas de terceiros.</p>
+        <p>O CriaHub reserva-se o direito de modificar, suspender ou descontinuar qualquer funcionalidade do Serviço, total ou parcialmente, mediante aviso prévio de 30 dias.</p>
+    </section>
+
+    <!-- ═══ 3. CONTAS E REGISTO ═══ -->
+    <section id="contas">
+        <h2>3. Contas e Registo</h2>
+        <h3>3.1 Criação de conta</h3>
+        <p>Para utilizar o Serviço, o Utilizador deve criar uma conta completa e fornecer informações verdadeiras, precisas e atualizadas, incluindo:</p>
+        <ul>
+            <li>Nome completo ou razão social;</li>
+            <li>Endereço de email válido;</li>
+            <li>Palavra-passe segura (mínimo 8 caracteres, com maiúsculas, minúsculas e números);</li>
+            <li>Informação de faturação (apenas para planos pagos).</li>
+        </ul>
+
+        <h3>3.2 Verificação de email</h3>
+        <p>Após o registo, o Utilizador deverá verificar o seu endereço de email através do link de confirmação enviado automaticamente. A conta só será ativada após esta verificação. A CriaHub reserva-se o direito de desativar contas com email não verificado após 7 dias.</p>
+
+        <h3>3.3 Segurança da conta</h3>
+        <p>O Utilizador é responsável por manter a confidencialidade dos seus dados de acesso e por todas as atividades que ocorram na sua conta. Deve notificar a CriaHub imediatamente sobre qualquer uso não autorizado.</p>
+        <p>A CriaHub não se responsabiliza por perdas resultantes do não cumprimento destas obrigações de segurança pelo Utilizador.</p>
+
+        <h3>3.4 Uma pessoa, uma conta</h3>
+        <p>Cada pessoa ou entidade jurídica pode manter apenas uma conta gratuita. A criação de múltiplas contas para contornar limitações do plano resultará na suspensão imediata de todas elas.</p>
+    </section>
+
+    <!-- ═══ 4. PLANOS E PAGAMENTO ═══ -->
+    <section id="planos">
+        <h2>4. Planos e Pagamento</h2>
+
+        <h3>4.1 Planos disponíveis</h3>
+        <div class="pricing-grid">
+            <div class="plan-card">
+                <h4>Free</h4>
+                <div class="price">€0<span>/mês</span></div>
+                <ul>
+                    <li>200 contactos</li>
+                    <li>500 DMs/mês</li>
+                    <li>3 automações</li>
+                    <li>Suporte comunitário</li>
+                </ul>
+            </div>
+            <div class="plan-card">
+                <h4>Starter</h4>
+                <div class="price">€9<span>/mês</span></div>
+                <div class="annual">€6/mês no plano anual</div>
+                <ul>
+                    <li>10.000 DMs/mês</li>
+                    <li>Instagram + TikTok + WhatsApp</li>
+                    <li>25 automações</li>
+                    <li>Suporte por email</li>
+                </ul>
+            </div>
+            <div class="plan-card highlight">
+                <h4>Pro</h4>
+                <div class="price">€24<span>/mês</span></div>
+                <div class="annual">€17/mês no plano anual</div>
+                <ul>
+                    <li>DMs ilimitados</li>
+                    <li>IA avançada</li>
+                    <li>5 utilizadores</li>
+                    <li>Suporte prioritário</li>
+                </ul>
+            </div>
+            <div class="plan-card">
+                <h4>Business</h4>
+                <div class="price">€59<span>/mês</span></div>
+                <div class="annual">€42/mês no plano anual</div>
+                <ul>
+                    <li>Tudo ilimitado</li>
+                    <li>White label</li>
+                    <li>10 utilizadores</li>
+                    <li>Gestor de conta dedicado</li>
+                </ul>
+            </div>
+        </div>
+
+        <h3>4.2 Desconto anual</h3>
+        <p>A subscrição anual oferece um desconto de 27% em relação ao preço mensal. O pagamento do plano anual é efetuado de uma só vez no ativo da subscrição e não é reembolsável parcialmente (ver secção 6).</p>
+
+        <h3>4.3 Métodos de pagamento</h3>
+        <p>aceitamos os seguintes métodos de pagamento:</p>
+        <ul>
+            <li><strong>MB Way</strong> — Pagamento imediato via aplicação MB Way;</li>
+            <li><strong>Cartão de crédito/débito</strong> — Visa, Mastercard (processado via gateway de pagamento certificado PCI-DSS);</li>
+            <li><strong>Transferência bancária</strong> — Para planos anuais (sujeita a confirmação manual).</li>
+        </ul>
+        <p>Todos os preços indicados incluem IVA à taxa legal em vigor na República Portuguesa.</p>
+
+        <h3>3.4 Renovação automática</h3>
+        <p>As subscrições mensais renovam-se automaticamente no primeiro dia de cada mês. O Utilizador pode cancelar a renovação automática a qualquer momento nas definições da conta (ver secção 6).</p>
+
+        <h3>4.5 Alteração de planos</h3>
+        <p>O Utilizador pode fazer upgrade do seu plano a qualquer momento. O downgrade só é efetuado no início do ciclo de faturação seguinte. Na alteração de plano, o valor proporcional não utilizado é creditado como saldo na conta.</p>
+    </section>
+
+    <!-- ═══ 5. PERÍODO DE TESTE ═══ -->
+    <section id="teste">
+        <h2>5. Período de Teste Gratuito</h2>
+        <p>A CriaHub oferece um período de teste gratuito de <strong>3 dias</strong> com acesso completo a todas as funcionalidades do plano <strong>Business</strong>.</p>
+        <ul>
+            <li>O período de teste inicia-se no momento da ativação da conta;</li>
+            <li>Não é necessário fornecer dados de pagamento para ativar o teste;</li>
+            <li>Ao término dos 3 dias, a conta é automaticamente convertida para o plano Free, salvo subscrição ativa de plano pago;</li>
+            <li>Cada Utilizador pode solicitar o período de teste gratuito apenas uma vez;</li>
+            <li>A CriaHub reserva-se o direito de limitar ou revogar períodos de teste em caso de uso abusivo.</li>
+        </ul>
+    </section>
+
+    <!-- ═══ 6. CANCELAMENTO E REEMBOLSO ═══ -->
+    <section id="cancelamento">
+        <h2>6. Cancelamento e Reembolso</h2>
+
+        <h3>6.1 Cancelamento</h3>
+        <p>O Utilizador pode cancelar a sua subscrição a qualquer momento, sem penalidades, através do painel de controlo em <em>Definições &gt; Subscrição &gt; Cancelar</em>.</p>
+        <ul>
+            <li>O cancelamento é efetivo no final do período de faturação em curso;</li>
+            <li>Até ao final do período pago, o Utilizador mantém acesso completo ao plano contratado;</li>
+            <li>Após o cancelamento, a conta é revertida para o plano Free;</li>
+            <li>Os dados do Utilizador são mantidos durante 90 dias após o cancelamento, podendo ser reativados com uma nova subscrição.</li>
+        </ul>
+
+        <h3>6.2 Reembolso</h3>
+        <ul>
+            <li><strong>Planos mensais:</strong> Reembolso integral solicitado nos primeiros 30 dias após o primeiro pagamento. Solicitações após 30 dias não são elegíveis;</li>
+            <li><strong>Planos anuais:</strong> Reembolso proporcional aos meses não utilizados, solicitado nos primeiros 30 dias. Após este período, o valor anual não é reembolsável;</li>
+            <li>Os reembolsos são processados no prazo máximo de 30 dias úteis, através do mesmo método de pagamento utilizado;</li>
+            <li>Subsidiariamente, o Utilizador pode solicitar o reembolso por email para <a href="mailto:contacto@criahub.global">contacto@criahub.global</a>.</li>
+        </ul>
+    </section>
+
+    <!-- ═══ 7. USO ACEITÁVEL ═══ -->
+    <section id="uso-aceitavel">
+        <h2>7. Uso Aceitável</h2>
+        <p>Ao utilizar o CriaHub, o Utilizador compromete-se a NÃO:</p>
+        <ul>
+            <li><strong>Spam</strong> — Enviar mensagens em massa não solicitadas, cadeias, ou mensagens repetitivas com caráter publicitário sem consentimento;</li>
+            <li><strong>Phishing</strong> — Utilizar o Serviço para recolher dados pessoais de terceiros de forma enganosa ou fraudulentamente;</li>
+            <li><strong>Conteúdo ilegal</strong> — Publicar, distribuir ou automatizar respostas relacionadas com conteúdo que viole leis aplicáveis, incluindo mas não se limitando a: ódio, violência, exploração, drogas, ou terrorismo;</li>
+            <li><strong>Scraping</strong> — Extrair, recolher ou armazenar dados de outros utilizadores ou plataformas de forma não autorizada;</li>
+            <li><strong>Engenharia inversa</strong> — Decompilar, descompilar ou de outra forma tentar obter o código-fonte do Serviço;</li>
+            <li><strong>Burla</strong> — Utilizar o Serviço para fins fraudulentos, incluindo suplantação de identidade ou scam;</li>
+            <li><strong>Violação de termos de plataformas</strong> — Utilizar o Serviço de forma que viole os termos de serviço do Instagram, TikTok, WhatsApp ou qualquer outra plataforma integrada;</li>
+            <li><strong>Múltiplas contas</strong> — Criar contas múltiplas para contornar limitações ou penalidades.</li>
+        </ul>
+        <p>A violação destas regras resulta em suspensão ou terminação imediata da conta, sem direito a reembolso. A CriaHub reserva-se o direito de reportar atividades ilegais às autoridades competentes.</p>
+    </section>
+
+    <!-- ═══ 8. PROPRIEDADE INTELECTUAL ═══ -->
+    <section id="propriedade">
+        <h2>8. Propriedade Intelectual</h2>
+        <p>Todos os direitos de propriedade intelectual relativos ao CriaHub — incluindo, mas não se limitando a: software, código-fonte, algoritmos de IA, design, marcas registadas, logótipos, textos e imagens — são da titularidade exclusiva da CriaHub, Lda. ou dos seus licensors.</p>
+        <p>O Utilizador recebe apenas uma licença limitada, não exclusiva, intransferível e revogável para utilizar o Serviço de acordo com estes Termos.</p>
+        <p>O conteúdo gerado pelo Utilizador através do Serviço (mensagens, campanhas, dados) permanece propriedade do Utilizador. Ao utilizar o Serviço, o Utilizador concede à CriaHub uma licença não exclusiva para processar esse conteúdo exclusivamente para fins de prestação do Serviço.</p>
+        <p>É proibida a reprodução, distribuição, criação de trabalhos derivados ou exploração comercial de qualquer elemento do Serviço sem autorização prévia e por escrito da CriaHub.</p>
+    </section>
+
+    <!-- ═══ 9. LIMITAÇÃO DE RESPONSABILIDADE ═══ -->
+    <section id="responsabilidade">
+        <h2>9. Limitação de Responsabilidade</h2>
+        <p>O CriaHub é fornecido em base "<strong>tal qual</strong>" (<em>as is</em>) e "<strong>conforme disponível</strong>" (<em>as available</em>).</p>
+        <p>Na máxima extensão permitida pela legislação aplicável, a CriaHub, os seus administradores, empregados, parceiros e fornecedores <strong>NÃO</strong> serão responsáveis por:</p>
+        <ul>
+            <li>Danos indiretos, incidentais, especiais, consequenciais ou punitivos;</li>
+            <li>Perda de lucros, receita, dados, oportunidades de negócio ou reputação;</li>
+            <li>Interrupções de serviço, atrasos ou erros de transmissão;</li>
+            <li>Ações ou omissões de plataformas de terceiros (Meta, TikTok, WhatsApp, Evolution API);</li>
+            <li>Perdas decorrentes de suspensão ou bloqueio de contas em plataformas de terceiros;</li>
+            <li>Qualquer dano resultante de decisões automatizadas tomadas com base em respostas geradas por IA;</li>
+            <li>Perdas decorrentes de uso não autorizado da conta do Utilizador.</li>
+        </ul>
+        <p>Em qualquer caso, a responsabilidade total da CriaHub em relação a qualquer reclamação destes Termos não excederá o valor efetivamente pago pelo Utilizador nos <strong>12 meses anteriores</strong> ao evento que deu origem à responsabilidade.</p>
+    </section>
+
+    <!-- ═══ 10. ISENÇÃO DE GARANTIAS ═══ -->
+    <section id="garantias">
+        <h2>10. Isenção de Garantias</h2>
+        <p>Na máxima extensão permitida pela lei, a CriaHub declina-se de quaisquer garantias, expressas ou implícitas, incluindo mas não se limitando a:</p>
+        <ul>
+            <li>Garantias de comerciabilidade ou adequação a um fim específico;</li>
+            <li>Garantias de que o Serviço será ininterrupto, seguro ou livre de erros;</li>
+            <li>Garantias de que os resultados obtidos através do Serviço serão precisos ou fiáveis;</li>
+            <li>Garantias de conformidade com leis ou regulamentos específicos do setor do Utilizador;</li>
+            <li>Garantias de que as funcionalidades de IA produzirão respostas adequadas ou não ofensivas.</li>
+        </ul>
+        <p>O Utilizador reconhece que utiliza o Serviço por sua conta e risco. A CriaHub recomenda a revisão humana de todas as respostas geradas automaticamente antes do seu envio.</p>
+    </section>
+
+    <!-- ═══ 11. INDENIZAÇÃO ═══ -->
+    <section id="indenizacao">
+        <h2>11. Indemnização</h2>
+        <p>O Utilizador concorda em indemnizar, defender e isentar a CriaHub, os seus administradores, empregados, representantes e parceiros de e contra quaisquer reclamações, demandas, perdas, danos, custos e despesas (incluindo custos judiciais razoáveis) decorrentes de ou relacionados com:</p>
+        <ul>
+            <li>A utilização do Serviço pelo Utilizador;</li>
+            <li>A violação destes Termos pelo Utilizador;</li>
+            <li>A violação de direitos de terceiros pelo Utilizador;</li>
+            <li>Conteúdo publicado ou automatizado pelo Utilizador através do Serviço;</li>
+            <li>A violação de leis ou regulamentos aplicáveis pelo Utilizador.</li>
+        </ul>
+    </section>
+
+    <!-- ═══ 12. LIGAÇÃO A TERCEIROS ═══ -->
+    <section id="terceiros">
+        <h2>12. Ligação a Terceiros</h2>
+        <p>O CriaHub integra-se com plataformas e serviços de terceiros, incluindo mas não se limitando a:</p>
+        <ul>
+            <li><strong>Meta Platforms (Instagram)</strong> — API do Instagram;</li>
+            <li><strong>TikTok</strong> — TikTok API;</li>
+            <li><strong>Evolution API</strong> — API para WhatsApp Business;</li>
+            <li><strong>OpenAI / modelos de IA</strong> — Para geração automática de conteúdo;</li>
+            <li><strong>Processadores de pagamento</strong> — Para gestão de subscrições.</li>
+        </ul>
+        <p>A utilização de serviços de terceiros é regida pelos respetivos termos e condições. A CriaHub não se responsabiliza por alterações, interrupções ou terminações nos serviços de terceiros que afetem o funcionamento do CriaHub.</p>
+        <p>O Utilizador autoriza a CriaHub a partilhar os dados estritamente necessários com estas plataformas de terceiros para a prestação do Serviço, em conformidade com a Política de Privacidade do CriaHub.</p>
+        <p>Quaisquer disputas entre o Utilizador e um terceiro devem ser resolvidas diretamente entre as partes, sem envolvimento da CriaHub.</p>
+    </section>
+
+    <!-- ═══ 13. SUSPENSÃO E TERMINAÇÃO ═══ -->
+    <section id="suspensao">
+        <h2>13. Suspensão e Terminação</h2>
+
+        <h3>13.1 Suspensão pela CriaHub</h3>
+        <p>A CriaHub reserva-se o direito de suspender ou limitar o acesso do Utilizador ao Serviço, sem aviso prévio, nas seguintes circunstâncias:</p>
+        <ul>
+            <li>Violação dos presentes Termos de Serviço;</li>
+            <li>Atividade considerada fraudulenta, abusiva ou ilegal;</li>
+            <li>Sobrecarga ou risco de comprometimento da segurança da plataforma;</li>
+            <li>Solicitação de autoridades judiciais ou administrativas;</li>
+            <li>Não pagamento após 7 dias da data de vencimento.</li>
+        </ul>
+
+        <h3>13.2 Terminação pelo Utilizador</h3>
+        <p>O Utilizador pode terminar a sua conta a qualquer momento, com efeito imediato, contactando <a href="mailto:contacto@criahub.global">contacto@criahub.global</a> ou através do painel de controlo.</p>
+
+        <h3>13.3 Efeitos da terminação</h3>
+        <ul>
+            <li>Todas as licenças e direitos concedidos ao Utilizador cessam imediatamente;</li>
+            <li>Os dados do Utilizador são mantidos durante 90 dias e depois eliminados de forma segura;</li>
+            <li>O Utilizador pode solicitar a exportação dos seus dados dentro desse prazo de 90 dias;</li>
+            <li>Disposições que por natureza devam sobreviver à terminação (propriedade intelectual, limitação de responsabilidade, indemnização, lei aplicável) permanecem em vigor.</li>
+        </ul>
+    </section>
+
+    <!-- ═══ 14. ALTERAÇÕES AOS TERMOS ═══ -->
+    <section id="alteracoes">
+        <h2>14. Alterações aos Termos</h2>
+        <p>A CriaHub reserva-se o direito de alterar estes Termos a qualquer momento. As alterações serão comunicadas através de:</p>
+        <ul>
+            <li>Notificação por email para o endereço registado na conta, com 30 dias de antecedência;</li>
+            <li>Aviso visível no painel de controlo do Serviço;</li>
+            <li>Publicação da versão atualizada em <em>criahub.global/terms</em>.</li>
+        </ul>
+        <p>As alterações entram em vigor 30 dias após a notificação. O Utilizador pode recusar as alterações cancelando a conta dentro desse período, sem penalidades. A utilização continuada do Serviço após o período de 30 dias constitui aceitação das alterações.</p>
+    </section>
+
+    <!-- ═══ 15. LEI APLICÁVEL ═══ -->
+    <section id="lei">
+        <h2>15. Lei Aplicável e Foro</h2>
+        <p>Estes Termos são regidos e interpretados em conformidade com as <strong>leis da República Portuguesa</strong>, em particular:</p>
+        <ul>
+            <li>Código Civil Português;</li>
+            <li>Lei n.º 24/2007, de 18 de julho (Lei do Comércio Eletrónico);</li>
+            <li>Lei n.º 46/2012, de 29 de agosto (Lei da Transparência);</li>
+            <li>Regulamento Geral sobre a Proteção de Dados (RGPD — Regulamento (UE) 2016/679);</li>
+            <li>Lei n.º 58/2019, de 8 de agosto (Lei da Proteção de Dados Pessoais).</li>
+        </ul>
+        <p>Para todos os efeitos legais, as partes elegem como foro competente os <strong>Tribunais Judiciais de Lisboa</strong>, com renúncia expressa a qualquer outro que por razão de domicílio ou residência pudesse ser competente.</p>
+    </section>
+
+    <!-- ═══ 16. RESOLUÇÃO DE DISPUTAS ═══ -->
+    <section id="disputas">
+        <h2>16. Resolução de Disputas</h2>
+        <h3>16.1 Resolução amigável</h3>
+        <p>Antes de intentar qualquer procedimento judicial, as partes comprometem-se a tentar resolver qualquer disputa de forma amigável, mediante notificação escrita com prazo de 30 dias para resposta.</p>
+
+        <h3>16.2 Mediação</h3>
+        <p>Caso não se chegue a acordo, as partes poderão recorrer à mediação junto do Centro de Arbitragem de Conflitos de Consumo de Lisboa, nos termos do Decreto-Lei n.º 146/2001.</p>
+
+        <h3>16.3 Plataforma de Resolução de Disputas Online</h3>
+        <p>Em conformidade com o Regulamento (UE) 524/2013, o Utilizador pode apresentar reclamações através da plataforma europeia de resolução de disputas online, acessível em: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener">https://ec.europa.eu/consumers/odr</a></p>
+
+        <h3>16.4 Legislação do consumidor</h3>
+        <p>Se o Utilizador for consumidor nos termos da legislação portuguesa ou europeia, mantém todos os direitos que lhe sejam conferidos pelas disposições imperativas de proteção do consumidor, que prevalecem sobre qualquer disposição destes Termos que lhes seja contrária.</p>
+    </section>
+
+    <!-- ═══ 17. CONTACTO ═══ -->
+    <section id="contacto">
+        <h2>17. Contacto</h2>
+        <p>Para questões, pedidos de suporte ou exercício de direitos relativos a estes Termos ou aos seus dados pessoais, o Utilizador pode contactar a CriaHub através de:</p>
+        <div class="contact-box">
+            <p><strong>CriaHub, Lda.</strong></p>
+            <p>📧 Email: <a href="mailto:contacto@criahub.global">contacto@criahub.global</a></p>
+            <p>🌐 Web: <a href="https://criahub.global">criahub.global</a></p>
+            <p>📍 Lisboa, Portugal</p>
+        </div>
+        <p>O nosso Encarregado de Proteção de Dados (DPO) pode ser contactado em: <a href="mailto:dpo@criahub.global">dpo@criahub.global</a></p>
+        <p>Comprometemo-nos a responder a todas as solicitações no prazo máximo de 15 dias úteis.</p>
+    </section>
+
+</main>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<footer>
+    <div class="footer-links">
+        <a href="#">Início</a>
+        <a href="#">Preços</a>
+        <a href="#">Suporte</a>
+        <a href="terms.html">Termos de Serviço</a>
+        <a href="#">Política de Privacidade</a>
+    </div>
+    <p>&copy; 2026 <span class="footer-brand">CriaHub</span>, Lda. — Todos os direitos reservados.</p>
+    <p>Lisboa, Portugal &nbsp;·&nbsp; <a href="mailto:contacto@criahub.global">contacto@criahub.global</a></p>
+</footer>
+
+</body>
+</html>

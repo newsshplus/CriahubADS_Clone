@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CriaHub - Entrar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',system-ui,sans-serif;background:#0a0a0f;color:#f0f0f5;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+.container{width:100%;max-width:420px}
+.logo{text-align:center;margin-bottom:40px}
+.logo h1{font-size:28px;font-weight:800;background:linear-gradient(135deg,#6c5ce7,#a855f7,#ec4899);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo p{color:#8888a0;font-size:14px;margin-top:8px}
+.tabs{display:flex;gap:4px;background:#12121a;border-radius:12px;padding:4px;margin-bottom:32px}
+.tab{flex:1;padding:10px;text-align:center;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;color:#8888a0;border:none;background:transparent}
+.tab.active{background:linear-gradient(135deg,#6c5ce7,#a855f7);color:#fff}
+.form{display:none}
+.form.active{display:block}
+.field{margin-bottom:20px}
+.field label{display:block;font-size:13px;font-weight:600;color:#8888a0;margin-bottom:8px}
+.field input{width:100%;padding:12px 16px;border-radius:10px;border:1px solid #2a2a3a;background:#12121a;color:#f0f0f5;font-size:15px;font-family:inherit;transition:border-color .2s}
+.field input:focus{outline:none;border-color:#6c5ce7}
+.btn{width:100%;padding:14px;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,#6c5ce7,#a855f7);color:#fff;transition:opacity .2s}
+.btn:hover{opacity:.9}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px;font-size:13px;color:#ef4444;margin-bottom:16px;display:none}
+.success{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);border-radius:10px;padding:12px;font-size:13px;color:#10b981;margin-bottom:16px;display:none}
+.back{display:block;text-align:center;margin-top:24px;color:#8888a0;font-size:13px;text-decoration:none;transition:color .2s}
+.back:hover{color:#6c5ce7}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="logo">
+    <h1>CriaHub</h1>
+    <p>Automação Inteligente para Instagram</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('login')">Entrar</button>
+    <button class="tab" onclick="showTab('register')">Criar Conta</button>
+  </div>
+
+  <div class="error" id="error"></div>
+  <div class="success" id="success"></div>
+
+  <form class="form active" id="loginForm" onsubmit="handleLogin(event)">
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="loginEmail" required placeholder="teu@email.com">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="loginPassword" required placeholder="A tua password" minlength="6">
+    </div>
+    <button type="submit" class="btn" id="loginBtn">Entrar</button>
+  </form>
+
+  <form class="form" id="registerForm" onsubmit="handleRegister(event)">
+    <div class="field">
+      <label>Nome</label>
+      <input type="text" id="regName" required placeholder="O teu nome">
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="regEmail" required placeholder="teu@email.com">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="regPassword" required placeholder="Mínimo 6 caracteres" minlength="6">
+    </div>
+    <button type="submit" class="btn" id="regBtn">Criar Conta Grátis</button>
+  </form>
+
+  <a href="/" class="back">&larr; Voltar à página inicial</a>
+</div>
+
+<script>
+function showTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'register' && i === 1));
+  });
+  document.getElementById('loginForm').classList.toggle('active', tab === 'login');
+  document.getElementById('registerForm').classList.toggle('active', tab === 'register');
+  hideMsgs();
+}
+
+function showError(msg) {
+  const el = document.getElementById('error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('success').style.display = 'none';
+}
+
+function showSuccess(msg) {
+  const el = document.getElementById('success');
+  el.textContent = msg;
+  el.style.display = 'block';
+  document.getElementById('error').style.display = 'none';
+}
+
+function hideMsgs() {
+  document.getElementById('error').style.display = 'none';
+  document.getElementById('success').style.display = 'none';
+}
+
+async function handleLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('loginBtn');
+  btn.disabled = true;
+  btn.textContent = 'A entrar...';
+  hideMsgs();
+
+  try {
+    const res = await fetch('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: document.getElementById('loginEmail').value,
+        password: document.getElementById('loginPassword').value
+      })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      localStorage.setItem('criahub_token', data.token);
+      localStorage.setItem('criahub_user', JSON.stringify(data.user));
+      if (data.subscription) localStorage.setItem('criahub_plan', JSON.stringify(data.subscription));
+      window.location.href = '/admin';
+    } else {
+      showError(data.error || 'Erro ao entrar');
+    }
+  } catch (err) {
+    showError('Erro de ligação: ' + err.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Entrar';
+}
+
+async function handleRegister(e) {
+  e.preventDefault();
+  const btn = document.getElementById('regBtn');
+  btn.disabled = true;
+  btn.textContent = 'A criar conta...';
+  hideMsgs();
+
+  try {
+    const res = await fetch('/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: document.getElementById('regName').value,
+        email: document.getElementById('regEmail').value,
+        password: document.getElementById('regPassword').value
+      })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      localStorage.setItem('criahub_token', data.token);
+      localStorage.setItem('criahub_user', JSON.stringify(data.user));
+      window.location.href = '/admin';
+    } else {
+      showError(data.error || 'Erro ao criar conta');
+    }
+  } catch (err) {
+    showError('Erro de ligação: ' + err.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Criar Conta Gratis';
+}
+
+// If already logged in, redirect to admin
+if (localStorage.getItem('criahub_token')) {
+  window.location.href = '/admin';
+}
+</script>
+
+</body>
+</html>

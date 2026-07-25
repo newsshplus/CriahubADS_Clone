@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ajuda TikTok — CriaHub</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{--white:#f8f9fc;--purple:#6c5ce7;--purple-light:#a29bfe;--purple-dark:#5a4bd1;--text:#2d3436;--text-light:#636e72;--border:#dfe6e9;--card:#ffffff;--shadow:0 2px 12px rgba(108,92,231,.08);--success:#00b894;--warning:#fdcb6e;--danger:#e17055}
+  body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--white);color:var(--text);line-height:1.7}
+  a{color:var(--purple);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* NAV */
+  nav{background:var(--card);border-bottom:1px solid var(--border);padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+  .logo{font-size:1.4rem;font-weight:700;color:var(--purple)}
+  .logo span{color:var(--text)}
+  nav ul{list-style:none;display:flex;gap:1.5rem}
+  nav ul li a{color:var(--text-light);font-size:.9rem;font-weight:500;transition:color .2s}
+  nav ul li a:hover{color:var(--purple);text-decoration:none}
+  .hamburger{display:none;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text)}
+
+  /* BREADCRUMB */
+  .breadcrumb{padding:1.2rem 2rem;font-size:.85rem;color:var(--text-light);max-width:1000px;margin:0 auto}
+  .breadcrumb a{color:var(--purple)}
+
+  /* HERO */
+  .hero{text-align:center;padding:3rem 2rem 2rem}
+  .hero h1{font-size:2.2rem;margin-bottom:.5rem}
+  .hero h1 span{color:var(--purple)}
+  .hero p{color:var(--text-light);max-width:580px;margin:0 auto;font-size:1.05rem}
+  .badge{display:inline-block;background:var(--purple);color:#fff;padding:.3rem .9rem;border-radius:20px;font-size:.78rem;font-weight:600;margin-top:.8rem;letter-spacing:.3px}
+
+  /* CONTAINER */
+  .container{max-width:1000px;margin:0 auto;padding:0 2rem 4rem}
+
+  /* TOC */
+  .toc{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem 2rem;margin-bottom:3rem;box-shadow:var(--shadow)}
+  .toc h2{font-size:1.1rem;margin-bottom:.8rem;color:var(--purple)}
+  .toc ol{padding-left:1.3rem}
+  .toc ol li{margin-bottom:.4rem}
+  .toc ol li a{font-size:.95rem;color:var(--text)}
+  .toc ol li a:hover{color:var(--purple)}
+
+  /* SECTION */
+  section{margin-bottom:3rem}
+  section h2{font-size:1.5rem;margin-bottom:1rem;color:var(--purple);border-bottom:2px solid var(--purple-light);padding-bottom:.5rem}
+  section h3{font-size:1.15rem;margin:1.5rem 0 .6rem;color:var(--text)}
+  section p{margin-bottom:.8rem;color:var(--text-light)}
+  section ul,section ol{margin:.5rem 0 1rem 1.5rem;color:var(--text-light)}
+  section li{margin-bottom:.4rem}
+
+  /* CARD */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1.5rem 2rem;box-shadow:var(--shadow);margin-bottom:1rem}
+  .card h3{margin-top:0;color:var(--text)}
+  .card ul{margin-top:.5rem}
+
+  /* STEP */
+  .step{display:flex;gap:1.2rem;align-items:flex-start;margin-bottom:1.5rem}
+  .step-num{flex-shrink:0;width:40px;height:40px;background:var(--purple);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1rem}
+  .step-body{flex:1}
+  .step-body h4{margin:0 0 .3rem;font-size:1.05rem}
+  .step-body p{margin:0;color:var(--text-light);font-size:.95rem}
+
+  /* ALERT */
+  .alert{border-radius:10px;padding:1rem 1.5rem;margin:1rem 0;font-size:.95rem}
+  .alert-warning{background:#ffeaa7;border-left:4px solid var(--warning)}
+  .alert-info{background:#dfe6e9;border-left:4px solid var(--purple-light)}
+  .alert-danger{background:#fab1a0;border-left:4px solid var(--danger)}
+  .alert strong{display:block;margin-bottom:.2rem}
+
+  /* CODE */
+  code{background:#e8e6f0;padding:.15rem .45rem;border-radius:4px;font-size:.88rem;font-family:'Cascadia Code','Fira Code',monospace}
+
+  /* TABLE */
+  table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.95rem}
+  th,td{padding:.7rem 1rem;text-align:left;border-bottom:1px solid var(--border)}
+  th{background:var(--purple);color:#fff;font-weight:600}
+  tr:hover{background:#f0eeff}
+
+  /* FOOTER */
+  footer{background:var(--card);border-top:1px solid var(--border);text-align:center;padding:2rem;font-size:.85rem;color:var(--text-light)}
+  footer a{color:var(--purple)}
+
+  /* RESPONSIVE */
+  @media(max-width:640px){
+    nav ul{display:none;flex-direction:column;position:absolute;top:100%;left:0;right:0;background:var(--card);border-bottom:1px solid var(--border);padding:1rem 2rem;gap:1rem}
+    nav ul.open{display:flex}
+    .hamburger{display:block}
+    .hero h1{font-size:1.6rem}
+    .step{flex-direction:column;gap:.6rem}
+    table{font-size:.82rem}
+    th,td{padding:.5rem .6rem}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Cria<span>Hub</span></div>
+  <button class="hamburger" onclick="document.querySelector('nav ul').classList.toggle('open')" aria-label="Menu">&#9776;</button>
+  <ul>
+    <li><a href="#">Início</a></li>
+    <li><a href="#">Plataforma</a></li>
+    <li><a href="#">Preços</a></li>
+    <li><a href="contact.html">Contacto</a></li>
+    <li><a href="help-tiktok.html">Ajuda TikTok</a></li>
+  </ul>
+</nav>
+
+<div class="breadcrumb">
+  <a href="#">Início</a> &rsaquo; Centro de Ajuda &rsaquo; <strong>Conectar TikTok ao CriaHub</strong>
+</div>
+
+<div class="hero">
+  <h1>Como Conectar o <span>TikTok</span> ao CriaHub</h1>
+  <p>Guia completo para ligar a tua conta TikTok Business ao CriaHub e automatizar a tua presença na plataforma.</p>
+  <span class="badge">Guia Oficial &bull; Atualizado em Julho 2026</span>
+</div>
+
+<div class="container">
+
+  <!-- TABLE OF CONTENTS -->
+  <div class="toc">
+    <h2>&#128209; Índice</h2>
+    <ol>
+      <li><a href="#precisas">O que precisas</a></li>
+      <li><a href="#token">Como obter o TikTok Access Token</a></li>
+      <li><a href="#navegador">Conexão automática via navegador</a></li>
+      <li><a href="#funcionalidades">Funcionalidades disponíveis</a></li>
+      <li><a href="#limitacoes">Limitações atuais</a></li>
+      <li><a href="#troubleshooting">Troubleshooting</a></li>
+      <li><a href="#suporte">Contactar suporte</a></li>
+    </ol>
+  </div>
+
+  <!-- 1. O QUE PRECISAS -->
+  <section id="precisas">
+    <h2>1. O que precisas</h2>
+    <p>Antes de iniciar a conexão, garante que tens os seguintes elementos preparados:</p>
+
+    <div class="card">
+      <h3>Conta TikTok Business</h3>
+      <p>A CriaHub apenas funciona com contas <strong>TikTok Business</strong> ou <strong>TikTok Ads Manager</strong>. Contas pessoais padrão não são suportadas porque não têm acesso à API de developer.</p>
+
+      <div class="alert alert-info">
+        <strong>&#128161; Como mudar para conta Business:</strong>
+        Abre o TikTok &rarr; Perfil &rarr; Menu (☰) &rarr; <em>Definições e privacidade</em> &rarr; <em>Conta</em> &rarr; <em>Mudar para Conta Business</em>. Seleciona a tua categoria (ex.: Tecnologia / Software) e confirma. A mudança é gratuita e não afeta o teu conteúdo existente.
+      </div>
+
+      <h3>Token de Acesso (Access Token)</h3>
+      <p>O Access Token é uma chave de autenticação que permite ao CriaHub aceder à tua conta TikTok de forma segura via API. Expire normalmente entre 24h e 365d consoante o tipo — o CriaHub suporta renovação automática.</p>
+    </div>
+  </section>
+
+  <!-- 2. COMO OBTER O TOKEN -->
+  <section id="token">
+    <h2>2. Como obter o TikTok Access Token</h2>
+    <p>Segue estes 6 passos para gerir o teu token de acesso. Todo o processo demora cerca de 10-15 minutos.</p>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h4>Criar conta no TikTok for Business</h4>
+        <p>Acede a <a href="https://business.tiktok.com" target="_blank">business.tiktok.com</a> e cria uma conta Business. Utiliza o mesmo email associado ao teu perfil TikTok. Preenche os dados da empresa (podes usar "Empresário Individual" se fores freelancer).</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h4>Aceder ao Developer Portal</h4>
+        <p>Navega até <a href="https://developers.tiktok.com" target="_blank">developers.tiktok.com</a> e faz login com as credenciais da tua conta TikTok Business. Aceita os termos e condições do programador TikTok se for a primeira vez.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h4>Criar uma aplicação</h4>
+        <p>No painel do Developer Portal, clica em <em>"Create App"</em> e preenche:</p>
+        <ul>
+          <li><strong>App Name:</strong> <code>CriaHub</code></li>
+          <li><strong>Description:</strong> <code>Instagram and TikTok automation platform for business</code></li>
+          <li><strong>Platform:</strong> Web</li>
+          <li><strong>Redirect URI:</strong> <code>https://criahub.global/auth/tiktok/callback</code></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h4>Solicitar permissões</h4>
+        <p>No separador <em>"Permissions"</em>, solicita as seguintes permissões:</p>
+        <table>
+          <thead>
+            <tr><th>Permissão</th><th>Descrição</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>user.info.basic</code></td><td>Obter dados básicos do perfil (nome, foto, seguidores)</td></tr>
+            <tr><td><code>video.list</code></td><td>Listar e aceder aos vídeos publicados</td></tr>
+            <tr><td><code>comment.read</code></td><td>Ler comentários nos teus vídeos</td></tr>
+            <tr><td><code>message.send</code></td><td>Enviar mensagens diretas (DMs)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <h4>Gerar Access Token via OAuth</h4>
+        <p>No separador <em>"Authentication"</em>, clica em <em>"Generate Token"</em>. Serás redirecionado para o TikTok para autorizar a aplicação. Confirma as permissões e autoriza o acesso.</p>
+        <div class="alert alert-warning">
+          <strong>&#9888;&#65039; Nota importante:</strong>
+          O token de curto prazo (Short-Lived) expira em 24 horas. Para automação contínua, gera um <strong>Long-Lived Token</strong> (válido até 365 dias) na secção <em>"Token Management"</em>.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">6</div>
+      <div class="step-body">
+        <h4>Copiar o token e colar no CriaHub</h4>
+        <p>Copia o Access Token gerado. No painel do CriaHub, navega até <strong>Configurações → TikTok</strong>, clica em <em>"Adicionar Conta"</em> e cola o token no campo indicado. Clica em <em>"Guardar e Testar Conexão"</em>.</p>
+        <div class="alert alert-info">
+          <strong>&#10003;&#65039; Verificação:</strong>
+          Se o token for válido, verás um ✔ verde com o nome da tua conta TikTok. Se receberes um erro, consulta a secção de <a href="#troubleshooting">Troubleshooting</a> abaixo.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. CONEXÃO VIA NAVEGADOR -->
+  <section id="navegador">
+    <h2>3. Conexão automática via navegador (semi-automática)</h2>
+    <p>Se preferes não gerir tokens manualmente, o CriaHub oferece um método alternativo via extensão de navegador.</p>
+
+    <div class="card">
+      <h3>Instalar extensão CriaHub Connector</h3>
+      <p>Instala a extensão oficial <strong>CriaHub Connector</strong> na Chrome Web Store.</p>
+      <ul>
+        <li><a href="#" target="_blank">&#128279; Instalar CriaHub Connector (Chrome Web Store)</a></li>
+        <li>Após instalar, o ícone do CriaHub aparecerá na barra de extensões do Chrome</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h3>Abrir TikTok no navegador</h3>
+      <p>Inicia sessão na tua conta TikTok Business no navegador onde a extensão está instalada. Navega pelo menos uma vez pela tua perfil para garantir que a sessão está ativa.</p>
+    </div>
+
+    <div class="card">
+      <h3>A extensão captura a sessão automaticamente</h3>
+      <p>Quando o TikTok estiver aberto, a extensão CriaHub Connector deteta a sessão ativa e captura os dados de autenticação de forma segura. Nada é enviado sem a tua autorização — verás um popup de confirmação.</p>
+    </div>
+
+    <div class="card">
+      <h3>CriaHub sincroniza os dados via polling</h3>
+      <p>Após a autorização, o CriaHub sincroniza periodicamente (polling a cada 5 minutos) os dados da tua conta TikTok: comentários, mensagens, métricas de vídeos e dados de perfil.</p>
+    </div>
+
+    <div class="alert alert-warning">
+      <strong>&#9888;&#65039; Nota sobre Browser Connector:</strong>
+      O método via navegador é mais lento do que a API direta e depende do navegador estar aberto. Para automação 24/7, recomendamos o método via Access Token descrito na secção anterior.
+    </div>
+  </section>
+
+  <!-- 4. FUNCIONALIDADES -->
+  <section id="funcionalidades">
+    <h2>4. Funcionalidades disponíveis</h2>
+    <p>Com o TikTok conectado ao CriaHub, tens acesso às seguintes funcionalidades:</p>
+
+    <div class="card">
+      <h3>&#128172; Resposta automática a comentários em vídeos</h3>
+      <p>Configura respostas automáticas personalizadas para comentários nos teus vídeos. Define palavras-chave e templates de resposta para interagir com a tua audiência em tempo real, mesmo quando não estás online.</p>
+    </div>
+
+    <div class="card">
+      <h3>&#128233; Envio de DMs quando alguém comenta com palavra-chave</h3>
+      <p>Automatiza o envio de mensagens diretas quando um utilizador comenta com uma palavra-chave específica. Por exemplo, se alguém comenta "INFO", o CriaHub envia automaticamente uma DM com o link ou catálogo que configuraste.</p>
+    </div>
+
+    <div class="card">
+      <h3>&#128200; Métricas de engajamento</h3>
+      <p>Acede a métricas detalhadas de engajamento: taxa de resposta a comentários, tempo médio de resposta, comentários mais populares, e evolução do engajamento ao longo do tempo.</p>
+    </div>
+
+    <div class="card">
+      <h3>&#128202; Analytics de campanhas TikTok Ads</h3>
+      <p>Se tiveres uma conta TikTok Ads Manager conectada, o CriaHub sincroniza os dados das tuas campanhas publicitarias: impressões, cliques, CTR, CPC, conversões e ROI — tudo num painel unificado.</p>
+    </div>
+  </section>
+
+  <!-- 5. LIMITAÇÕES -->
+  <section id="limitacoes">
+    <h2>5. Limitações atuais</h2>
+
+    <div class="alert alert-danger">
+      <strong>&#9888;&#65039; Importante — Lê antes de utilizares:</strong>
+      O TikTok tem restrições de API diferentes do Instagram. Estas são as principais limitações que precisas de conhecer.
+    </div>
+
+    <div class="card">
+      <h3>TikTok não tem API oficial para DMs</h3>
+      <p>Ao contrário do Instagram (que tem a Messenger API), o TikTok <strong>não oferece uma API oficial de envio de DMs</strong> para terceiros. Isto significa que o envio de mensagens diretas não pode ser feito 100% via API.</p>
+    </div>
+
+    <div class="card">
+      <h3>DMs são enviadas via Browser Connector ou redirecionamento</h3>
+      <p>As DMs no TikTok são processadas através do <strong>CriaHub Browser Connector</strong> (extensão de navegador descrita na secção 3) ou via <strong>redirecionamento para link</strong> — por exemplo, gerar um link que abre o chat do TikTok com uma mensagem pré-preenchida.</p>
+    </div>
+
+    <div class="card">
+      <h3>Taxa de envio: máx. 50 DMs/hora</h3>
+      <p>O TikTok impõe um limite de <strong>50 mensagens diretas por hora</strong> por conta. O CriaHub respeita este limite automaticamente e distribui os envios ao longo do tempo para evitar bloqueios. Se atingires o limite, as mensagens em fila de espera são enviadas automaticamente quando a janela se renova.</p>
+    </div>
+  </section>
+
+  <!-- 6. TROUBLESHOOTING -->
+  <section id="troubleshooting">
+    <h2>6. Troubleshooting</h2>
+
+    <div class="card">
+      <h3>&#128308; "Token expirado"</h3>
+      <p><strong>Causa:</strong> O Access Token de curto prazo expirou (24h) ou o token longo atingiu o limite de 365 dias.</p>
+      <p><strong>Solução:</strong> Acede ao <a href="https://developers.tiktok.com" target="_blank">TikTok Developer Portal</a> → <em>"Token Management"</em> → <em>"Regenerate Token"</em>. Copia o novo token e atualiza-o no CriaHub em <strong>Configurações → TikTok</strong>.</p>
+    </div>
+
+    <div class="card">
+      <h3>&#128308; "Conta não é Business"</h3>
+      <p><strong>Causa:</strong> A conta TikTok associada ao token é uma conta pessoal padrão, não Business.</p>
+      <p><strong>Solução:</strong> No TikTok, vai a <em>Perfil → Menu → Definições e privacidade → Conta → Mudar para Conta Business</em>. Após a mudança, regenera o token no Developer Portal e volta a inseri-lo no CriaHub.</p>
+    </div>
+
+    <div class="card">
+      <h3>&#128308; "Mensagens não enviadas"</h3>
+      <p><strong>Causa:</strong> Provável atingimento do rate limit de 50 DMs/hora ou bloqueio temporário do TikTok devido a atividade suspeita.</p>
+      <p><strong>Solução:</strong> Verifica no painel do CriaHub (<em>Dashboard → TikTok → Status</em>) se o rate limit está ativo. Se sim, aguarda a renovação da janela horária. Se o problema persistir, verifica se a extensão Browser Connector está ativa e se o TikTok está aberto no navegador.</p>
+    </div>
+
+    <div class="card">
+      <h3>&#128308; "Extensão não deteta sessão"</h3>
+      <p><strong>Causa:</strong> O TikTok não está aberto no navegador ou a sessão expirou.</p>
+      <p><strong>Solução:</strong> Fecha e volta a abrir o TikTok no Chrome. Garante que estás autenticado. Clica no ícone da extensão CriaHub Connector e seleciona <em>"Atualizar sessão"</em>.</p>
+    </div>
+  </section>
+
+  <!-- 7. CONTACTAR SUPORTE -->
+  <section id="suporte">
+    <h2>7. Contactar suporte</h2>
+    <p>Se nenhum dos passos acima resolveu o teu problema, a nossa equipa de suporte técnico está pronta a ajudar.</p>
+
+    <div class="card">
+      <h3>&#9993; Email de suporte</h3>
+      <p>Envia um email para <a href="mailto:contacto@criahub.global"><strong>contacto@criahub.global</strong></a> com:</p>
+      <ul>
+        <li>Descrição detalhada do problema</li>
+        <li>Capturas de ecrã do erro (se aplicável)</li>
+        <li>O endereço de email associado à tua conta CriaHub</li>
+        <li>O tipo de conexão utilizada (Token API ou Browser Connector)</li>
+      </ul>
+      <p style="margin-top:.8rem"><strong>Tempo de resposta:</strong> Segunda a Sexta, 9h-18h (WET). Resposta máxima em 24h úteis.</p>
+    </div>
+
+    <div class="card">
+      <h3>&#128205; Página de contacto</h3>
+      <p>Consulta também a nossa <a href="contact.html">página de contacto</a> para mais informações, FAQ e formulário de contacto.</p>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  &copy; 2026 CriaHub. Todos os direitos reservados. | <a href="mailto:contacto@criahub.global">contacto@criahub.global</a>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>CriaHub - Automação Inteligente para Instagram</title>
+<meta name="description" content="Automatiza as tuas vendas no Instagram com IA. Comentário → DM em menos de 1 segundo. API oficial da Meta. Suporte em português.">
+<meta name="theme-color" content="#6c5ce7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CriaHub">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/svg+xml" href="/icon-192.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#f7f8fc;--bg-white:#ffffff;--card:#ffffff;--accent:#6c5ce7;--accent2:#a855f7;--text:#1a1a2e;--text2:#6b7280;--border:#e5e7eb;--success:#10b981;--warning:#f59e0b;--gradient:linear-gradient(135deg,#6c5ce7,#a855f7)}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text2);line-height:1.6;overflow-x:hidden}
+h1,h2,h3,h4{font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--text)}
+a{color:var(--accent);text-decoration:none}
+.svg-icon{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:14px 32px;display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,.92);backdrop-filter:blur(24px) saturate(1.4);-webkit-backdrop-filter:blur(24px) saturate(1.4);border-bottom:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.nav-logo{font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:22px;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.nav-links{display:flex;gap:28px;align-items:center}
+.nav-links a{color:var(--text2);font-size:14px;font-weight:500;transition:color .2s}
+.nav-links a:hover{color:var(--accent)}
+.nav-btn{padding:10px 22px;border-radius:10px;background:var(--gradient);color:#fff!important;font-weight:600;font-size:14px;box-shadow:0 2px 8px rgba(108,92,231,.25)}
+.nav-hamburger{display:none;background:none;border:none;color:var(--text);cursor:pointer;padding:4px}
+.nav-hamburger svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.mobile-menu{display:none;position:fixed;top:60px;left:0;right:0;bottom:0;background:rgba(255,255,255,.98);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);z-index:99;padding:32px;flex-direction:column;gap:0}
+.mobile-menu.open{display:flex}
+.mobile-menu a{padding:16px 0;font-size:18px;color:var(--text2);border-bottom:1px solid var(--border);font-weight:500}
+.mobile-menu a:last-child{border:none;color:#fff;background:var(--gradient);text-align:center;border-radius:12px;margin-top:16px;padding:16px}
+
+.trust-bar{padding:14px 24px;text-align:center;border-bottom:1px solid var(--border);background:var(--bg-white);margin-top:58px}
+.trust-bar p{color:var(--text2);font-size:12px;letter-spacing:2px;text-transform:uppercase;font-weight:600}
+.trust-bar span{margin:0 6px;opacity:.3}
+
+.hero{min-height:100vh;display:flex;align-items:center;padding:100px 32px 60px;position:relative;overflow:hidden;max-width:1280px;margin:0 auto;gap:40px}
+.hero::before{content:'';position:absolute;top:-20%;right:-10%;width:700px;height:700px;background:radial-gradient(circle,rgba(108,92,231,.06),transparent 70%);pointer-events:none}
+.hero::after{content:'';position:absolute;bottom:-20%;left:-10%;width:600px;height:600px;background:radial-gradient(circle,rgba(168,85,247,.04),transparent 70%);pointer-events:none}
+.hero-left{flex:1;position:relative;z-index:1;max-width:600px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:50px;background:rgba(108,92,231,.08);border:1px solid rgba(108,92,231,.18);font-size:13px;color:var(--accent);margin-bottom:24px;font-weight:600}
+.hero-badge svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2}
+.hero h1{font-size:clamp(32px,5vw,56px);font-weight:800;line-height:1.08;margin-bottom:20px;letter-spacing:-1px;color:var(--text)}
+.hero h1 em{font-style:normal;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero>p,.hero-desc{font-size:17px;color:var(--text2);max-width:520px;margin-bottom:32px;line-height:1.7}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 28px;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:all .25s;border:none;text-decoration:none;font-family:inherit}
+.btn-primary{background:var(--gradient);color:#fff;box-shadow:0 4px 20px rgba(108,92,231,.3)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(108,92,231,.4)}
+.btn-ghost{background:var(--bg-white);border:1.5px solid var(--border);color:var(--text)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:48px}
+.hero-stat{text-align:center;padding:16px 8px;background:var(--bg-white);border:1px solid var(--border);border-radius:12px}
+.hero-stat .num{font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:22px;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hero-stat .lbl{font-size:11px;color:var(--text2);margin-top:2px;font-weight:500}
+
+.hero-right{flex:0 0 auto;position:relative;z-index:1;display:flex;justify-content:center}
+.phone-mockup{width:280px;background:#e8e9ed;border-radius:40px;padding:12px;box-shadow:0 24px 80px rgba(0,0,0,.1),0 0 0 1px rgba(0,0,0,.04);position:relative}
+.phone-notch{width:120px;height:28px;background:#e8e9ed;border-radius:0 0 18px 18px;position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:2}
+.phone-screen{background:#f0f1f5;border-radius:30px;overflow:hidden;min-height:480px}
+.phone-statusbar{display:flex;justify-content:space-between;align-items:center;padding:12px 20px 6px;font-size:11px;font-weight:600;color:var(--text)}
+.phone-ig-header{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid rgba(0,0,0,.06);background:var(--bg-white)}
+.phone-ig-avatar{width:32px;height:32px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.phone-ig-name{font-size:13px;font-weight:600;color:var(--text)}
+.phone-ig-status{font-size:10px;color:var(--accent)}
+.phone-dm-area{padding:16px;display:flex;flex-direction:column;gap:10px}
+.dm-bubble{max-width:85%;padding:10px 14px;border-radius:16px;font-size:12px;line-height:1.5;color:var(--text)}
+.dm-incoming{background:#e8e9ed;border-bottom-left-radius:4px;align-self:flex-start}
+.dm-outgoing{background:var(--accent);border-bottom-right-radius:4px;align-self:flex-end;color:#fff}
+.dm-time{text-align:center;font-size:9px;color:var(--text2);opacity:.6}
+.dm-field{background:var(--bg-white);border-radius:20px;padding:10px 14px;display:flex;align-items:center;gap:8px;margin-top:8px;border:1px solid var(--border)}
+.dm-field span{font-size:12px;color:var(--text2);flex:1}
+.dm-field svg{width:18px;height:18px;fill:none;stroke:var(--accent);stroke-width:2}
+
+.section{padding:100px 32px;max-width:1200px;margin:0 auto}
+.section-label{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:50px;background:rgba(108,92,231,.08);border:1px solid rgba(108,92,231,.15);font-size:12px;color:var(--accent);margin-bottom:16px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.section-title{text-align:center;margin-bottom:56px}
+.section-title h2{font-size:clamp(28px,4vw,42px);font-weight:800;margin-bottom:12px;letter-spacing:-.5px;color:var(--text)}
+.section-title p{color:var(--text2);font-size:16px;max-width:560px;margin:0 auto;line-height:1.7}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.feature-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;transition:all .3s;position:relative;overflow:hidden}
+.feature-card:hover{border-color:rgba(108,92,231,.3);transform:translateY(-4px);box-shadow:0 12px 40px rgba(108,92,231,.08)}
+.feature-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:16px;background:rgba(108,92,231,.08)}
+.feature-icon svg{width:22px;height:22px;fill:none;stroke:var(--accent);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.feature-card h3{font-size:17px;font-weight:700;margin-bottom:8px;color:var(--text)}
+.feature-card p{color:var(--text2);font-size:14px;line-height:1.6}
+
+.demo-section{background:var(--bg-white);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.demo-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1080px;margin:0 auto}
+.demo-card{background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:24px;transition:all .3s}
+.demo-card:hover{border-color:rgba(108,92,231,.3);transform:translateY(-3px)}
+.demo-card-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);margin-bottom:14px}
+.demo-phone-sm{background:var(--bg-white);border-radius:20px;padding:14px;min-height:240px;border:1px solid var(--border)}
+.demo-phone-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.demo-phone-bar .avatar{width:28px;height:28px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.demo-phone-bar .name{font-size:12px;font-weight:600;color:var(--text)}
+.demo-phone-bar .time{font-size:10px;color:var(--text2);margin-left:auto}
+.demo-comment{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:8px;border-left:3px solid var(--accent)}
+.demo-comment strong{color:var(--text)}
+.demo-dm{background:rgba(108,92,231,.06);border-radius:12px 12px 12px 4px;padding:10px 12px;font-size:12px;border:1px solid rgba(108,92,231,.15);line-height:1.5}
+.demo-dm .dm-sender{font-size:10px;color:var(--accent);font-weight:600;margin-bottom:4px}
+.demo-email-box{background:var(--bg);border-radius:12px;padding:16px;text-align:center;border:1px dashed rgba(108,92,231,.25)}
+.demo-email-text{font-size:11px;color:var(--text2);margin-bottom:8px}
+.demo-email-field{background:var(--bg-white);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--success);font-family:'Inter',monospace}
+.demo-check{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--success);margin-top:10px;font-weight:600}
+.demo-check svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5}
+
+.dashboard-section{position:relative}
+.dashboard-section::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:80%;height:100%;background:radial-gradient(ellipse,rgba(108,92,231,.04),transparent 70%);pointer-events:none}
+.dashboard-wrap{display:flex;gap:60px;align-items:center;max-width:1100px;margin:0 auto}
+.dashboard-text{flex:1}
+.dashboard-text h2{font-size:clamp(28px,4vw,40px);font-weight:800;margin-bottom:16px;letter-spacing:-.5px;color:var(--text)}
+.dashboard-text p{color:var(--text2);font-size:16px;line-height:1.7;margin-bottom:24px}
+.dashboard-mockup{flex:1.2;background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 24px 60px rgba(108,92,231,.08),0 1px 3px rgba(0,0,0,.04)}
+.dash-topbar{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--bg)}
+.dash-dot{width:10px;height:10px;border-radius:50%}
+.dash-dot:nth-child(1){background:#ff5f57}
+.dash-dot:nth-child(2){background:#febc2e}
+.dash-dot:nth-child(3){background:#28c840}
+.dash-title{font-size:12px;color:var(--text2);margin-left:8px;font-weight:500}
+.dash-body{padding:20px;background:var(--bg-white)}
+.dash-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.dash-stat{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px}
+.dash-stat-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;font-weight:600;margin-bottom:6px}
+.dash-stat-num{font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:22px;font-weight:800}
+.dash-stat-num.purple{color:var(--accent)}
+.dash-stat-num.green{color:var(--success)}
+.dash-stat-num.pink{color:#ec4899}
+.dash-chart{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px}
+.dash-chart-title{font-size:11px;color:var(--text2);font-weight:600;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+.dash-chart-bars{display:flex;align-items:flex-end;gap:6px;height:80px}
+.dash-bar{flex:1;border-radius:4px 4px 0 0;background:var(--gradient);opacity:.7;transition:opacity .2s}
+.dash-bar:hover{opacity:1}
+.dash-campaigns{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px}
+.dash-campaigns-title{font-size:11px;color:var(--text2);font-weight:600;margin-bottom:12px;text-transform:uppercase;letter-spacing:.5px}
+.dash-campaign{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.dash-campaign:last-child{border:none}
+.dash-campaign-name{font-size:12px;font-weight:600;color:var(--text)}
+.dash-campaign-stat{font-size:11px;color:var(--text2)}
+.dash-badge{font-size:9px;font-weight:700;padding:3px 8px;border-radius:50px;text-transform:uppercase;letter-spacing:.5px}
+.dash-badge.active{background:rgba(16,185,129,.12);color:var(--success)}
+.dash-badge.paused{background:rgba(245,158,11,.12);color:var(--warning)}
+
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;position:relative}
+.steps::before{content:'';position:absolute;top:36px;left:calc(16.67% + 24px);right:calc(16.67% + 24px);height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));opacity:.2}
+.step{text-align:center;position:relative;padding:0 16px}
+.step-num{width:48px;height:48px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-family:'Plus Jakarta Sans',system-ui,sans-serif;font-size:18px;font-weight:800;color:#fff;margin:0 auto 16px;position:relative;z-index:1;box-shadow:0 4px 16px rgba(108,92,231,.25)}
+.step h3{font-size:17px;font-weight:700;margin-bottom:8px;color:var(--text)}
+.step p{color:var(--text2);font-size:14px;line-height:1.6}
+
+.pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;align-items:start}
+.price-card{background:var(--card);border:1.5px solid var(--border);border-radius:20px;padding:32px 28px;position:relative;transition:all .35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column}
+.price-card:hover{transform:translateY(-6px);box-shadow:0 20px 60px rgba(108,92,231,.1)}
+.price-card.featured{border-color:var(--accent);box-shadow:0 8px 40px rgba(108,92,231,.15);transform:translateY(-4px);z-index:2}
+.price-card.featured:hover{transform:translateY(-8px);box-shadow:0 16px 56px rgba(108,92,231,.2)}
+.price-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--gradient);color:#fff;padding:5px 18px;border-radius:50px;font-size:10px;font-weight:700;letter-spacing:1.2px;white-space:nowrap;text-transform:uppercase;box-shadow:0 4px 12px rgba(108,92,231,.3)}
+.price-icon{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;font-size:22px}
+.price-icon.free{background:rgba(107,114,128,.1)}
+.price-icon.starter{background:rgba(59,130,246,.1)}
+.price-icon.pro{background:rgba(108,92,231,.12)}
+.price-icon.business{background:rgba(245,158,11,.1)}
+.price-name{font-size:20px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.price-desc{color:var(--text2);font-size:13px;margin-bottom:20px;line-height:1.5}
+.price-amount{font-size:44px;font-weight:800;margin-bottom:2px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:var(--text);display:flex;align-items:baseline;gap:2px}
+.price-amount .currency{font-size:22px;font-weight:600;opacity:.6}
+.price-amount .period{font-size:14px;font-weight:500;color:var(--text2);font-family:'Inter',system-ui,sans-serif}
+.price-original{font-size:14px;color:var(--text2);text-decoration:line-through;margin-bottom:2px;min-height:20px}
+.price-annual-note{font-size:12px;color:var(--success);font-weight:600;margin-bottom:16px;min-height:18px}
+.price-divider{height:1px;background:var(--border);margin:0 0 20px}
+.price-features{list-style:none;margin-bottom:28px;flex:1}
+.price-features li{padding:8px 0;font-size:13px;color:var(--text);display:flex;align-items:flex-start;gap:10px;line-height:1.4}
+.price-features li svg{width:16px;height:16px;fill:none;stroke:var(--success);stroke-width:2.5;flex-shrink:0;margin-top:2px}
+.price-features li .feat-highlight{color:var(--text);font-weight:600}
+.price-btn{width:100%;padding:14px;border:none;border-radius:12px;font-size:14px;font-weight:600;cursor:pointer;transition:all .25s;font-family:inherit;text-align:center}
+.price-btn-primary{background:var(--gradient);color:#fff;box-shadow:0 4px 20px rgba(108,92,231,.3)}
+.price-btn-primary:hover{opacity:.92;transform:translateY(-2px);box-shadow:0 8px 28px rgba(108,92,231,.4)}
+.price-btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text)}
+.price-btn-outline:hover{border-color:var(--accent);color:var(--accent);background:rgba(108,92,231,.04)}
+.price-btn-ghost{background:rgba(108,92,231,.06);border:1.5px solid transparent;color:var(--accent)}
+.price-btn-ghost:hover{background:rgba(108,92,231,.12)}
+.lang-active{color:var(--accent)!important;border-color:var(--accent)!important}
+
+.comparison{overflow-x:auto;margin-top:20px}
+.comparison table{width:100%;border-collapse:collapse;min-width:680px}
+.comparison th,.comparison td{padding:12px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:13px}
+.comparison th{color:var(--text2);font-size:11px;text-transform:uppercase;letter-spacing:.5px;font-weight:600;background:var(--bg)}
+.comparison td{color:var(--text2)}
+.comparison td:first-child{font-weight:600;color:var(--text)}
+.comparison .check{color:var(--success)}
+.comparison .cross{color:#ef4444;opacity:.5}
+.comparison .highlight{color:var(--success);font-weight:700}
+.comparison tr:hover{background:rgba(108,92,231,.02)}
+
+.testimonials-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.testimonial{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;transition:all .3s}
+.testimonial:hover{box-shadow:0 8px 32px rgba(108,92,231,.06);transform:translateY(-2px)}
+.testimonial-stars{display:flex;gap:2px;margin-bottom:12px}
+.testimonial-stars svg{width:16px;height:16px;fill:var(--warning);stroke:none}
+.testimonial p{font-size:14px;color:var(--text2);margin-bottom:16px;line-height:1.7;font-style:italic}
+.testimonial-author{display:flex;align-items:center;gap:12px}
+.testimonial-avatar{width:40px;height:40px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#fff;flex-shrink:0}
+.testimonial-name{font-size:14px;font-weight:600;color:var(--text)}
+.testimonial-role{font-size:12px;color:var(--text2)}
+
+.faq-grid{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+details.faq-item{background:var(--card);border:1px solid var(--border);border-radius:14px;transition:all .3s}
+details.faq-item[open]{border-color:rgba(108,92,231,.3);box-shadow:0 4px 16px rgba(108,92,231,.06)}
+details.faq-item:hover{border-color:rgba(108,92,231,.2)}
+summary{padding:18px 22px;cursor:pointer;font-size:15px;font-weight:600;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--text)}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'+';font-size:18px;color:var(--accent);transition:transform .2s;flex-shrink:0}
+details[open] summary::after{transform:rotate(45deg)}
+.faq-a{padding:0 22px 18px;font-size:14px;color:var(--text2);line-height:1.7}
+
+.install-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:800px;margin:0 auto}
+.install-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;transition:all .3s}
+.install-card:hover{border-color:rgba(108,92,231,.3);box-shadow:0 8px 24px rgba(108,92,231,.06)}
+.install-card h3{font-size:17px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px;color:var(--text)}
+.install-card h3 svg{width:24px;height:24px;fill:none;stroke:var(--accent);stroke-width:1.7}
+.install-steps{text-align:left;font-size:13px;color:var(--text2);display:flex;flex-direction:column;gap:10px}
+.install-step{display:flex;align-items:flex-start;gap:10px}
+.install-step-num{background:var(--gradient);color:#fff;font-size:10px;font-weight:700;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+
+.cta-section{text-align:center;padding:100px 32px;position:relative;overflow:hidden;background:var(--bg-white);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.cta-section::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(108,92,231,.06),transparent 70%);pointer-events:none}
+.cta-section h2{font-size:clamp(28px,4vw,40px);font-weight:800;margin-bottom:12px;position:relative;color:var(--text)}
+.cta-section p{color:var(--text2);margin-bottom:32px;font-size:16px;position:relative}
+
+footer{padding:48px 32px 32px;text-align:center;color:var(--text2);font-size:13px;background:var(--text);color:rgba(255,255,255,.6)}
+footer a{color:rgba(255,255,255,.7);text-decoration:none;transition:color .2s}
+footer a:hover{color:var(--accent2)}
+.footer-links{display:flex;justify-content:center;gap:24px;margin-bottom:16px;flex-wrap:wrap}
+.footer-links a{font-size:14px}
+.footer-made{margin-top:12px;font-size:12px;opacity:.5}
+.footer-social{margin-top:8px;font-size:12px;color:var(--success);font-weight:600;opacity:.8}
+
+.fade-in{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+
+@media(max-width:1024px){
+  .hero{flex-direction:column;text-align:center;padding-top:120px}
+  .hero-left{max-width:100%}
+  .hero-desc{margin:0 auto 32px}
+  .hero-cta{justify-content:center}
+  .hero-stats{max-width:500px;margin:48px auto 0}
+  .features-grid,.demo-cards,.testimonials-grid{grid-template-columns:repeat(2,1fr)}
+  .pricing-grid{grid-template-columns:repeat(2,1fr);max-width:700px;margin:0 auto}
+  .steps{grid-template-columns:1fr;max-width:400px;margin:0 auto}
+  .steps::before{display:none}
+  .dashboard-wrap{flex-direction:column}
+  .install-grid{grid-template-columns:1fr}
+}
+@media(max-width:768px){
+  .nav-links{display:none}
+  .nav-hamburger{display:block}
+  .features-grid,.demo-cards,.testimonials-grid{grid-template-columns:1fr}
+  .hero-stats{grid-template-columns:repeat(2,1fr)}
+  .section{padding:72px 20px}
+  .phone-mockup{width:240px}
+  .dash-stats{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-logo">CriaHub</div>
+  <div class="nav-links">
+    <a href="#features">Funcionalidades</a>
+    <a href="#demo">Demo</a>
+    <a href="#pricing">Preços</a>
+    <a href="#how">Como Funciona</a>
+    <a href="#faq">FAQ</a>
+    <a href="#contacto">Contacto</a>
+    <button class="lang-toggle" onclick="toggleLang()" style="background:none;border:1px solid var(--border);color:var(--text2);padding:6px 12px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit">EN</button>
+    <a href="/auth" class="nav-btn">Entrar</a>
+  </div>
+  <button class="nav-hamburger" onclick="document.querySelector('.mobile-menu').classList.toggle('open')" aria-label="Menu">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+  </button>
+</nav>
+<div class="mobile-menu">
+  <a href="#features" onclick="this.parentElement.classList.remove('open')">Funcionalidades</a>
+  <a href="#demo" onclick="this.parentElement.classList.remove('open')">Demo</a>
+  <a href="#pricing" onclick="this.parentElement.classList.remove('open')">Preços</a>
+  <a href="#how" onclick="this.parentElement.classList.remove('open')">Como Funciona</a>
+  <a href="#faq" onclick="this.parentElement.classList.remove('open')">FAQ</a>
+  <a href="#contacto" onclick="this.parentElement.classList.remove('open')">Contacto</a>
+  <button onclick="toggleLang();this.parentElement.classList.remove('open')" style="background:none;border:none;color:var(--text2);font-size:16px;padding:16px 0;border-bottom:1px solid var(--border);text-align:left;font-weight:500;cursor:pointer;width:100%;text-align:left">Idioma: <strong id="mobile-lang-label">EN</strong></button>
+  <a href="/auth">Entrar</a>
+</div>
+
+<div class="trust-bar">
+  <p>INSTAGRAM + TIKTOK + WHATSAPP <span>&middot;</span> IA INCLUÍDA <span>&middot;</span> SEM TAXAS EXTRAS</p>
+</div>
+
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-badge">
+      <svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      Alternativa ao ManyChat — Mais Canais, Menos Preço
+    </div>
+    <h1>Automatiza as tuas vendas no Instagram <em>24/7</em></h1>
+    <p class="hero-desc">Transforma comentários em clientes automaticamente. Responde a todos, envia links, recolhe emails e fecha vendas enquanto dormes. Tudo com inteligência artificial e a API oficial da Meta.</p>
+    <div class="hero-cta">
+      <a href="/auth" class="btn btn-primary">
+        Começar Grátis — 3 Dias
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <a href="#how" class="btn btn-ghost">Ver Como Funciona</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="num">300%</div><div class="lbl">Mais conversões</div></div>
+      <div class="hero-stat"><div class="num">24/7</div><div class="lbl">Automação ativa</div></div>
+      <div class="hero-stat"><div class="num">5 min</div><div class="lbl">Configuração</div></div>
+      <div class="hero-stat"><div class="num">0%</div><div class="lbl">Risco de ban</div></div>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="phone-mockup">
+      <div class="phone-notch"></div>
+      <div class="phone-screen">
+        <div class="phone-statusbar"><span>9:41</span><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/></svg></div>
+        <div class="phone-ig-header">
+          <div class="phone-ig-avatar">L</div>
+          <div><div class="phone-ig-name">loja_exemplo</div><div class="phone-ig-status">Online agora</div></div>
+        </div>
+        <div class="phone-dm-area">
+          <div class="dm-time">Hoje, 14:32</div>
+          <div class="dm-bubble dm-incoming">Olá! Vi o post das ténis novas, quanto custam? 👟</div>
+          <div class="dm-bubble dm-outgoing">Olá! 😊 As ténis estão por 59,90€ com frete grátis. Queres que te envie o link direto?</div>
+          <div class="dm-bubble dm-incoming">Sim por favor!</div>
+          <div class="dm-bubble dm-outgoing">Aqui está: loja.pt/tenis-novas 🛒 Entrega em 24-48h</div>
+          <div class="dm-bubble dm-incoming">Perfeito, vou encomendar!</div>
+          <div class="dm-field">
+            <span>Escrever mensagem...</span>
+            <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <div class="section-title fade-in">
+    <div class="section-label">Funcionalidades</div>
+    <h2>Tudo o que precisas para vender no Instagram</h2>
+    <p>Funcionalidades profissionais que grandes marcas utilizam, agora acessíveis para qualquer negócio em Portugal</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card fade-in">
+      <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/><path d="M8 10h.01M12 10h.01M16 10h.01"/></svg></div>
+      <h3>Comentário → DM Automático</h3>
+      <p>Alguém comenta "QUERO" no teu post? Em menos de 1 segundo recebe uma mensagem privada personalizada com o link, preço ou material.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 017 7c0 2.38-1.19 4.47-3 5.74V17a1 1 0 01-1 1H9a1 1 0 01-1-1v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 017-7z"/><path d="M9 21h6M10 17v4M14 17v4"/></svg></div>
+      <h3>IA que Entende o Teu Público</h3>
+      <p>A inteligência artificial analisa cada comentário e responde de forma contextualizada, profissional e em português europeu.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
+      <h3>Dashboard Completo</h3>
+      <p>Observa em tempo real quantas mensagens foram enviadas, quantos emails recolheste, taxa de conversão e muito mais.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-icon"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></svg></div>
+      <h3>Recolha de Emails</h3>
+      <p>Transforma seguidores em leads qualificados. O sistema pede o email automaticamente antes de entregar o conteúdo.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+      <h3>Filtro de Conteúdo Negativo</h3>
+      <p>A IA deteta insultos, xenofobia e comentários maldosos e NÃO responde. Protege a tua marca e reputação automaticamente.</p>
+    </div>
+    <div class="feature-card fade-in">
+      <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+      <h3>100% Seguro e Oficial</h3>
+      <p>Utiliza a API oficial da Meta (Instagram Graph API). Não partilhas senhas, não há risco de shadowban. Aprovado e certificado.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="channels" style="background:var(--bg-white);border-top:1px solid var(--border);border-bottom:1px solid var(--border);max-width:100%;padding:100px 32px">
+  <div style="max-width:1200px;margin:0 auto">
+    <div class="section-title fade-in">
+      <div class="section-label">Multi-Canal</div>
+      <h2>Instagram + TikTok + WhatsApp</h2>
+      <p>Uma única plataforma para gerir toda a comunicação automática nos 3 canais principais</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:960px;margin:0 auto">
+      <div class="feature-card fade-in" style="text-align:center">
+        <div class="feature-icon" style="margin:0 auto 16px;background:linear-gradient(135deg,rgba(225,48,108,.08),rgba(131,58,180,.08))"><svg viewBox="0 0 24 24" style="stroke:#E1306C"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5"/></svg></div>
+        <h3 style="margin-bottom:8px">Instagram</h3>
+        <p style="color:var(--text2);font-size:14px;line-height:1.6">Comentários → DM automático. API oficial da Meta. Sem risco de ban.</p>
+      </div>
+      <div class="feature-card fade-in" style="text-align:center">
+        <div class="feature-icon" style="margin:0 auto 16px;background:rgba(0,0,0,.05)"><svg viewBox="0 0 24 24" style="stroke:var(--text)"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"/></svg></div>
+        <h3 style="margin-bottom:8px">TikTok</h3>
+        <p style="color:var(--text2);font-size:14px;line-height:1.6">Via API oficial e Browser Connector. Responde a comentários e DMs automaticamente.</p>
+      </div>
+      <div class="feature-card fade-in" style="text-align:center">
+        <div class="feature-icon" style="margin:0 auto 16px;background:rgba(37,211,102,.08)"><svg viewBox="0 0 24 24" style="stroke:#25D366"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg></div>
+        <h3 style="margin-bottom:8px">WhatsApp</h3>
+        <p style="color:var(--text2);font-size:14px;line-height:1.6">Via Evolution API. Automação completa de inbox. Atendimento 24/7.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section demo-section" id="demo">
+  <div class="section-title fade-in">
+    <div class="section-label">Demo</div>
+    <h2>Vê como funciona na prática</h2>
+    <p>Desde o comentário até à venda — tudo automatizado em segundos</p>
+  </div>
+  <div class="demo-cards">
+    <div class="demo-card fade-in">
+      <div class="demo-card-label">1. Comentário detetado</div>
+      <div class="demo-phone-sm">
+        <div class="demo-phone-bar">
+          <div class="avatar">L</div>
+          <div class="name">loja_exemplo</div>
+          <div class="time">há 2 min</div>
+        </div>
+        <div class="demo-comment"><strong>@ana_lemos</strong> QUERO ESTE! Como faço para comprar? 🔥</div>
+        <div class="demo-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Palavra-chave "QUERO" detetada</div>
+      </div>
+    </div>
+    <div class="demo-card fade-in">
+      <div class="demo-card-label">2. DM enviada automaticamente</div>
+      <div class="demo-phone-sm">
+        <div class="demo-phone-bar">
+          <div class="avatar">L</div>
+          <div class="name">loja_exemplo</div>
+          <div class="time">há 2 min</div>
+        </div>
+        <div class="demo-dm">
+          <div class="dm-sender">loja_exemplo</div>
+          Olá Ana! 😊 Vi que gostaste do produto. Aqui está o link direto para encomendares: loja.pt/produto
+        </div>
+        <div class="demo-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Mensagem enviada em 0,8 segundos</div>
+      </div>
+    </div>
+    <div class="demo-card fade-in">
+      <div class="demo-card-label">3. Lead capturado</div>
+      <div class="demo-phone-sm">
+        <div class="demo-phone-bar">
+          <div class="avatar">L</div>
+          <div class="name">loja_exemplo</div>
+          <div class="time">há 1 min</div>
+        </div>
+        <div class="demo-email-box">
+          <div class="demo-email-text">Pedimos o email antes de entregar o conteúdo:</div>
+          <div class="demo-email-field">ana.lemais@email.com</div>
+        </div>
+        <div class="demo-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Email guardado no painel de controlo</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section dashboard-section">
+  <div class="dashboard-wrap">
+    <div class="dashboard-text fade-in">
+      <div class="section-label">Painel de Controlo</div>
+      <h2>Painel de controlo completo</h2>
+      <p>Gestão de automações, contas, contactos e analytics — tudo num só lugar. Vê em tempo real o desempenho das tuas campanhas e toma decisões com dados concretos.</p>
+      <a href="/auth" class="btn btn-primary">
+        Experimentar Grátis
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+    <div class="dashboard-mockup fade-in">
+      <div class="dash-topbar">
+        <div class="dash-dot"></div><div class="dash-dot"></div><div class="dash-dot"></div>
+        <span class="dash-title">CriaHub — Dashboard</span>
+      </div>
+      <div class="dash-body">
+        <div class="dash-stats">
+          <div class="dash-stat"><div class="dash-stat-label">Mensagens Enviadas</div><div class="dash-stat-num purple">12.847</div></div>
+          <div class="dash-stat"><div class="dash-stat-label">Conversões</div><div class="dash-stat-num green">1.203</div></div>
+          <div class="dash-stat"><div class="dash-stat-label">Emails Recolhidos</div><div class="dash-stat-num pink">3.418</div></div>
+        </div>
+        <div class="dash-chart">
+          <div class="dash-chart-title">Mensagens — Últimos 7 dias</div>
+          <div class="dash-chart-bars">
+            <div class="dash-bar" style="height:45%"></div>
+            <div class="dash-bar" style="height:62%"></div>
+            <div class="dash-bar" style="height:38%"></div>
+            <div class="dash-bar" style="height:78%"></div>
+            <div class="dash-bar" style="height:55%"></div>
+            <div class="dash-bar" style="height:90%"></div>
+            <div class="dash-bar" style="height:100%"></div>
+          </div>
+        </div>
+        <div class="dash-campaigns">
+          <div class="dash-campaigns-title">Automações Ativas</div>
+          <div class="dash-campaign"><span class="dash-campaign-name">Campanha Verão 2026</span><span class="dash-badge active">Ativa</span><span class="dash-campaign-stat">4.231 msgs</span></div>
+          <div class="dash-campaign"><span class="dash-campaign-name">Lançamento Produto X</span><span class="dash-badge active">Ativa</span><span class="dash-campaign-stat">3.102 msgs</span></div>
+          <div class="dash-campaign"><span class="dash-campaign-name">Black Friday Preview</span><span class="dash-badge paused">Pausada</span><span class="dash-campaign-stat">1.890 msgs</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="how">
+  <div class="section-title fade-in">
+    <div class="section-label">Como Funciona</div>
+    <h2>3 passos para automatizar</h2>
+    <p>Configura em menos de 5 minutos, sem conhecimentos técnicos</p>
+  </div>
+  <div class="steps">
+    <div class="step fade-in">
+      <div class="step-num">1</div>
+      <h3>Conecta o teu Instagram</h3>
+      <p>Liga a tua conta profissional (Business ou Creator) em segundos. Seguro, rápido e pela API oficial da Meta.</p>
+    </div>
+    <div class="step fade-in">
+      <div class="step-num">2</div>
+      <h3>Cria a tua automação</h3>
+      <p>Define a palavra-chave, escreve a mensagem ou deixa a IA gerar automaticamente. Escolhe o post e ativa.</p>
+    </div>
+    <div class="step fade-in">
+      <div class="step-num">3</div>
+      <h3>As vendas acontecem</h3>
+      <p>Cada comentário com a palavra-chave gera uma mensagem privada automática. Tu apenas vês os resultados.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="pricing">
+  <div class="section-title fade-in">
+    <div class="section-label">Preços</div>
+    <h2>Planos simples, sem surpresas</h2>
+    <p>Preço fixo mensal. Sem custos por contacto, sem taxas escondidas. 3 dias grátis em qualquer plano.</p>
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:28px">
+      <span style="font-size:14px;font-weight:600;color:var(--text)" id="pricing-monthly-label">Mensal</span>
+      <button id="pricing-toggle" onclick="togglePricing()" style="width:52px;height:28px;border-radius:14px;background:var(--accent);border:none;cursor:pointer;position:relative;transition:background .3s">
+        <span id="pricing-toggle-dot" style="position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .3s;transform:translateX(0);box-shadow:0 1px 4px rgba(0,0,0,.15)"></span>
+      </button>
+      <span style="font-size:14px;font-weight:600;color:var(--text2)" id="pricing-annual-label">Anual <span style="background:rgba(16,185,129,.1);color:var(--success);padding:2px 8px;border-radius:50px;font-size:11px;font-weight:700;margin-left:4px">Poupa 15%</span></span>
+    </div>
+  </div>
+  <div class="pricing-grid">
+    <!-- FREE -->
+    <div class="price-card fade-in">
+      <div class="price-icon free">&#127380;</div>
+      <div class="price-name">Free</div>
+      <div class="price-desc">Para experimentar</div>
+      <div class="price-amount"><span class="currency">&euro;</span>0</div>
+      <div class="price-original">&nbsp;</div>
+      <div class="price-annual-note">&nbsp;</div>
+      <div class="price-divider"></div>
+      <ul class="price-features">
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> <span class="feat-highlight">200</span> contactos</li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> <span class="feat-highlight">500</span> DMs/mês</li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> <span class="feat-highlight">3</span> automações</li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Instagram apenas</li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 1 utilizador</li>
+      </ul>
+      <button class="price-btn price-btn-ghost" onclick="window.location.href='/auth'">Começar Grátis</button>
+    </div>
+    <!-- STARTER -->
+    <div class="price-card fade-in">
+      <div class="price-icon starter">&#9889;</div>
+      <div class="price-name">Starter</div>
+      <div class="price-desc">Para quem está a começar</div>
+      <div class="price-amount" data-monthly="9" data-annual="7.65"><span class="currency">&euro;</span><span data-plan="price">9</span><span class="period">/mês</span></div>
+      <div class="price-original" data-plan="original">&nbsp;</div>
+      <div class="price-annual-note" data-plan="annual-note">&nbsp;</div>
+      <div class="price-divider"></div>
+      <ul class="price-features">
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> <span class="feat-highlight">10.000</span> DMs/mês</li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Instagram + TikTok + WhatsApp</li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> <span class="feat-highlight">25</span> automações</li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> IA incluída</li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> <span class="feat-highlight">2</span> utilizadores</li>
+      </ul>
+      <button class="price-btn price-btn-outline" onclick="window.location.href='/auth'">Escolher Starter</button>
+    </div>
+    <!-- PRO (featured) -->
+    <div class="price-card featured fade-in">
+      <div class="price-badge">Mais Popular</div>
+      <div class="price-icon pro">&#128640;</div>
+      <div class="price-name">Pro</div>
+      <div class="price-desc">Para negócios em crescimento</div>
+      <div class="price-amount" data-monthly="24" data-annual="20.40"><span class="currency">&euro;</span><span data-plan="price">24</span><span class="period">/mês</span></div>
+      <div class="price-original" data-plan="original">&nbsp;</div>
+      <div class="price-annual-note" data-plan="annual-note">&nbsp;</div>
+      <div class="price-divider"></div>
+      <ul class="price-features">
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> DMs <span class="feat-highlight">ilimitados</span></li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> IA <span class="feat-highlight">avançada</span></li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> <span class="feat-highlight">5</span> utilizadores</li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> CRM + Tags</li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Analytics avançados</li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Suporte prioritário</li>
+      </ul>
+      <button class="price-btn price-btn-primary" onclick="window.location.href='/auth'">Escolher Pro</button>
+    </div>
+    <!-- BUSINESS -->
+    <div class="price-card fade-in">
+      <div class="price-icon business">&#127970;</div>
+      <div class="price-name">Business</div>
+      <div class="price-desc">Para agências e multi-marcas</div>
+      <div class="price-amount" data-monthly="59" data-annual="50.15"><span class="currency">&euro;</span><span data-plan="price">59</span><span class="period">/mês</span></div>
+      <div class="price-original" data-plan="original">&nbsp;</div>
+      <div class="price-annual-note" data-plan="annual-note">&nbsp;</div>
+      <div class="price-divider"></div>
+      <ul class="price-features">
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Tudo <span class="feat-highlight">ilimitado</span></li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> White label</li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> <span class="feat-highlight">10</span> utilizadores</li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> API + Webhooks</li>
+        <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Suporte dedicado</li>
+      </ul>
+      <button class="price-btn price-btn-outline" onclick="window.location.href='/auth'">Escolher Business</button>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="compare">
+  <div class="section-title fade-in">
+    <div class="section-label">Comparação</div>
+    <h2>Compara com outras ferramentas</h2>
+    <p>Porque é que o CriaHub é a melhor escolha para Portugal e para a Europa</p>
+  </div>
+  <div class="comparison fade-in">
+    <table>
+      <tr><th>Funcionalidade</th><th style="color:var(--accent)">CriaHub</th><th>ManyChat</th><th>CreatorFlow</th><th>Inrō</th></tr>
+      <tr><td>Preço (a partir de)</td><td class="highlight">&euro;0 grátis / &euro;9/mês</td><td>&euro;16+/mês</td><td>$15 (~&euro;14)/mês</td><td>&euro;12,99/mês</td></tr>
+      <tr><td>IA incluída</td><td class="check">&#10003;</td><td>Pago extra</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td></tr>
+      <tr><td>Contactos ilimitados (planos pagos)</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td></tr>
+      <tr><td>Canais: Instagram + TikTok + WhatsApp</td><td class="check">&#10003;</td><td class="cross">&#10007; (só IG)</td><td class="cross">&#10007; (só IG)</td><td class="check">&#10003; (parcial)</td></tr>
+      <tr><td>Sem taxas extra por contacto</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td></tr>
+      <tr><td>IA em português europeu</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td></tr>
+      <tr><td>Filtro de conteúdo negativo</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td></tr>
+      <tr><td>Recolha de emails</td><td class="check">&#10003;</td><td>Pago extra</td><td>Só Pro</td><td class="cross">&#10007;</td></tr>
+      <tr><td>Suporte em português</td><td class="check">&#10003;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td><td class="cross">&#10007;</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="section" id="testimonials">
+  <div class="section-title fade-in">
+    <div class="section-label">Testemunhos</div>
+    <p>Empresas reais em Portugal que já utilizam o CriaHub para vender mais</p>
+  </div>
+  <div class="testimonials-grid">
+    <div class="testimonial fade-in">
+      <div class="testimonial-stars"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+      <p>"Antes perdia clientes porque não respondia a tempo. Agora o CriaHub responde em menos de 1 segundo e eu apenas vejo os resultados. Triplicou as minhas vendas no Instagram."</p>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar">M</div>
+        <div><div class="testimonial-name">Maria Silva</div><div class="testimonial-role">Loja de Moda, Lisboa</div></div>
+      </div>
+    </div>
+    <div class="testimonial fade-in">
+      <div class="testimonial-stars"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+      <p>"Paguei 40 euros por mês no ManyChat e não tinha metade destas funcionalidades. O CriaHub é mais barato, melhor e está em português. Não há comparação."</p>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar">J</div>
+        <div><div class="testimonial-name">João Santos</div><div class="testimonial-role">Coach Digital, Porto</div></div>
+      </div>
+    </div>
+    <div class="testimonial fade-in">
+      <div class="testimonial-stars"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+      <p>"A funcionalidade de filtrar comentários negativos salvou-me de vários problemas. Profissional e inteligente. Recomendo a todos os que vendem no Instagram."</p>
+      <div class="testimonial-author">
+        <div class="testimonial-avatar">A</div>
+        <div><div class="testimonial-name">Ana Costa</div><div class="testimonial-role">Agência de Marketing, Faro</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="faq">
+  <div class="section-title fade-in">
+    <div class="section-label">FAQ</div>
+    <h2>Perguntas frequentes</h2>
+    <p>Respostas às dúvidas mais comuns sobre o CriaHub</p>
+  </div>
+  <div class="faq-grid">
+    <details class="faq-item fade-in">
+      <summary>Preciso de saber programar?</summary>
+      <div class="faq-a">Não. O CriaHub foi desenhado para qualquer pessoa. Configura tudo com poucos cliques, sem qualquer conhecimento técnico.</div>
+    </details>
+    <details class="faq-item fade-in">
+      <summary>É seguro para a minha conta?</summary>
+      <div class="faq-a">Sim. Utiliza a API oficial da Meta (Instagram Graph API). Não partilhas senhas e não há risco de ban ou shadowban.</div>
+    </details>
+    <details class="faq-item fade-in">
+      <summary>Posso cancelar quando quiser?</summary>
+      <div class="faq-a">Sim. Sem fidelização. Cancela quando quiseres, sem custos adicionais nem letras pequenas.</div>
+    </details>
+    <details class="faq-item fade-in">
+      <summary>Funciona no telemóvel?</summary>
+      <div class="faq-a">Sim. Podes instalar o CriaHub como aplicação no telemóvel e gerir tudo diretamente a partir do ecrã.</div>
+    </details>
+    <details class="faq-item fade-in">
+      <summary>Preciso de conta Business?</summary>
+      <div class="faq-a">Sim, o Instagram exige conta Business ou Creator para aceder à API. É gratuito mudar nas definições do Instagram.</div>
+    </details>
+    <details class="faq-item fade-in">
+      <summary>Posso conectar TikTok?</summary>
+      <div class="faq-a">Sim! O CriaHub suporta TikTok via API oficial e Browser Connector. Podes responder a comentários e DMs automaticamente.</div>
+    </details>
+    <details class="faq-item fade-in">
+      <summary>WhatsApp funciona como?</summary>
+      <div class="faq-a">Via Evolution API, com automação completa de inbox. Podes configurar respostas automáticas, catálogos e fluxos de vendas 24/7.</div>
+    </details>
+    <details class="faq-item fade-in">
+      <summary>Há taxas extras por contacto?</summary>
+      <div class="faq-a">NÃO. Contactos ilimitados em todos os planos pagos. Sem custos escondidos, sem taxas por mensagem ou por contacto.</div>
+    </details>
+    <details class="faq-item fade-in">
+      <summary>Posso mudar de plano?</summary>
+      <div class="faq-a">Sim, podes mudar de plano a qualquer momento. O upgrade é imediato e o downgrade aplica-se no próximo ciclo de faturação.</div>
+    </details>
+  </div>
+</section>
+
+<section class="section" id="contacto" style="background:var(--bg-white);border-top:1px solid var(--border);border-bottom:1px solid var(--border);max-width:100%;padding:100px 32px">
+  <div style="max-width:640px;margin:0 auto">
+    <div class="section-title fade-in">
+      <div class="section-label">Contacto</div>
+      <h2>Fala connosco</h2>
+      <p>Tens dúvidas, sugestões ou queres uma demonstração? Preenche o formulário e entraremos em contacto em menos de 24h.</p>
+    </div>
+    <form id="lpContactForm" onsubmit="submitLPContact(event)" class="fade-in" style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:32px;display:flex;flex-direction:column;gap:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <label for="lpName" style="display:block;font-size:13px;color:var(--text2);margin-bottom:6px;font-weight:500">Nome *</label>
+          <input type="text" id="lpName" required placeholder="O teu nome" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px;outline:none;font-family:inherit;transition:border .2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <div>
+          <label for="lpEmail" style="display:block;font-size:13px;color:var(--text2);margin-bottom:6px;font-weight:500">Email *</label>
+          <input type="email" id="lpEmail" required placeholder="email@exemplo.com" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px;outline:none;font-family:inherit;transition:border .2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+      </div>
+      <div>
+        <label for="lpPhone" style="display:block;font-size:13px;color:var(--text2);margin-bottom:6px;font-weight:500">Telefone</label>
+        <div style="display:flex;gap:0">
+          <div style="position:relative;flex:0 0 200px">
+            <div id="phoneCountryBtn" onclick="toggleCountryDropdown()" style="display:flex;align-items:center;gap:8px;padding:12px 14px;border:1px solid var(--border);border-radius:10px 0 0 10px;background:var(--bg);color:var(--text);font-size:14px;cursor:pointer;transition:border .2s;overflow:hidden;height:46px" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+              <span id="selectedFlag" style="font-size:20px;line-height:1">&#127463;&#127479;</span>
+              <span id="selectedCountryCode" style="font-weight:600;white-space:nowrap">+351</span>
+              <svg style="width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;margin-left:auto;flex-shrink:0" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div id="countryDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;max-height:280px;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:0 0 10px 10px;z-index:50;box-shadow:0 8px 24px rgba(0,0,0,.15)">
+              <div style="padding:8px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--card)">
+                <input type="text" id="countrySearch" placeholder="Pesquisar país..." oninput="filterCountries(this.value)" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;outline:none;font-family:inherit">
+              </div>
+              <div id="countryList"></div>
+            </div>
+          </div>
+          <input type="tel" id="lpPhone" placeholder="912 345 678" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-left:none;border-radius:0 10px 10px 0;background:var(--bg);color:var(--text);font-size:14px;outline:none;font-family:inherit;transition:border .2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+        </div>
+      </div>
+      <div>
+        <label for="lpSubject" style="display:block;font-size:13px;color:var(--text2);margin-bottom:6px;font-weight:500">Assunto *</label>
+        <select id="lpSubject" required style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px;outline:none;font-family:inherit;transition:border .2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+          <option value="">Seleciona...</option>
+          <option value="demo">Quero uma demonstração</option>
+          <option value="suporte">Suporte técnico</option>
+          <option value="planos">Questão sobre planos</option>
+          <option value="parceria">Parceria / Colaboração</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+      <div>
+        <label for="lpDescription" style="display:block;font-size:13px;color:var(--text2);margin-bottom:6px;font-weight:500">Descrição *</label>
+        <textarea id="lpDescription" required rows="4" placeholder="Conta-nos como podemos ajudar..." style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);font-size:14px;outline:none;font-family:inherit;resize:vertical;transition:border .2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+      </div>
+      <button type="submit" id="lpSubmitBtn" style="width:100%;padding:14px;border:none;border-radius:10px;background:var(--gradient);color:#fff;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .25s;box-shadow:0 4px 16px rgba(108,92,231,.25)">
+        Enviar Mensagem
+      </button>
+      <div id="lpFormMsg" style="display:none;text-align:center;padding:10px;border-radius:8px;font-size:14px;font-weight:500"></div>
+    </form>
+  </div>
+</section>
+
+<section class="section" id="install">
+  <div class="section-title fade-in">
+    <div class="section-label">PWA</div>
+    <h2>Instala o CriaHub no telemóvel</h2>
+    <p>Utiliza o CriaHub como uma aplicação nativa, sempre ao alcance das tuas mãos</p>
+  </div>
+  <div class="install-grid">
+    <div class="install-card fade-in">
+      <h3>
+        <svg viewBox="0 0 24 24"><path d="M5 16V8a7 7 0 0114 0v8M8 20h8M12 16v4"/></svg>
+        Android
+      </h3>
+      <div class="install-steps">
+        <div class="install-step"><span class="install-step-num">1</span> Abre <strong>criahub-automation.dpjcam.workers.dev</strong> no Chrome</div>
+        <div class="install-step"><span class="install-step-num">2</span> Toca nos 3 pontos do canto superior direito</div>
+        <div class="install-step"><span class="install-step-num">3</span> Seleciona <strong>"Adicionar ao ecrã principal"</strong></div>
+        <div class="install-step"><span class="install-step-num">4</span> Confirma e está pronto</div>
+      </div>
+    </div>
+    <div class="install-card fade-in">
+      <h3>
+        <svg viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+        iPhone / iPad
+      </h3>
+      <div class="install-steps">
+        <div class="install-step"><span class="install-step-num">1</span> Abre <strong>criahub-automation.dpjcam.workers.dev</strong> no Safari</div>
+        <div class="install-step"><span class="install-step-num">2</span> Toca no botão de partilha (quadrado com seta)</div>
+        <div class="install-step"><span class="install-step-num">3</span> Seleciona <strong>"Adicionar ao Ecrã de Início"</strong></div>
+        <div class="install-step"><span class="install-step-num">4</span> Confirma e está pronto</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <h2 class="fade-in">Pronto para automatizar as tuas vendas?</h2>
+  <p class="fade-in">3 dias grátis, sem cartão de crédito. Testa todas as funcionalidades do plano Business.</p>
+  <a href="/auth" class="btn btn-primary fade-in" style="font-size:17px;padding:16px 36px">
+    Começar Agora — Grátis
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </a>
+</section>
+
+<footer>
+  <div class="footer-links">
+    <a href="/auth">Entrar</a>
+    <a href="/terms">Termos</a>
+    <a href="/privacy">Privacidade</a>
+    <a href="/contact">Contacto</a>
+    <a href="/help/tiktok">Ajuda TikTok</a>
+  </div>
+  <p>&copy; 2026 CriaHub. Todos os direitos reservados.</p>
+  <div class="footer-made">Feito em Portugal &#127463;&#127479;</div>
+  <div class="footer-social">200+ empresas já utilizam o CriaHub</div>
+</footer>
+
+<script>
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+const obs=new IntersectionObserver((e)=>{e.forEach(el=>{if(el.isIntersecting){el.target.classList.add('visible');obs.unobserve(el.target)}})},{threshold:.15});
+document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener('click',e=>{const t=document.querySelector(a.getAttribute('href'));if(t){e.preventDefault();t.scrollIntoView({behavior:'smooth',block:'start'})}})});
+
+let isAnnual=false;
+async function submitLPContact(e){
+  e.preventDefault();
+  const btn=document.getElementById('lpSubmitBtn');
+  const msg=document.getElementById('lpFormMsg');
+  btn.disabled=true;
+  btn.textContent=currentLang==='pt'?'A enviar...':currentLang==='en'?'Sending...':'Enviando...';
+  msg.style.display='none';
+  try{
+    const r=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      name:document.getElementById('lpName').value,
+      email:document.getElementById('lpEmail').value,
+      phone:document.getElementById('lpPhone').value,
+      subject:document.getElementById('lpSubject').value,
+      description:document.getElementById('lpDescription').value
+    })});
+    const d=await r.json();
+    if(d.ok){
+      msg.textContent=currentLang==='pt'?'Mensagem enviada com sucesso! Entraremos em contacto em breve.':currentLang==='en'?'Message sent successfully! We will get back to you soon.':'Mensaje enviado con éxito! Te contactaremos pronto.';
+      msg.style.display='block';msg.style.background='rgba(16,185,129,.1)';msg.style.color='var(--success)';
+      document.getElementById('lpContactForm').reset();
+    }else{
+      msg.textContent=d.error||(currentLang==='pt'?'Erro ao enviar. Tenta novamente.':currentLang==='en'?'Error sending. Try again.':'Error al enviar. Intenta de nuevo.');
+      msg.style.display='block';msg.style.background='rgba(239,68,68,.1)';msg.style.color='#ef4444';
+    }
+  }catch(_){
+    msg.textContent=currentLang==='pt'?'Erro de rede. Tenta novamente.':currentLang==='en'?'Network error. Try again.':'Error de red. Intenta de nuevo.';
+    msg.style.display='block';msg.style.background='rgba(239,68,68,.1)';msg.style.color='#ef4444';
+  }
+  btn.disabled=false;
+  btn.textContent=currentLang==='pt'?'Enviar Mensagem':currentLang==='en'?'Send Message':'Enviar Mensaje';
+}
+function togglePricing(){
+  isAnnual=!isAnnual;
+  const dot=document.getElementById('pricing-toggle-dot');
+  dot.style.transform=isAnnual?'translateX(24px)':'translateX(0)';
+  document.getElementById('pricing-toggle').style.background=isAnnual?'var(--success)':'var(--accent)';
+  document.getElementById('pricing-monthly-label').style.color=isAnnual?'var(--text2)':'var(--text)';
+  document.getElementById('pricing-annual-label').style.color=isAnnual?'var(--text)':'var(--text2)';
+  document.querySelectorAll('.price-card').forEach(card=>{
+    const priceEl=card.querySelector('[data-plan="price"]');
+    const originalEl=card.querySelector('[data-plan="original"]');
+    const annualNote=card.querySelector('[data-plan="annual-note"]');
+    if(!priceEl)return;
+    const monthly=card.querySelector('.price-amount').dataset.monthly;
+    const annual=card.querySelector('.price-amount').dataset.annual;
+    if(!monthly||!annual)return;
+    if(isAnnual){
+      priceEl.textContent=annual;
+      if(originalEl)originalEl.textContent='/mês '+monthly+'€';
+      if(annualNote)annualNote.textContent='Cobrado '+((parseFloat(annual)*12).toFixed(2))+'€/ano — poupa 15%';
+    }else{
+      priceEl.textContent=monthly;
+      if(originalEl)originalEl.innerHTML='&nbsp;';
+      if(annualNote)annualNote.innerHTML='&nbsp;';
+    }
+  });
+}
+
+const ptTexts={
+  navFeatures:'Funcionalidades',navDemo:'Demo',navPricing:'Preços',navHow:'Como Funciona',navFaq:'FAQ',navContact:'Contacto',navLogin:'Entrar',
+  trustBar:'INSTAGRAM + TIKTOK + WHATSAPP · IA INCLUÍDA · SEM TAXAS EXTRAS',
+  heroBadge:'Alternativa ao ManyChat — Mais Canais, Menos Preço',
+  heroTitle:'Automatiza as tuas vendas no Instagram <em>24/7</em>',
+  heroDesc:'Transforma comentários em clientes automaticamente. Responde a todos, envia links, recolhe emails e fecha vendas enquanto dormes. Tudo com inteligência artificial e a API oficial da Meta.',
+  heroCta:'Começar Grátis — 3 Dias',heroHow:'Ver Como Funciona',
+  heroStat1:'Empresas Activas',heroStat2:'Resposta Média',heroStat3:'Satisfação',heroStat4:'Canais',
+  featuresLabel:'Funcionalidades',featuresTitle:'Tudo o que precisas para vender no Instagram',featuresDesc:'Funcionalidades profissionais que grandes marcas utilizam, agora acessíveis para qualquer negócio em Portugal',
+  channelsLabel:'Multi-Canal',channelsTitle:'Instagram + TikTok + WhatsApp',channelsDesc:'Uma única plataforma para gerir toda a comunicação automática nos 3 canais principais',
+  channelsIg:'Comentários → DM automático. API oficial da Meta. Sem risco de ban.',
+  channelsTk:'Via API oficial e Browser Connector. Responde a comentários e DMs automaticamente.',
+  channelsWa:'Via Evolution API. Automação completa de inbox. Atendimento 24/7.',
+  demoLabel:'Demo',demoTitle:'Vê como funciona na prática',demoDesc:'Desde o comentário até à venda — tudo automatizado em segundos',
+  demoS1:'1. Comentário detetado',demoC1:'Palavra-chave "QUERO" detetada',
+  demoS2:'2. DM enviada automaticamente',demoC2:'Mensagem enviada em 0,8 segundos',
+  demoS3:'3. Lead capturado',demoC3:'Email guardado no painel de controlo',
+  dashLabel:'Painel de Controlo',dashTitle:'Painel de controlo completo',dashDesc:'Gestão de automações, contas, contactos e analytics — tudo num só lugar. Vê em tempo real o desempenho das tuas campanhas e toma decisões com dados concretos.',
+  dashCta:'Experimentar Grátis',
+  dashS1:'Mensagens Enviadas',dashS2:'Conversões',dashS3:'Emails Recolhidos',
+  dashChart:'Mensagens — Últimos 7 dias',dashActive:'Automações Ativas',
+  dashC1:'Campanha Verão 2026',dashC2:'Lançamento Produto X',dashC3:'Black Friday Preview',
+  dashActiveLabel:'Ativa',dashPausedLabel:'Pausada',
+  howLabel:'Como Funciona',howTitle:'3 passos para automatizar',howDesc:'Configura em menos de 5 minutos, sem conhecimentos técnicos',
+  how1T:'Conecta o teu Instagram',how1D:'Liga a tua conta profissional (Business ou Creator) em segundos. Seguro, rápido e pela API oficial da Meta.',
+  how2T:'Cria a tua automação',how2D:'Define a palavra-chave, escreve a mensagem ou deixa a IA gerar automaticamente. Escolhe o post e ativa.',
+  how3T:'As vendas acontecem',how3D:'Cada comentário com a palavra-chave gera uma mensagem privada automática. Tu apenas vês os resultados.',
+  pricingLabel:'Preços',pricingTitle:'Planos simples, sem surpresas',pricingDesc:'Preço fixo mensal. Sem custos por contacto, sem taxas escondidas. 3 dias grátis em qualquer plano.',
+  monthlyLabel:'Mensal',annualLabel:'Anual',saveLabel:'Poupa 15%',
+  compLabel:'Comparação',compTitle:'Compara com outras ferramentas',compDesc:'Porque é que o CriaHub é a melhor escolha para Portugal e para a Europa',
+  compFeature:'Funcionalidade',compPrice:'Preço (a partir de)',compIa:'IA incluída',compContacts:'Contactos ilimitados (planos pagos)',compChannels:'Canais: Instagram + TikTok + WhatsApp',compFees:'Sem taxas extra por contacto',compPtIa:'IA em português europeu',compFilter:'Filtro de conteúdo negativo',compEmails:'Recolha de emails',compSupport:'Suporte em português',
+  compPaidExtra:'Pago extra',compProOnly:'Só Pro',compPartial:'(parcial)',compOnlyIg:'(só IG)',
+  testLabel:'Testemunhos',testDesc:'Empresas reais em Portugal que já utilizam o CriaHub para vender mais',
+  test1:'"Antes perdia clientes porque não respondia a tempo. Agora o CriaHub responde em menos de 1 segundo e eu apenas vejo os resultados. Triplicou as minhas vendas no Instagram."',
+  test1Name:'Maria Silva',test1Role:'Loja de Moda, Lisboa',
+  test2:'"Paguei 40 euros por mês no ManyChat e não tinha metade destas funcionalidades. O CriaHub é mais barato, melhor e está em português. Não há comparação."',
+  test2Name:'João Santos',test2Role:'Coach Digital, Porto',
+  test3:'"A funcionalidade de filtrar comentários negativos salvou-me de vários problemas. Profissional e inteligente. Recomendo a todos os que vendem no Instagram."',
+  test3Name:'Ana Costa',test3Role:'Agência de Marketing, Faro',
+  faqLabel:'FAQ',faqTitle:'Perguntas frequentes',faqDesc:'Respostas às dúvidas mais comuns sobre o CriaHub',
+  faq1Q:'Preciso de saber programar?',faq1A:'Não. O CriaHub foi desenhado para qualquer pessoa. Configura tudo com poucos cliques, sem qualquer conhecimento técnico.',
+  faq2Q:'É seguro para a minha conta?',faq2A:'Sim. Utiliza a API oficial da Meta (Instagram Graph API). Não partilhas senhas e não há risco de ban ou shadowban.',
+  faq3Q:'Posso cancelar quando quiser?',faq3A:'Sim. Sem fidelização. Cancela quando quiseres, sem custos adicionais nem letras pequenas.',
+  faq4Q:'Funciona no telemóvel?',faq4A:'Sim. Podes instalar o CriaHub como aplicação no telemóvel e gerir tudo diretamente a partir do ecrã.',
+  faq5Q:'Preciso de conta Business?',faq5A:'Sim, o Instagram exige conta Business ou Creator para aceder à API. É gratuito mudar nas definições do Instagram.',
+  faq6Q:'Posso conectar TikTok?',faq6A:'Sim! O CriaHub suporta TikTok via API oficial e Browser Connector. Podes responder a comentários e DMs automaticamente.',
+  faq7Q:'WhatsApp funciona como?',faq7A:'Via Evolution API, com automação completa de inbox. Podes configurar respostas automáticas, catálogos e fluxos de vendas 24/7.',
+  faq8Q:'Há taxas extras por contacto?',faq8A:'NÃO. Contactos ilimitados em todos os planos pagos. Sem custos escondidos, sem taxas por mensagem ou por contacto.',
+  faq9Q:'Posso mudar de plano?',faq9A:'Sim, podes mudar de plano a qualquer momento. O upgrade é imediato e o downgrade aplica-se no próximo ciclo de faturação.',
+  installLabel:'PWA',installTitle:'Instala o CriaHub no telemóvel',installDesc:'Utiliza o CriaHub como uma aplicação nativa, sempre ao alcance das tuas mãos',
+  installAndroid:'Android',installIphone:'iPhone / iPad',
+  installA1:'Abre criahub-automation.dpjcam.workers.dev no Chrome',installA2:'Toca nos 3 pontos do canto superior direito',installA3:'Seleciona "Adicionar ao ecrã principal"',installA4:'Confirma e está pronto',
+  installI1:'Abre criahub-automation.dpjcam.workers.dev no Safari',installI2:'Toca no botão de partilha (quadrado com seta)',installI3:'Seleciona "Adicionar ao Ecrã de Início"',installI4:'Confirma e está pronto',
+  ctaTitle:'Pronto para automatizar as tuas vendas?',ctaDesc:'3 dias grátis, sem cartão de crédito. Testa todas as funcionalidades do plano Business.',
+  ctaBtn:'Começar Agora — Grátis',
+  contactLabel:'Contacto',contactTitle:'Fala connosco',contactDesc:'Tens dúvidas, sugestões ou queres uma demonstração? Preenche o formulário e entraremos em contacto em menos de 24h.',
+  contactName:'Nome *',contactEmail:'Email *',contactPhone:'Telefone',contactSubject:'Assunto *',contactDescField:'Descrição *',
+  contactPlaceholderName:'O teu nome',contactPlaceholderEmail:'email@exemplo.com',contactPlaceholderDesc:'Conta-nos como podemos ajudar...',contactBtn:'Enviar Mensagem',
+  contactOptDemo:'Quero uma demonstração',contactOptSupport:'Suporte técnico',contactOptPlans:'Questão sobre planos',contactOptPartner:'Parceria / Colaboração',contactOptOther:'Outro',contactOptSelect:'Seleciona...',
+  footerLogin:'Entrar',footerTerms:'Termos',footerPrivacy:'Privacidade',footerContact:'Contacto',footerHelp:'Ajuda TikTok',footerCopy:'Todos os direitos reservados.',footerMade:'Feito em Portugal',footerClients:'200+ empresas já utilizam o CriaHub'
+};
+const enTexts={
+  navFeatures:'Features',navDemo:'Demo',navPricing:'Pricing',navHow:'How It Works',navFaq:'FAQ',navContact:'Contact',navLogin:'Log In',
+  trustBar:'INSTAGRAM + TIKTOK + WHATSAPP · AI INCLUDED · NO HIDDEN FEES',
+  heroBadge:'ManyChat Alternative — More Channels, Lower Price',
+  heroTitle:'Automate your Instagram sales <em>24/7</em>',
+  heroDesc:'Turn comments into customers automatically. Reply to everyone, send links, collect emails and close sales while you sleep. All with AI and the official Meta API.',
+  heroCta:'Start Free — 3 Days',heroHow:'See How It Works',
+  heroStat1:'Active Businesses',heroStat2:'Average Response',heroStat3:'Satisfaction',heroStat4:'Channels',
+  featuresLabel:'Features',featuresTitle:'Everything you need to sell on Instagram',featuresDesc:'Professional features used by big brands, now accessible for any business',
+  channelsLabel:'Multi-Channel',channelsTitle:'Instagram + TikTok + WhatsApp',channelsDesc:'One platform to manage all automated communication across the 3 main channels',
+  channelsIg:'Comment → DM automatically. Official Meta API. Zero ban risk.',
+  channelsTk:'Via official API and Browser Connector. Auto-reply to comments and DMs.',
+  channelsWa:'Via Evolution API. Full inbox automation. 24/7 support.',
+  demoLabel:'Demo',demoTitle:'See how it works in practice',demoDesc:'From the comment to the sale — all automated in seconds',
+  demoS1:'1. Comment detected',demoC1:'Keyword "QUERO" detected',
+  demoS2:'2. DM sent automatically',demoC2:'Message sent in 0.8 seconds',
+  demoS3:'3. Lead captured',demoC3:'Email saved in the dashboard',
+  dashLabel:'Control Panel',dashTitle:'Complete control panel',dashDesc:'Automation, accounts, contacts and analytics management — all in one place. See your campaign performance in real-time and make decisions with concrete data.',
+  dashCta:'Try Free',
+  dashS1:'Messages Sent',dashS2:'Conversions',dashS3:'Emails Collected',
+  dashChart:'Messages — Last 7 days',dashActive:'Active Automations',
+  dashC1:'Summer Campaign 2026',dashC2:'Product X Launch',dashC3:'Black Friday Preview',
+  dashActiveLabel:'Active',dashPausedLabel:'Paused',
+  howLabel:'How It Works',howTitle:'3 steps to automate',howDesc:'Set up in less than 5 minutes, no technical knowledge required',
+  how1T:'Connect your Instagram',how1D:'Link your professional account (Business or Creator) in seconds. Secure, fast and via the official Meta API.',
+  how2T:'Create your automation',how2D:'Set the keyword, write the message or let the AI generate it automatically. Choose the post and activate.',
+  how3T:'Sales happen',how3D:'Every comment with the keyword generates an automatic private message. You just see the results.',
+  pricingLabel:'Pricing',pricingTitle:'Simple plans, no surprises',pricingDesc:'Fixed monthly price. No per-contact costs, no hidden fees. 3-day free trial on any plan.',
+  monthlyLabel:'Monthly',annualLabel:'Annual',saveLabel:'Save 15%',
+  compLabel:'Comparison',compTitle:'Compare with other tools',compDesc:'Why CriaHub is the best choice for Portugal and Europe',
+  compFeature:'Feature',compPrice:'Price (from)',compIa:'AI included',compContacts:'Unlimited contacts (paid plans)',compChannels:'Channels: Instagram + TikTok + WhatsApp',compFees:'No extra fees per contact',compPtIa:'AI in European Portuguese',compFilter:'Negative content filter',compEmails:'Email collection',compSupport:'Support in Portuguese',
+  compPaidExtra:'Paid extra',compProOnly:'Pro only',compPartial:'(partial)',compOnlyIg:'(IG only)',
+  testLabel:'Testimonials',testDesc:'Real businesses in Portugal already using CriaHub to sell more',
+  test1:'"I used to lose customers because I didn\'t reply on time. Now CriaHub replies in under 1 second and I just see the results. It tripled my Instagram sales."',
+  test1Name:'Maria Silva',test1Role:'Fashion Store, Lisbon',
+  test2:'"I paid 40 euros a month on ManyChat and didn\'t have half these features. CriaHub is cheaper, better and in Portuguese. No comparison."',
+  test2Name:'João Santos',test2Role:'Digital Coach, Porto',
+  test3:'"The negative comment filtering feature saved me from several issues. Professional and smart. I recommend it to everyone selling on Instagram."',
+  test3Name:'Ana Costa',test3Role:'Marketing Agency, Faro',
+  faqLabel:'FAQ',faqTitle:'Frequently asked questions',faqDesc:'Answers to the most common questions about CriaHub',
+  faq1Q:'Do I need to know how to code?',faq1A:'No. CriaHub was designed for anyone. Set it up with a few clicks, with no technical knowledge required.',
+  faq2Q:'Is it safe for my account?',faq2A:'Yes. It uses the official Meta API (Instagram Graph API). You don\'t share passwords and there\'s no risk of ban or shadowban.',
+  faq3Q:'Can I cancel anytime?',faq3A:'Yes. No lock-in. Cancel whenever you want, with no additional costs or fine print.',
+  faq4Q:'Does it work on mobile?',faq4A:'Yes. You can install CriaHub as an app on your phone and manage everything directly from your screen.',
+  faq5Q:'Do I need a Business account?',faq5A:'Yes, Instagram requires a Business or Creator account to access the API. It\'s free to switch in Instagram settings.',
+  faq6Q:'Can I connect TikTok?',faq6A:'Yes! CriaHub supports TikTok via official API and Browser Connector. You can auto-reply to comments and DMs.',
+  faq7Q:'How does WhatsApp work?',faq7A:'Via Evolution API, with full inbox automation. Set up auto-replies, catalogs and 24/7 sales flows.',
+  faq8Q:'Are there extra fees per contact?',faq8A:'NO. Unlimited contacts on all paid plans. No hidden costs, no per-message or per-contact fees.',
+  faq9Q:'Can I change plans?',faq9A:'Yes, you can change plans at any time. Upgrade is immediate and downgrade applies in the next billing cycle.',
+  installLabel:'PWA',installTitle:'Install CriaHub on your phone',installDesc:'Use CriaHub as a native app, always within reach',
+  installAndroid:'Android',installIphone:'iPhone / iPad',
+  installA1:'Open criahub-automation.dpjcam.workers.dev in Chrome',installA2:'Tap the 3 dots in the top right corner',installA3:'Select "Add to Home screen"',installA4:'Confirm and you\'re set',
+  installI1:'Open criahub-automation.dpjcam.workers.dev in Safari',installI2:'Tap the share button (square with arrow)',installI3:'Select "Add to Home Screen"',installI4:'Confirm and you\'re set',
+  ctaTitle:'Ready to automate your sales?',ctaDesc:'3 days free, no credit card required. Try all Business plan features.',
+  ctaBtn:'Start Now — Free',
+  contactLabel:'Contact',contactTitle:'Talk to us',contactDesc:'Have questions, suggestions or want a demo? Fill out the form and we\'ll get back to you within 24 hours.',
+  contactName:'Name *',contactEmail:'Email *',contactPhone:'Phone',contactSubject:'Subject *',contactDescField:'Description *',
+  contactPlaceholderName:'Your name',contactPlaceholderEmail:'email@example.com',contactPlaceholderDesc:'Tell us how we can help...',contactBtn:'Send Message',
+  contactOptDemo:'I want a demo',contactOptSupport:'Technical support',contactOptPlans:'Plan question',contactOptPartner:'Partnership',contactOptOther:'Other',contactOptSelect:'Select...',
+  footerLogin:'Log In',footerTerms:'Terms',footerPrivacy:'Privacy',footerContact:'Contact',footerHelp:'TikTok Help',footerCopy:'All rights reserved.',footerMade:'Made in Portugal',footerClients:'200+ businesses already use CriaHub'
+};
+const esTexts={
+  navFeatures:'Funcionalidades',navDemo:'Demo',navPricing:'Precios',navHow:'Cómo Funciona',navFaq:'FAQ',navContact:'Contacto',navLogin:'Iniciar Sesión',
+  trustBar:'INSTAGRAM + TIKTOK + WHATSAPP · IA INCLUIDA · SIN COSTOS OCULTOS',
+  heroBadge:'Alternativa a ManyChat — Más Canales, Menor Precio',
+  heroTitle:'Automatiza tus ventas en Instagram <em>24/7</em>',
+  heroDesc:'Convierte comentarios en clientes automáticamente. Responde a todos, envía enlaces, recopila emails y cierra ventas mientras duermes. Todo con inteligencia artificial y la API oficial de Meta.',
+  heroCta:'Empieza Gratis — 3 Días',heroHow:'Ver Cómo Funciona',
+  heroStat1:'Empresas Activas',heroStat2:'Respuesta Media',heroStat3:'Satisfacción',heroStat4:'Canales',
+  featuresLabel:'Funcionalidades',featuresTitle:'Todo lo que necesitas para vender en Instagram',featuresDesc:'Funcionalidades profesionales que usan las grandes marcas, ahora accesibles para cualquier negocio',
+  channelsLabel:'Multi-Canal',channelsTitle:'Instagram + TikTok + WhatsApp',channelsDesc:'Una sola plataforma para gestionar toda la comunicación automática en los 3 canales principales',
+  channelsIg:'Comentarios → DM automático. API oficial de Meta. Sin riesgo de baneo.',
+  channelsTk:'Vía API oficial y Browser Connector. Responde a comentarios y DMs automáticamente.',
+  channelsWa:'Vía Evolution API. Automatización completa de inbox. Atención 24/7.',
+  demoLabel:'Demo',demoTitle:'Mira cómo funciona en la práctica',demoDesc:'Desde el comentario hasta la venta — todo automatizado en segundos',
+  demoS1:'1. Comentario detectado',demoC1:'Palabra clave "QUERO" detectada',
+  demoS2:'2. DM enviada automáticamente',demoC2:'Mensaje enviado en 0,8 segundos',
+  demoS3:'3. Lead capturado',demoC3:'Email guardado en el panel de control',
+  dashLabel:'Panel de Control',dashTitle:'Panel de control completo',dashDesc:'Gestión de automatizaciones, cuentas, contactos y análisis — todo en un solo lugar. Ve en tiempo real el rendimiento de tus campañas y toma decisiones con datos concretos.',
+  dashCta:'Probar Gratis',
+  dashS1:'Mensajes Enviados',dashS2:'Conversiones',dashS3:'Emails Recopilados',
+  dashChart:'Mensajes — Últimos 7 días',dashActive:'Automatizaciones Activas',
+  dashC1:'Campaña Verano 2026',dashC2:'Lanzamiento Producto X',dashC3:'Black Friday Preview',
+  dashActiveLabel:'Activa',dashPausedLabel:'Pausada',
+  howLabel:'Cómo Funciona',howTitle:'3 pasos para automatizar',howDesc:'Configura en menos de 5 minutos, sin conocimientos técnicos',
+  how1T:'Conecta tu Instagram',how1D:'Vincula tu cuenta profesional (Business o Creator) en segundos. Seguro, rápido y vía la API oficial de Meta.',
+  how2T:'Crea tu automatización',how2D:'Define la palabra clave, escribe el mensaje o deja que la IA lo genere automáticamente. Elige el post y activa.',
+  how3T:'Las ventas suceden',how3D:'Cada comentario con la palabra clave genera un mensaje privado automático. Solo ves los resultados.',
+  pricingLabel:'Precios',pricingTitle:'Planes simples, sin sorpresas',pricingDesc:'Precio fijo mensual. Sin costos por contacto, sin tarifas ocultas. 3 días gratis en cualquier plan.',
+  monthlyLabel:'Mensual',annualLabel:'Anual',saveLabel:'Ahorra 15%',
+  compLabel:'Comparación',compTitle:'Compara con otras herramientas',compDesc:'Por qué CriaHub es la mejor elección para Portugal y Europa',
+  compFeature:'Funcionalidad',compPrice:'Precio (desde)',compIa:'IA incluida',compContacts:'Contactos ilimitados (planes de pago)',compChannels:'Canales: Instagram + TikTok + WhatsApp',compFees:'Sin cargos extra por contacto',compPtIa:'IA en portugués europeo',compFilter:'Filtro de contenido negativo',compEmails:'Recopilación de emails',compSupport:'Soporte en portugués',
+  compPaidExtra:'Pago extra',compProOnly:'Solo Pro',compPartial:'(parcial)',compOnlyIg:'(solo IG)',
+  testLabel:'Testimonios',testDesc:'Empresas reales en Portugal que ya usan CriaHub para vender más',
+  test1:'"Antes perdía clientes porque no respondía a tiempo. Ahora CriaHub responde en menos de 1 segundo y solo veo los resultados. Triplicó mis ventas en Instagram."',
+  test1Name:'María Silva',test1Role:'Tienda de Moda, Lisboa',
+  test2:'"Pagué 40 euros por mes en ManyChat y no tenía la mitad de estas funcionalidades. CriaHub es más barato, mejor y está en portugués. No hay comparación."',
+  test2Name:'João Santos',test2Role:'Coach Digital, Oporto',
+  test3:'"La funcionalidad de filtrar comentarios negativos me salvó de varios problemas. Profesional e inteligente. Lo recomiendo a todos los que venden en Instagram."',
+  test3Name:'Ana Costa',test3Role:'Agencia de Marketing, Faro',
+  faqLabel:'FAQ',faqTitle:'Preguntas frecuentes',faqDesc:'Respuestas a las dudas más comunes sobre CriaHub',
+  faq1Q:'¿Necesito saber programar?',faq1A:'No. CriaHub está diseñado para cualquier persona. Configura todo con unos clics, sin ningún conocimiento técnico.',
+  faq2Q:'¿Es seguro para mi cuenta?',faq2A:'Sí. Utiliza la API oficial de Meta (Instagram Graph API). No compartes contraseñas y no hay riesgo de baneo o shadowban.',
+  faq3Q:'¿Puedo cancelar cuando quiera?',faq3A:'Sí. Sin permanencia. Cancela cuando quieras, sin costes adicionales ni letra pequeña.',
+  faq4Q:'¿Funciona en el móvil?',faq4A:'Sí. Puedes instalar CriaHub como aplicación en tu móvil y gestionar todo directamente desde la pantalla.',
+  faq5Q:'¿Necesito cuenta Business?',faq5A:'Sí, Instagram exige cuenta Business o Creator para acceder a la API. Es gratuito cambiar en los ajustes de Instagram.',
+  faq6Q:'¿Puedo conectar TikTok?',faq6A:'¡Sí! CriaHub soporta TikTok vía API oficial y Browser Connector. Puedes responder a comentarios y DMs automáticamente.',
+  faq7Q:'¿Cómo funciona WhatsApp?',faq7A:'Vía Evolution API, con automatización completa de inbox. Configura respuestas automáticas, catálogos y flujos de ventas 24/7.',
+  faq8Q:'¿Hay cargos extra por contacto?',faq8A:'NO. Contactos ilimitados en todos los planes de pago. Sin costes ocultos, sin cargos por mensaje o por contacto.',
+  faq9Q:'¿Puedo cambiar de plan?',faq9A:'Sí, puedes cambiar de plan en cualquier momento. El upgrade es inmediato y el downgrade se aplica en el próximo ciclo de facturación.',
+  installLabel:'PWA',installTitle:'Instala CriaHub en tu móvil',installDesc:'Usa CriaHub como una aplicación nativa, siempre al alcance de tu mano',
+  installAndroid:'Android',installIphone:'iPhone / iPad',
+  installA1:'Abre criahub-automation.dpjcam.workers.dev en Chrome',installA2:'Toca los 3 puntos de la esquina superior derecha',installA3:'Selecciona "Añadir a pantalla de inicio"',installA4:'Confirma y listo',
+  installI1:'Abre criahub-automation.dpjcam.workers.dev en Safari',installI2:'Toca el botón de compartir (cuadrado con flecha)',installI3:'Selecciona "Añadir a pantalla de inicio"',installI4:'Confirma y listo',
+  ctaTitle:'¿Listo para automatizar tus ventas?',ctaDesc:'3 días gratis, sin tarjeta de crédito. Prueba todas las funcionalidades del plan Business.',
+  ctaBtn:'Empezar Ahora — Gratis',
+  contactLabel:'Contacto',contactTitle:'Habla con nosotros',contactDesc:'¿Tienes dudas, sugerencias o quieres una demostración? Rellena el formulario y te contactaremos en menos de 24 horas.',
+  contactName:'Nombre *',contactEmail:'Email *',contactPhone:'Teléfono',contactSubject:'Asunto *',contactDescField:'Descripción *',
+  contactPlaceholderName:'Tu nombre',contactPlaceholderEmail:'email@ejemplo.com',contactPlaceholderDesc:'Cuéntanos cómo podemos ayudar...',contactBtn:'Enviar Mensaje',
+  contactOptDemo:'Quiero una demostración',contactOptSupport:'Soporte técnico',contactOptPlans:'Pregunta sobre planes',contactOptPartner:'Asociación / Colaboración',contactOptOther:'Otro',contactOptSelect:'Seleccionar...',
+  footerLogin:'Iniciar Sesión',footerTerms:'Términos',footerPrivacy:'Privacidad',footerContact:'Contacto',footerHelp:'Ayuda TikTok',footerCopy:'Todos los derechos reservados.',footerMade:'Hecho en Portugal',footerClients:'200+ empresas ya usan CriaHub'
+};
+const langs=['pt','en','es'];
+const langLabels={pt:'PT',en:'EN',es:'ES'};
+let currentLang='pt';
+function toggleLang(){
+  const idx=langs.indexOf(currentLang);
+  currentLang=langs[(idx+1)%langs.length];
+  const t=currentLang==='pt'?ptTexts:currentLang==='en'?enTexts:esTexts;
+  const btn=document.querySelector('.lang-toggle');
+  if(btn)btn.textContent=langLabels[currentLang];
+  const ml=document.getElementById('mobile-lang-label');
+  if(ml)ml.textContent=langLabels[currentLang];
+  document.querySelectorAll('.nav-links a[href="#features"]').forEach(el=>el.textContent=t.navFeatures);
+  document.querySelectorAll('.nav-links a[href="#demo"]').forEach(el=>el.textContent=t.navDemo);
+  document.querySelectorAll('.nav-links a[href="#pricing"]').forEach(el=>el.textContent=t.navPricing);
+  document.querySelectorAll('.nav-links a[href="#how"]').forEach(el=>el.textContent=t.navHow);
+  document.querySelectorAll('.nav-links a[href="#faq"]').forEach(el=>el.textContent=t.navFaq);
+  document.querySelectorAll('.nav-links a[href="#contacto"]').forEach(el=>el.textContent=t.navContact);
+  document.querySelectorAll('.nav-links .nav-btn').forEach(el=>el.textContent=t.navLogin);
+  document.querySelectorAll('.mobile-menu a[href="#features"]').forEach(el=>el.textContent=t.navFeatures);
+  document.querySelectorAll('.mobile-menu a[href="#demo"]').forEach(el=>el.textContent=t.navDemo);
+  document.querySelectorAll('.mobile-menu a[href="#pricing"]').forEach(el=>el.textContent=t.navPricing);
+  document.querySelectorAll('.mobile-menu a[href="#how"]').forEach(el=>el.textContent=t.navHow);
+  document.querySelectorAll('.mobile-menu a[href="#faq"]').forEach(el=>el.textContent=t.navFaq);
+  document.querySelectorAll('.mobile-menu a[href="#contacto"]').forEach(el=>el.textContent=t.navContact);
+  var tb=document.querySelector('.trust-bar p');if(tb)tb.textContent=t.trustBar;
+  var hb=document.querySelector('.hero-badge');if(hb){var svg=hb.querySelector('svg');hb.textContent='';if(svg)hb.appendChild(svg);hb.appendChild(document.createTextNode(' '+t.heroBadge));}
+  var h1=document.querySelector('.hero h1');if(h1)h1.innerHTML=t.heroTitle;
+  var hd=document.querySelector('.hero .hero-desc');if(hd)hd.textContent=t.heroDesc;
+  var hc=document.querySelector('.hero .btn-primary');if(hc){var sv=hc.querySelector('svg');hc.textContent='';hc.appendChild(document.createTextNode(t.heroCta+' '));if(sv)hc.appendChild(sv);}
+  var hh=document.querySelector('.hero .btn-ghost');if(hh)hh.textContent=t.heroHow;
+  var stats=document.querySelectorAll('.hero-stat .lbl');if(stats[0])stats[0].textContent=t.heroStat1;if(stats[1])stats[1].textContent=t.heroStat2;if(stats[2])stats[2].textContent=t.heroStat3;if(stats[3])stats[3].textContent=t.heroStat4;
+  var featSection=document.getElementById('features');
+  if(featSection){var fl=featSection.querySelector('.section-label');if(fl)fl.textContent=t.featuresLabel;var ft=featSection.querySelector('h2');if(ft)ft.textContent=t.featuresTitle;var fd=featSection.querySelector('p');if(fd)fd.textContent=t.featuresDesc;}
+  var chLabel=document.getElementById('channels');
+  if(chLabel){var cl=chLabel.querySelector('.section-label');if(cl)cl.textContent=t.channelsLabel;var ct=chLabel.querySelector('h2');if(ct)ct.textContent=t.channelsTitle;var cd=chLabel.querySelector('.section-title p');if(cd)cd.textContent=t.channelsDesc;var cards=chLabel.querySelectorAll('.feature-card p');if(cards[0])cards[0].textContent=t.channelsIg;if(cards[1])cards[1].textContent=t.channelsTk;if(cards[2])cards[2].textContent=t.channelsWa;}
+  var demoSection=document.getElementById('demo');
+  if(demoSection){var dl=demoSection.querySelector('.section-label');if(dl)dl.textContent=t.demoLabel;var dt=demoSection.querySelector('h2');if(dt)dt.textContent=t.demoTitle;var dd=demoSection.querySelector('p');if(dd)dd.textContent=t.demoDesc;var dcl=demoSection.querySelectorAll('.demo-card-label');if(dcl[0])dcl[0].textContent=t.demoS1;if(dcl[1])dcl[1].textContent=t.demoS2;if(dcl[2])dcl[2].textContent=t.demoS3;var dchk=demoSection.querySelectorAll('.demo-check');if(dchk[0])dchk[0].innerHTML='<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> '+t.demoC1;if(dchk[1])dchk[1].innerHTML='<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> '+t.demoC2;if(dchk[2])dchk[2].innerHTML='<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> '+t.demoC3;}
+  var dashSection=document.querySelector('.dashboard-section');
+  if(dashSection){var dbl=dashSection.querySelector('.section-label');if(dbl)dbl.textContent=t.dashLabel;var dbt=dashSection.querySelector('h2');if(dbt)dbt.textContent=t.dashTitle;var dbd=dashSection.querySelector('p');if(dbd)dbd.textContent=t.dashDesc;var dbc=dashSection.querySelector('.dashboard-text .btn-primary');if(dbc){var dbsv=dbc.querySelector('svg');dbc.textContent='';dbc.appendChild(document.createTextNode(t.dashCta+' '));if(dbsv)dbc.appendChild(dbsv);}var dsl=dashSection.querySelectorAll('.dash-stat-label');if(dsl[0])dsl[0].textContent=t.dashS1;if(dsl[1])dsl[1].textContent=t.dashS2;if(dsl[2])dsl[2].textContent=t.dashS3;var dct=dashSection.querySelector('.dash-chart-title');if(dct)dct.textContent=t.dashChart;var dac=dashSection.querySelector('.dash-campaigns-title');if(dac)dac.textContent=t.dashActive;var dcName=dashSection.querySelectorAll('.dash-campaign-name');if(dcName[0])dcName[0].textContent=t.dashC1;if(dcName[1])dcName[1].textContent=t.dashC2;if(dcName[2])dcName[2].textContent=t.dashC3;var dBadge=dashSection.querySelectorAll('.dash-badge.active');dBadge.forEach(function(b){b.textContent=t.dashActiveLabel;});var dPBadge=dashSection.querySelector('.dash-badge.paused');if(dPBadge)dPBadge.textContent=t.dashPausedLabel;}
+  var howSection=document.getElementById('how');
+  if(howSection){var hl=howSection.querySelector('.section-label');if(hl)hl.textContent=t.howLabel;var ht=howSection.querySelector('h2');if(ht)ht.textContent=t.howTitle;var hd2=howSection.querySelector('p');if(hd2)hd2.textContent=t.howDesc;var steps=howSection.querySelectorAll('.step');if(steps[0]){steps[0].querySelector('h3').textContent=t.how1T;steps[0].querySelector('p').textContent=t.how1D;}if(steps[1]){steps[1].querySelector('h3').textContent=t.how2T;steps[1].querySelector('p').textContent=t.how2D;}if(steps[2]){steps[2].querySelector('h3').textContent=t.how3T;steps[2].querySelector('p').textContent=t.how3D;}}
+  var pl=document.querySelector('#pricing .section-label');if(pl)pl.textContent=t.pricingLabel;
+  var pti=document.querySelector('#pricing .section-title h2');if(pti)pti.textContent=t.pricingTitle;
+  var pd=document.querySelector('#pricing .section-title p');if(pd)pd.textContent=t.pricingDesc;
+  var ml2=document.getElementById('pricing-monthly-label');if(ml2)ml2.textContent=t.monthlyLabel;
+  var al=document.getElementById('pricing-annual-label');if(al)al.innerHTML=t.annualLabel+' <span style="background:rgba(16,185,129,.1);color:var(--success);padding:2px 8px;border-radius:50px;font-size:11px;font-weight:700;margin-left:4px">'+t.saveLabel+'</span>';
+  var compSection=document.getElementById('compare');
+  if(compSection){var col=compSection.querySelector('.section-label');if(col)col.textContent=t.compLabel;var cot=compSection.querySelector('h2');if(cot)cot.textContent=t.compTitle;var cod=compSection.querySelector('p');if(cod)cod.textContent=t.compDesc;var th=compSection.querySelector('th');if(th)th.textContent=t.compFeature;var rows=compSection.querySelectorAll('tr');if(rows[1])rows[1].querySelector('td').textContent=t.compPrice;if(rows[2])rows[2].querySelector('td').textContent=t.compIa;if(rows[3])rows[3].querySelector('td').textContent=t.compContacts;if(rows[4])rows[4].querySelector('td').textContent=t.compChannels;if(rows[5])rows[5].querySelector('td').textContent=t.compFees;if(rows[6])rows[6].querySelector('td').textContent=t.compPtIa;if(rows[7])rows[7].querySelector('td').textContent=t.compFilter;if(rows[8])rows[8].querySelector('td').textContent=t.compEmails;if(rows[9])rows[9].querySelector('td').textContent=t.compSupport;}
+  var testSection=document.getElementById('testimonials');
+  if(testSection){var tel=testSection.querySelector('.section-label');if(tel)tel.textContent=t.testLabel;var ted=testSection.querySelector('p');if(ted)ted.textContent=t.testDesc;var tCards=testSection.querySelectorAll('.testimonial');if(tCards[0]){tCards[0].querySelector('p').textContent=t.test1;tCards[0].querySelector('.testimonial-name').textContent=t.test1Name;tCards[0].querySelector('.testimonial-role').textContent=t.test1Role;}if(tCards[1]){tCards[1].querySelector('p').textContent=t.test2;tCards[1].querySelector('.testimonial-name').textContent=t.test2Name;tCards[1].querySelector('.testimonial-role').textContent=t.test2Role;}if(tCards[2]){tCards[2].querySelector('p').textContent=t.test3;tCards[2].querySelector('.testimonial-name').textContent=t.test3Name;tCards[2].querySelector('.testimonial-role').textContent=t.test3Role;}}
+  var faqSection=document.getElementById('faq');
+  if(faqSection){var fl2=faqSection.querySelector('.section-label');if(fl2)fl2.textContent=t.faqLabel;var ft2=faqSection.querySelector('h2');if(ft2)ft2.textContent=t.faqTitle;var fd2=faqSection.querySelector('p');if(fd2)fd2.textContent=t.faqDesc;var items=faqSection.querySelectorAll('.faq-item');for(var i=0;i<items.length&&i<9;i++){items[i].querySelector('summary').textContent=t['faq'+(i+1)+'Q'];items[i].querySelector('.faq-a').textContent=t['faq'+(i+1)+'A'];}}
+  var installSection=document.getElementById('install');
+  if(installSection){var il=installSection.querySelector('.section-label');if(il)il.textContent=t.installLabel;var it=installSection.querySelector('h2');if(it)it.textContent=t.installTitle;var id2=installSection.querySelector('p');if(id2)id2.textContent=t.installDesc;var iCards=installSection.querySelectorAll('.install-card');if(iCards[0]){iCards[0].querySelector('h3').innerHTML='<svg viewBox="0 0 24 24"><path d="M5 16V8a7 7 0 0114 0v8M8 20h8M12 16v4"/></svg> '+t.installAndroid;var aSteps=iCards[0].querySelectorAll('.install-step');if(aSteps[0])aSteps[0].innerHTML='<span class="install-step-num">1</span> '+t.installA1;if(aSteps[1])aSteps[1].innerHTML='<span class="install-step-num">2</span> '+t.installA2;if(aSteps[2])aSteps[2].innerHTML='<span class="install-step-num">3</span> '+t.installA3;if(aSteps[3])aSteps[3].innerHTML='<span class="install-step-num">4</span> '+t.installA4;}if(iCards[1]){iCards[1].querySelector('h3').innerHTML='<svg viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="20" rx="2"/><path d="M12 18h.01"/></svg> '+t.installIphone;var iSteps=iCards[1].querySelectorAll('.install-step');if(iSteps[0])iSteps[0].innerHTML='<span class="install-step-num">1</span> '+t.installI1;if(iSteps[1])iSteps[1].innerHTML='<span class="install-step-num">2</span> '+t.installI2;if(iSteps[2])iSteps[2].innerHTML='<span class="install-step-num">3</span> '+t.installI3;if(iSteps[3])iSteps[3].innerHTML='<span class="install-step-num">4</span> '+t.installI4;}}
+  var ct2=document.querySelector('.cta-section h2');if(ct2)ct2.textContent=t.ctaTitle;
+  var cd2=document.querySelector('.cta-section p');if(cd2)cd2.textContent=t.ctaDesc;
+  var cb=document.querySelector('.cta-section .btn-primary');if(cb){var sv=cb.querySelector('svg');cb.textContent='';cb.appendChild(document.createTextNode(t.ctaBtn+' '));if(sv)cb.appendChild(sv);}
+  var clSec=document.getElementById('contacto');
+  if(clSec){
+    var cl2=clSec.querySelector('.section-label');if(cl2)cl2.textContent=t.contactLabel;
+    var ct3=clSec.querySelector('h2');if(ct3)ct3.textContent=t.contactTitle;
+    var cd3=clSec.querySelector('.section-title p');if(cd3)cd3.textContent=t.contactDesc;
+    var nameL=clSec.querySelector('label[for="lpName"]');if(nameL)nameL.textContent=t.contactName;
+    var emailL=clSec.querySelector('label[for="lpEmail"]');if(emailL)emailL.textContent=t.contactEmail;
+    var phoneL=clSec.querySelector('label[for="lpPhone"]');if(phoneL)phoneL.textContent=t.contactPhone;
+    var subL=clSec.querySelector('label[for="lpSubject"]');if(subL)subL.textContent=t.contactSubject;
+    var descL=clSec.querySelector('label[for="lpDescription"]');if(descL)descL.textContent=t.contactDescField;
+    var nameI=clSec.querySelector('#lpName');if(nameI)nameI.placeholder=t.contactPlaceholderName;
+    var emailI=clSec.querySelector('#lpEmail');if(emailI)emailI.placeholder=t.contactPlaceholderEmail;
+    var descI=clSec.querySelector('#lpDescription');if(descI)descI.placeholder=t.contactPlaceholderDesc;
+    var subO=clSec.querySelector('#lpSubject');
+    if(subO){var opts=subO.options;if(opts[1])opts[1].text=t.contactOptDemo;if(opts[2])opts[2].text=t.contactOptSupport;if(opts[3])opts[3].text=t.contactOptPlans;if(opts[4])opts[4].text=t.contactOptPartner;if(opts[5])opts[5].text=t.contactOptOther;if(opts[0])opts[0].text=t.contactOptSelect;}
+    var subBtn=clSec.querySelector('#lpSubmitBtn');if(subBtn)subBtn.textContent=t.contactBtn;
+  }
+  var footerLinks=document.querySelectorAll('footer .footer-links a');
+  if(footerLinks.length>=5){footerLinks[0].textContent=t.footerLogin;footerLinks[1].textContent=t.footerTerms;footerLinks[2].textContent=t.footerPrivacy;footerLinks[3].textContent=t.footerContact;footerLinks[4].textContent=t.footerHelp;}
+  var footerCopy=document.querySelector('footer p');if(footerCopy)footerCopy.textContent='\u00A9 2026 CriaHub. '+t.footerCopy;
+  var footerMade=document.querySelector('.footer-made');if(footerMade)footerMade.textContent=t.footerMade+' \uD83C\uDDE6\uD83C\uDDF7';
+  var footerSocial=document.querySelector('.footer-social');if(footerSocial)footerSocial.textContent=t.footerClients;
+  document.documentElement.lang=currentLang==='pt'?'pt-PT':currentLang==='es'?'es':'en';
+}
+</script>
+</body>
+</html>
