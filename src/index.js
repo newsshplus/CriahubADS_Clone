@@ -1090,17 +1090,28 @@ async function handleAdminApi(request, env, path, method) {
     const plan = await env.criahub_db.prepare("SELECT id FROM saas_plans WHERE id = ? AND active = 1").bind(body.plan_id).first();
     if (!plan) return jsonResponse({ error: "Plan not found" }, 404);
 
-    // Cancel existing subscription
-    await env.criahub_db.prepare("UPDATE saas_subscriptions SET status = 'cancelled', cancelled_at = datetime('now') WHERE user_id = ? AND status = 'active'").bind(userId).run();
-
-    // Create new subscription
+    // saas_subscriptions has UNIQUE(user_id) — one row per user. Cancelling the
+    // old row and then INSERTing a new one for the same user_id always collided
+    // with that constraint (the cancelled row still occupies the user_id slot),
+    // so every plan change after the first one failed. Upsert instead.
     const subId = "sub_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
     const expiresAt = body.expires_at || null;
-    await env.criahub_db.prepare(`
-      INSERT INTO saas_subscriptions (id, user_id, plan_id, status, started_at, expires_at) VALUES (?, ?, ?, 'active', datetime('now'), ?)
-    `).bind(subId, userId, body.plan_id, expiresAt).run();
+    try {
+      await env.criahub_db.prepare(`
+        INSERT INTO saas_subscriptions (id, user_id, plan_id, status, started_at, expires_at, cancelled_at)
+        VALUES (?, ?, ?, 'active', datetime('now'), ?, NULL)
+        ON CONFLICT(user_id) DO UPDATE SET
+          plan_id = excluded.plan_id,
+          status = 'active',
+          started_at = datetime('now'),
+          expires_at = excluded.expires_at,
+          cancelled_at = NULL
+      `).bind(subId, userId, body.plan_id, expiresAt).run();
+    } catch (err) {
+      return jsonResponse({ error: "Erro ao mudar plano: " + err.message }, 500);
+    }
 
-    return jsonResponse({ ok: true, subscription_id: subId });
+    return jsonResponse({ ok: true });
   }
 
   // POST /admin/api/saas-users/:id/ban — ban a user
