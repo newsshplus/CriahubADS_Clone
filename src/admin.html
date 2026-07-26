@@ -2939,8 +2939,12 @@ function toast(msg,type){
   setTimeout(()=>{t.style.display='none'},4000);
 }
 
-if(TOKEN)showApp();
-else document.getElementById('loginWrap').style.display='flex';
+if(TOKEN){
+  fetch(API+'/admin/api/accounts',{headers:{'Authorization':'Bearer '+TOKEN}}).then(r=>{
+    if(r.ok)showApp();
+    else{TOKEN='';localStorage.removeItem('criahub_token');document.getElementById('loginWrap').style.display='flex'}
+  }).catch(()=>{TOKEN='';localStorage.removeItem('criahub_token');document.getElementById('loginWrap').style.display='flex'});
+}else document.getElementById('loginWrap').style.display='flex';
 
 function showApp(){document.getElementById('loginWrap').style.display='none';document.getElementById('appWrap').style.display='block';applyAdminLang();loadPage('dashboard');loadNotifications()}
 
