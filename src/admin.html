@@ -536,8 +536,8 @@ async function renderDashboard(m){
       <h3>&#128200; Uso do Plano <span class="badge badge-active" style="font-size:11px;margin-left:8px">${(up.plan_id||'free').toUpperCase()}</span></h3>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:16px">
         ${[
-          {label:'Contactos',used:ul.contacts||0,max:up.max_contacts||200},
-          {label:'Autowa\u00e7\u00f5es',used:ul.automations||0,max:up.max_automations||3},
+          {label:'Contactos',used:ul.contacts||0,max:up.max_accounts||200},
+          {label:'Campanhas',used:ul.automations||0,max:up.max_campaigns||3},
           {label:'Contas IG',used:ul.accounts||0,max:up.max_accounts||1}
         ].map(x=>{
           const pct=x.max>0?Math.min(Math.round((x.used/x.max)*100),100):0;
@@ -555,7 +555,7 @@ async function renderDashboard(m){
           </div>`;
         }).join('')}
       </div>
-      ${up.price?`<div style="margin-top:12px;font-size:12px;color:var(--text2)">Plano: <strong>${up.plan_id?.charAt(0).toUpperCase()+up.plan_id?.slice(1)}</strong> — ${up.price}&euro;/m\u00eas</div>`:''}
+      ${up.price_eur_monthly?`<div style="margin-top:12px;font-size:12px;color:var(--text2)">Plano: <strong>${up.plan_id?.charAt(0).toUpperCase()+up.plan_id?.slice(1)}</strong> — ${up.price_eur_monthly}&euro;/m\u00eas</div>`:''}
     </div>`:''}
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
@@ -1801,6 +1801,7 @@ function renderHelp(m){
 function showModal(html){document.getElementById('modalContent').innerHTML=html;document.getElementById('modalOverlay').classList.add('show')}
 const openModal = showModal;
 function closeModal(){document.getElementById('modalOverlay').classList.remove('show')}
+function scrollToHelp(id){const el=document.getElementById(id);if(el)el.scrollIntoView({behavior:'smooth',block:'start'})}
 
 function connectAccount(){
   showModal(`
@@ -2834,7 +2835,7 @@ async function saveMetaAdsConfig(){
 async function renderGA4(m){
   const [configs,analytics]=await Promise.all([
     api('GET','/api/ga4/config'),
-    api('GET','/api/ga4/analytics')
+    api('GET','/api/ga4/data')
   ]);
   const cfg=configs&&configs.config?configs.config:{};
   const anl=analytics&&analytics.data?analytics.data:{};

@@ -160,7 +160,7 @@ async function sendEmail(cfg, to, subject, htmlBody) {
 }
 
 async function getUserPlanLimits(db, userId) {
-  const user = await db.prepare('SELECT u.plan_id, p.max_contacts, p.max_dm, p.max_automations, p.max_accounts, p.max_users, p.price FROM saas_users u LEFT JOIN saas_plans p ON u.plan_id = p.id WHERE u.id = ?').bind(userId).first();
+  const user = await db.prepare('SELECT u.plan_id, p.max_accounts, p.max_dms_month, p.max_campaigns, p.price_eur_monthly FROM saas_users u LEFT JOIN saas_plans p ON u.plan_id = p.id WHERE u.id = ?').bind(userId).first();
   return user;
 }
 
@@ -168,11 +168,12 @@ async function getUsageCounts(db, userId) {
   const [contacts, dms, automations, accounts] = await Promise.all([
     db.prepare('SELECT COUNT(*) as c FROM leads WHERE user_id = ?').bind(userId).first(),
     db.prepare('SELECT COUNT(*) as c FROM saas_users u JOIN leads l ON l.user_id = u.id WHERE u.id = ? AND l.platform = ?').bind(userId, 'instagram').first(),
-    db.prepare('SELECT COUNT(*) as c FROM campaigns WHERE account_id IN (SELECT id FROM accounts WHERE user_id = ?)').bind(userId).first(),
-    db.prepare('SELECT COUNT(*) as c FROM accounts WHERE user_id = ?').bind(userId).first(),
+    db.prepare('SELECT COUNT(*) as c FROM campaigns WHERE ig_account_id IN (SELECT id FROM ig_accounts WHERE client_id IN (SELECT id FROM clients WHERE email = (SELECT email FROM saas_users WHERE id = ?)))').bind(userId).first(),
+    db.prepare('SELECT COUNT(*) as c FROM ig_accounts WHERE client_id IN (SELECT id FROM clients WHERE email = (SELECT email FROM saas_users WHERE id = ?))').bind(userId).first(),
   ]);
   return {
     contacts: contacts?.c || 0,
+    dms: dms?.c || 0,
     automations: automations?.c || 0,
     accounts: accounts?.c || 0,
   };
@@ -184,12 +185,12 @@ async function checkPlanLimit(db, userId, type) {
   const usage = await getUsageCounts(db, userId);
   switch(type) {
     case 'contacts':
-      if (plan.max_contacts > 0 && usage.contacts >= plan.max_contacts)
-        return { ok: false, limit: plan.max_contacts, usage: usage.contacts, type: 'contactos' };
+      if (plan.max_accounts > 0 && usage.contacts >= plan.max_accounts)
+        return { ok: false, limit: plan.max_accounts, usage: usage.contacts, type: 'contactos' };
       break;
     case 'automations':
-      if (plan.max_automations > 0 && usage.automations >= plan.max_automations)
-        return { ok: false, limit: plan.max_automations, usage: usage.automations, type: 'automações' };
+      if (plan.max_campaigns > 0 && usage.automations >= plan.max_campaigns)
+        return { ok: false, limit: plan.max_campaigns, usage: usage.automations, type: 'automações' };
       break;
     case 'accounts':
       if (plan.max_accounts > 0 && usage.accounts >= plan.max_accounts)
@@ -323,6 +324,19 @@ self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;if(e.reques
       // === SaaS: Plans ===
       if (path === "/api/plans" && method === "GET") {
         return handleGetPlans(env);
+      }
+
+      // === SaaS: Usage ===
+      if (path === "/api/usage" && method === "GET") {
+        const authHeader = request.headers.get("Authorization") || "";
+        const token = authHeader.replace("Bearer ", "");
+        if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
+        const userSession = await env.criahub_db.prepare("SELECT value FROM system_config WHERE key = ?").bind("session_user_" + token).first();
+        if (!userSession) return jsonResponse({ error: "Invalid session" }, 401);
+        const userId = userSession.value;
+        const plan = await getUserPlanLimits(env.criahub_db, userId);
+        const usage = await getUsageCounts(env.criahub_db, userId);
+        return jsonResponse({ plan: plan || { plan_id: 'free', max_accounts: 1, max_dms_month: 500, max_campaigns: 3, price_eur_monthly: 0 }, usage });
       }
 
       // === SaaS: Client Notifications ===
@@ -623,15 +637,6 @@ async function handleAdminApi(request, env, path, method) {
       `).bind(key, value).run();
     }
     return jsonResponse({ ok: true });
-  }
-
-  // GET /api/usage — get user's current usage and plan limits
-  if (path === "/api/usage" && method === "GET") {
-    const userId = session?.userId || session?.id;
-    if (!userId) return jsonResponse({ error: "Unauthorized" }, 401);
-    const plan = await getUserPlanLimits(env.criahub_db, userId);
-    const usage = await getUsageCounts(env.criahub_db, userId);
-    return jsonResponse({ plan: plan || { plan_id: 'free', max_contacts: 200, max_dm: 500, max_automations: 3, max_accounts: 1, max_users: 1, price: 0 }, usage });
   }
 
   // POST /admin/api/accounts/:id/update-token
@@ -1314,10 +1319,13 @@ async function handleClientNotifications(request, env, path, method) {
     const authHeader = request.headers.get("Authorization") || "";
     const token = authHeader.replace("Bearer ", "");
     if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
+    const notifId = path.split("/")[3];
     const adminSession = await env.criahub_db.prepare("SELECT 1 FROM processed_events WHERE event_id = ?").bind("session_" + token).first();
     if (!adminSession) {
       const user = await resolveSaaSUser(token);
       if (!user) return jsonResponse({ error: "Invalid session" }, 401);
+      // Mark user's notification as read
+      await env.criahub_db.prepare("UPDATE user_notifications SET read = 1 WHERE notification_id = ? AND user_id = ?").bind(notifId, user.id).run();
     }
     return jsonResponse({ ok: true });
   }
@@ -1331,6 +1339,8 @@ async function handleClientNotifications(request, env, path, method) {
     if (!adminSession) {
       const user = await resolveSaaSUser(token);
       if (!user) return jsonResponse({ error: "Invalid session" }, 401);
+      // Mark all user's notifications as read
+      await env.criahub_db.prepare("UPDATE user_notifications SET read = 1 WHERE user_id = ?").bind(user.id).run();
     }
     return jsonResponse({ ok: true });
   }
@@ -2529,7 +2539,7 @@ async function handleGetSubscriptions(env) {
 async function handleWhatsApp(request, env, path, method) {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
-  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_" + token).first();
+  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_user_" + token).first();
   if (!session) return jsonResponse({ error: "Invalid session" }, 401);
   const userId = session.value;
 
@@ -2595,7 +2605,7 @@ async function handleWhatsApp(request, env, path, method) {
 async function handleTikTok(request, env, path, method) {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
-  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_" + token).first();
+  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_user_" + token).first();
   if (!session) return jsonResponse({ error: "Invalid session" }, 401);
   const userId = session.value;
 
@@ -2639,7 +2649,7 @@ async function handleTikTok(request, env, path, method) {
 async function handleMetaAds(request, env, path, method) {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
-  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_" + token).first();
+  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_user_" + token).first();
   if (!session) return jsonResponse({ error: "Invalid session" }, 401);
   const userId = session.value;
 
@@ -2679,7 +2689,7 @@ async function handleMetaAds(request, env, path, method) {
 async function handleGA4(request, env, path, method) {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
-  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_" + token).first();
+  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_user_" + token).first();
   if (!session) return jsonResponse({ error: "Invalid session" }, 401);
   const userId = session.value;
 
@@ -2712,7 +2722,7 @@ async function handleGA4(request, env, path, method) {
 async function handleLeads(request, env, path, method) {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
-  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_" + token).first();
+  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_user_" + token).first();
   if (!session) return jsonResponse({ error: "Invalid session" }, 401);
   const userId = session.value;
 
