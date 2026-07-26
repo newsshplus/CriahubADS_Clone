@@ -1139,6 +1139,65 @@ async function handleAdminApi(request, env, path, method) {
     return jsonResponse({ ok: true });
   }
 
+  // POST /admin/api/saas-users/:id/approve — approve pending user + create trial
+  if (path.match(/^\/admin\/api\/saas-users\/[^/]+\/approve$/) && method === "POST") {
+    const userId = path.split("/")[4];
+    await env.criahub_db.prepare("UPDATE saas_users SET status = 'active', updated_at = datetime('now') WHERE id = ?").bind(userId).run();
+    // Create 3-day trial
+    const subId = "sub_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+    const expiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+    try {
+      await env.criahub_db.prepare(`
+        INSERT INTO saas_subscriptions (id, user_id, plan_id, status, started_at, expires_at) VALUES (?, ?, 'plan_business', 'active', datetime('now'), ?)
+        ON CONFLICT(user_id) DO UPDATE SET plan_id = 'plan_business', status = 'active', started_at = datetime('now'), expires_at = ?, cancelled_at = NULL
+      `).bind(subId, userId, expiresAt, expiresAt).run();
+    } catch (_) {}
+    return jsonResponse({ ok: true });
+  }
+
+  // POST /admin/api/saas-users/:id/reject — reject pending user
+  if (path.match(/^\/admin\/api\/saas-users\/[^/]+\/reject$/) && method === "POST") {
+    const userId = path.split("/")[4];
+    await env.criahub_db.prepare("UPDATE saas_users SET status = 'rejected', updated_at = datetime('now') WHERE id = ?").bind(userId).run();
+    return jsonResponse({ ok: true });
+  }
+
+  // POST /admin/api/config/approval — toggle approval requirement
+  if (path === "/admin/api/config/approval" && method === "POST") {
+    const body = await request.json().catch(() => null);
+    const enabled = body?.enabled ? '1' : '0';
+    await env.criahub_db.prepare(`
+      INSERT INTO system_config (key, value, updated_at) VALUES ('approval_required', ?, datetime('now'))
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+    `).bind(enabled).run();
+    return jsonResponse({ ok: true, enabled: enabled === '1' });
+  }
+  if (path === "/admin/api/config/approval" && method === "GET") {
+    const cfg = await env.criahub_db.prepare("SELECT value FROM system_config WHERE key = 'approval_required'").first();
+    return jsonResponse({ enabled: cfg?.value === '1' });
+  }
+
+  // DELETE /admin/api/accounts/:id — delete IG account and all related data
+  if (path.match(/^\/admin\/api\/accounts\/[^/]+$/) && method === "DELETE") {
+    const id = path.split("/")[4];
+    const account = await env.criahub_db.prepare("SELECT id FROM ig_accounts WHERE id = ?").bind(id).first();
+    if (!account) return jsonResponse({ error: "Account not found" }, 404);
+    // Cleanup related data
+    try {
+      await env.criahub_db.prepare("DELETE FROM conversation_state WHERE campaign_id IN (SELECT id FROM campaigns WHERE ig_account_id = ?)").bind(id).run();
+      await env.criahub_db.prepare("DELETE FROM activity_log WHERE ig_account_id = ?").bind(id).run();
+      await env.criahub_db.prepare("DELETE FROM collected_emails WHERE ig_account_id = ?").bind(id).run();
+      await env.criahub_db.prepare("DELETE FROM follow_ups WHERE ig_account_id = ?").bind(id).run();
+      await env.criahub_db.prepare("DELETE FROM reply_variations WHERE campaign_id IN (SELECT id FROM campaigns WHERE ig_account_id = ?)").bind(id).run();
+      await env.criahub_db.prepare("DELETE FROM campaigns WHERE ig_account_id = ?").bind(id).run();
+      await env.criahub_db.prepare("DELETE FROM contacts WHERE ig_account_id = ?").bind(id).run();
+      await env.criahub_db.prepare("DELETE FROM ig_accounts WHERE id = ?").bind(id).run();
+    } catch (err) {
+      return jsonResponse({ error: "Erro ao excluir: " + err.message }, 500);
+    }
+    return jsonResponse({ ok: true });
+  }
+
   // POST /admin/api/payments — register a manual payment
   if (path === "/admin/api/payments" && method === "POST") {
     const body = await request.json().catch(() => null);
@@ -1411,7 +1470,7 @@ async function handleWebhook(request, env) {
 }
 
 // ============================================================
-// COMMENT EVENT handler
+// COMMENT EVENT handler — responds to ANY comment
 // ============================================================
 async function handleComment(value, igUserId, token, env) {
   const commentId = value.id;
@@ -1441,34 +1500,31 @@ async function handleComment(value, igUserId, token, env) {
   } catch (_) {}
 
   // Upsert contact
+  let contactId;
   const existingContact = await env.criahub_db
     .prepare("SELECT id FROM contacts WHERE ig_account_id = (SELECT id FROM ig_accounts WHERE ig_user_id = ?) AND igsid = ?")
     .bind(igUserId, igsid)
     .first();
 
-  let contactId;
   if (existingContact) {
     contactId = existingContact.id;
     await env.criahub_db
       .prepare("UPDATE contacts SET last_seen_at = datetime('now'), username = COALESCE(NULLIF(?, ''), username) WHERE id = ?")
-      .bind(username, contactId)
-      .run();
+      .bind(username, contactId).run();
   } else {
     contactId = "con_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
     await env.criahub_db
       .prepare("INSERT INTO contacts (id, ig_account_id, igsid, username, first_seen_at, last_seen_at) VALUES (?, (SELECT id FROM ig_accounts WHERE ig_user_id = ?), ?, ?, datetime('now'), datetime('now'))")
-      .bind(contactId, igUserId, igsid, username)
-      .run();
+      .bind(contactId, igUserId, igsid, username).run();
   }
 
   // Find active campaigns for this account
   const campaigns = await env.criahub_db
     .prepare("SELECT c.* FROM campaigns c INNER JOIN ig_accounts a ON c.ig_account_id = a.id WHERE a.ig_user_id = ? AND c.status = 'active'")
-    .bind(igUserId)
-    .all();
+    .bind(igUserId).all();
   const campaignList = campaigns.results || [];
 
-  // Fetch post caption for AI context (use first campaign's media_id)
+  // Fetch post caption for AI context
   let postCaption = null;
   const firstCampaign = campaignList[0];
   if (firstCampaign && firstCampaign.media_id) {
@@ -1479,7 +1535,7 @@ async function handleComment(value, igUserId, token, env) {
     } catch (_) {}
   }
 
-  // 1. Try exact keyword match first
+  // Find matching campaign by keyword (optional — any comment triggers response)
   let matchedCampaign = null;
   for (const campaign of campaignList) {
     if (text.includes(campaign.keyword.toLowerCase())) {
@@ -1487,212 +1543,79 @@ async function handleComment(value, igUserId, token, env) {
       break;
     }
   }
-
-  // 2. If no exact match, use AI intent detection
+  // If no keyword match, use first active campaign
   if (!matchedCampaign && campaignList.length > 0) {
-    const availableKeywords = [...new Set(campaignList.map(c => c.keyword))];
-    const detectedKeyword = await detectCommentIntent(text, availableKeywords, env);
-    if (detectedKeyword) {
-      matchedCampaign = campaignList.find(c => c.keyword.toLowerCase() === detectedKeyword.toLowerCase());
-      console.log(`AI detected intent "${detectedKeyword}" for comment: "${text.substring(0, 50)}"`);
-    }
+    matchedCampaign = campaignList[0];
   }
 
-  // 3. If keyword found → Check follower → Send DM (private reply)
+  // === STEP 1: PUBLIC REPLY (visible to everyone) ===
+  const publicReply = await generateCommentReply(text, postCaption, matchedCampaign?.delivery_content || "o conteudo", env);
+  if (publicReply) {
+    await postPublicReply(commentId, publicReply, token);
+  }
+
+  // === STEP 2: CHECK IF ALREADY DELIVERED ===
   if (matchedCampaign) {
-    // Check if follower before doing anything
-    const isFollower = await checkFollow(igsid, igUserId, token);
-    if (!isFollower) {
-      console.log(`Keyword match but ${igsid} is NOT a follower, skipping DM`);
-      try {
-        await env.criahub_db.prepare("INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)").bind(commentId).run();
-      } catch (_) {}
-      return;
-    }
-
-    // Check if we already sent a private reply for this contact+campaign (prevent duplicates)
-    const convState = await env.criahub_db
+    const existingState = await env.criahub_db
       .prepare("SELECT stage FROM conversation_state WHERE contact_id = ? AND campaign_id = ?")
-      .bind(contactId, matchedCampaign.id)
-      .first();
-
-    if (convState && (convState.stage === "aguardando_quero" || convState.stage === "follow_pendente" || convState.stage === "entregue")) {
-      console.log(`Contact ${igsid} already has DM for campaign ${matchedCampaign.id}, stage: ${convState.stage}`);
-      try {
-        await env.criahub_db.prepare("INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)").bind(commentId).run();
-      } catch (_) {}
+      .bind(contactId, matchedCampaign.id).first();
+    if (existingState && existingState.stage === 'entregue') {
+      try { await env.criahub_db.prepare("INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)").bind(commentId).run(); } catch (_) {}
       return;
     }
+  }
 
-    // Init conversation state if not exists
-    await env.criahub_db
-      .prepare("INSERT OR IGNORE INTO conversation_state (contact_id, campaign_id, stage) VALUES (?, ?, 'aguardando_quero')")
-      .bind(contactId, matchedCampaign.id)
-      .run();
+  // === STEP 3: DM with rich format (any comment triggers DM) ===
+  if (matchedCampaign) {
+    const isFollower = await checkFollow(igsid, igUserId, token);
+    const deliveryContent = matchedCampaign.delivery_content || "o conteudo que solicitaste";
+    const campaignKeyword = matchedCampaign.keyword || "QUERO";
 
-    // Generate AI reply or use static message
-    let replyMessage = matchedCampaign.private_reply_message;
-    const deliveryType = matchedCampaign.delivery_content || "o conteudo";
-    const aiReply = await generateCommentReply(text, postCaption, deliveryType, env);
-    if (aiReply) {
-      replyMessage = aiReply;
-    }
-
-    // Send private reply (DM)
-    try {
-      const replyUrl = `https://graph.facebook.com/v21.0/${commentId}/private_replies`;
-      const res = await fetch(replyUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: replyMessage,
-          access_token: token
-        })
-      });
-      const data = await res.json();
-
-      if (res.ok) {
-        console.log(`Private reply sent to comment ${commentId}${aiReply ? ' (AI)' : ' (static)'}`);
-        await env.criahub_db
-          .prepare("UPDATE conversation_state SET stage = 'aguardando_quero', updated_at = datetime('now') WHERE contact_id = ? AND campaign_id = ?")
-          .bind(contactId, matchedCampaign.id)
-          .run();
-        // Log DM sent
-        try {
-          await env.criahub_db.prepare(`
-            INSERT INTO activity_log (ig_account_id, contact_id, campaign_id, event_type, event_detail, status)
-            VALUES (?, ?, ?, 'dm_sent', ?, 'success')
-          `).bind(
-            (await env.criahub_db.prepare("SELECT ig_account_id FROM campaigns WHERE id = ?").bind(matchedCampaign.id).first())?.ig_account_id,
-            contactId, matchedCampaign.id,
-            `To @${username || '?'}: "${replyMessage.substring(0, 80)}..."`
-          ).run();
-        } catch (_) {}
+    if (isFollower) {
+      // Follower — send rich DM with quick reply buttons
+      let dmText;
+      const aiDm = await generateDMMessage("intro", postCaption, { keyword: campaignKeyword, delivery_content: deliveryContent }, null, env);
+      if (aiDm) {
+        dmText = aiDm;
       } else {
-        console.error(`Private reply failed: ${JSON.stringify(data)}`);
-        // Log DM failed
-        try {
-          await env.criahub_db.prepare(`
-            INSERT INTO activity_log (ig_account_id, contact_id, campaign_id, event_type, event_detail, status)
-            VALUES (?, ?, ?, 'dm_failed', ?, 'failed')
-          `).bind(
-            (await env.criahub_db.prepare("SELECT ig_account_id FROM campaigns WHERE id = ?").bind(matchedCampaign.id).first())?.ig_account_id,
-            contactId, matchedCampaign.id,
-            `Error: ${JSON.stringify(data.error || data).substring(0, 100)}`
-          ).run();
-        } catch (_) {}
-        if (data.error && data.error.code === 2534025) {
-          return;
-        }
+        dmText = `Ola ${username || ''}! Obrigado pelo teu interesse!\n\nO teu conteudo esta pronto:\n\n${deliveryContent}\n\nToque no botao abaixo para receber agora!`;
       }
-    } catch (err) {
-      console.error(`Exception sending private reply: ${err.message}`);
-    }
+      const buttons = [
+        { title: "Receber Agora", payload: "QUERO" },
+        { title: "Saber Mais", payload: "INFO" }
+      ];
+      await sendDMRich(igsid, dmText, buttons, token);
 
-    // Mark processed
-    try {
-      await env.criahub_db.prepare("INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)").bind(commentId).run();
-    } catch (_) {}
-    return;
-  }
-
-  // 4. No keyword match → Check if follower → Send initial DM "Comente QUERO"
-  if (campaignList.length === 0) return;
-
-  // Check if harmful comment first (skip silently)
-  const classification = await classifyComment(text, postCaption, env);
-  console.log(`Comment classification: "${classification}" for: "${text.substring(0, 50)}"`);
-  if (classification === "ignorar") {
-    console.log(`Ignoring harmful comment: "${text.substring(0, 50)}"`);
-    try {
-      await env.criahub_db.prepare("INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)").bind(commentId).run();
-    } catch (_) {}
-    return;
-  }
-
-  // Check if this user already has a conversation state for any campaign (avoid spam)
-  const existingState = await env.criahub_db
-    .prepare("SELECT stage FROM conversation_state WHERE contact_id = ?")
-    .bind(contactId)
-    .first();
-  if (existingState && ["aguardando_quero", "aguardando_follow", "entregue"].includes(existingState.stage)) {
-    console.log(`Contact ${igsid} already in conversation flow, stage: ${existingState.stage}, skipping initial DM`);
-    try {
-      await env.criahub_db.prepare("INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)").bind(commentId).run();
-    } catch (_) {}
-    return;
-  }
-
-  // Check if commenter is a REAL FOLLOWER before sending any DM
-  const following = await checkFollow(igsid, igUserId, token);
-  if (!following) {
-    console.log(`Commenter ${igsid} is NOT a follower, skipping DM`);
-    try {
-      await env.criahub_db.prepare("INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)").bind(commentId).run();
-    } catch (_) {}
-    return;
-  }
-
-  // Follower confirmed → Send initial DM via private reply
-  const targetCampaign = campaignList[0];
-  const deliveryHint = targetCampaign.delivery_content || "o conteúdo";
-  let initialMsg;
-  const aiInitial = await generateDMMessage("intro", postCaption, { keyword: targetCampaign.keyword, delivery_content: deliveryHint }, null, env);
-  if (aiInitial) {
-    initialMsg = aiInitial;
-  } else {
-    initialMsg = `Olá! 😊 Obrigado pelo teu interesse! Vi que comentaste no nosso post.\n\nPara receberes ${deliveryHint}, basta comentares QUERO neste mesmo post e envio-te tudo por mensagem privada! 📩`;
-  }
-
-  try {
-    const replyUrl = `https://graph.facebook.com/v21.0/${commentId}/private_replies`;
-    const res = await fetch(replyUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: initialMsg,
-        access_token: token
-      })
-    });
-    const data = await res.json();
-
-    if (res.ok) {
-      console.log(`Initial DM sent to follower ${igsid} via comment ${commentId}`);
-      // Init conversation state
+      // Set conversation state
       await env.criahub_db
         .prepare("INSERT OR IGNORE INTO conversation_state (contact_id, campaign_id, stage) VALUES (?, ?, 'aguardando_quero')")
-        .bind(contactId, targetCampaign.id)
-        .run();
-      // Log activity
+        .bind(contactId, matchedCampaign.id).run();
+
+      // Log
       try {
         const acc = await env.criahub_db.prepare("SELECT id FROM ig_accounts WHERE ig_user_id = ?").bind(igUserId).first();
         if (acc) {
-          await env.criahub_db.prepare(`
-            INSERT INTO activity_log (ig_account_id, contact_id, campaign_id, event_type, event_detail, status)
-            VALUES (?, ?, ?, 'dm_sent', ?, 'success')
-          `).bind(acc.id, contactId, targetCampaign.id, `Initial DM to @${username || '?'}: "${initialMsg.substring(0, 80)}..."`).run();
+          await env.criahub_db.prepare(`INSERT INTO activity_log (ig_account_id, contact_id, campaign_id, event_type, event_detail, status) VALUES (?, ?, ?, 'dm_sent', ?, 'success')`)
+            .bind(acc.id, contactId, matchedCampaign.id, `Rich DM to @${username || '?'}: "${dmText.substring(0, 80)}..."`).run();
         }
       } catch (_) {}
     } else {
-      console.error(`Initial DM failed: ${JSON.stringify(data)}`);
-      try {
-        const acc = await env.criahub_db.prepare("SELECT id FROM ig_accounts WHERE ig_user_id = ?").bind(igUserId).first();
-        if (acc) {
-          await env.criahub_db.prepare(`
-            INSERT INTO activity_log (ig_account_id, contact_id, campaign_id, event_type, event_detail, status)
-            VALUES (?, ?, ?, 'dm_failed', ?, 'failed')
-          `).bind(acc.id, contactId, targetCampaign.id, `Error: ${JSON.stringify(data.error || data).substring(0, 100)}`).run();
-        }
-      } catch (_) {}
+      // Not a follower — ask to follow with buttons
+      const followMsg = `Ola ${username || ''}! Obrigado pelo comentario!\n\nPara receberes o conteudo "${deliveryContent}", precisamos que nos sigas primeiro!`;
+      const buttons = [
+        { title: "Ja Segui!", payload: "SEGUI" },
+        { title: "Ver Perfil", payload: "PERFIL" }
+      ];
+      await sendDMRich(igsid, followMsg, buttons, token);
+
+      await env.criahub_db
+        .prepare("INSERT OR IGNORE INTO conversation_state (contact_id, campaign_id, stage) VALUES (?, ?, 'aguardando_follow')")
+        .bind(contactId, matchedCampaign.id).run();
     }
-  } catch (err) {
-    console.error(`Exception sending initial DM: ${err.message}`);
   }
 
   // Mark processed
-  try {
-    await env.criahub_db.prepare("INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)").bind(commentId).run();
-  } catch (_) {}
+  try { await env.criahub_db.prepare("INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)").bind(commentId).run(); } catch (_) {}
 }
 
 // ============================================================
@@ -1751,7 +1674,7 @@ async function handleMessage(msg, igUserId, token, env) {
     }
 
     if (conv.stage === "aguardando_quero") {
-      if (text === "quero") {
+      if (["quero", "receber agora", "saber mais", "quero receber", "sim"].includes(text)) {
         const following = await checkFollow(igsid, igUserId, token);
         if (following) {
           // AI delivery message
@@ -1778,7 +1701,7 @@ async function handleMessage(msg, igUserId, token, env) {
         }
       }
     } else if (conv.stage === "aguardando_follow") {
-      if (["pronto", "sim", "ok", "ja segui", "segui", "feito", "quero"].includes(text)) {
+      if (["pronto", "sim", "ok", "ja segui", "segui", "feito", "quero", "ja segui!", "perfil"].includes(text)) {
         const following = await checkFollow(igsid, igUserId, token);
         if (following) {
           // AI delivery message
@@ -1855,6 +1778,69 @@ async function sendDM(recipientId, text, token) {
     }
   } catch (err) {
     console.error(`DM exception: ${err.message}`);
+    return false;
+  }
+}
+
+// ============================================================
+// sendDMRich — DM with quick reply buttons (better than ManyChat)
+// ============================================================
+async function sendDMRich(recipientId, text, quickReplies, token) {
+  try {
+    const message = { text: text };
+    if (quickReplies && quickReplies.length > 0) {
+      message.quick_replies = quickReplies.map(btn => ({
+        content_type: "text",
+        title: btn.title,
+        payload: btn.payload
+      }));
+    }
+    const res = await fetch(`${IG_GRAPH_BASE}/me/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        recipient: { id: recipientId },
+        message: message,
+        access_token: token
+      })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      console.log(`Rich DM sent to ${recipientId}: ${text.substring(0, 40)}`);
+      return true;
+    } else {
+      console.error(`Rich DM failed: ${JSON.stringify(data)}`);
+      return false;
+    }
+  } catch (err) {
+    console.error(`Rich DM exception: ${err.message}`);
+    return false;
+  }
+}
+
+// ============================================================
+// postPublicReply — reply publicly to a comment
+// ============================================================
+async function postPublicReply(commentId, text, token) {
+  try {
+    const res = await fetch(`https://graph.facebook.com/v21.0/${commentId}/replies`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: text,
+        access_token: token
+      })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      console.log(`Public reply sent to comment ${commentId}`);
+      return true;
+    } else {
+      console.error(`Public reply failed: ${JSON.stringify(data)}`);
+      return false;
+    }
+  } catch (err) {
+    console.error(`Public reply exception: ${err.message}`);
     return false;
   }
 }
@@ -2350,24 +2336,44 @@ async function handleRegister(request, env) {
     return jsonResponse({ error: "Email already registered" }, 409);
   }
 
+  // Check if approval is required
+  let approvalRequired = false;
+  try {
+    const cfg = await env.criahub_db.prepare("SELECT value FROM system_config WHERE key = 'approval_required'").first();
+    approvalRequired = cfg && cfg.value === '1';
+  } catch (_) {}
+
   const userId = "usr_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
   const passwordHash = await hashPassword(body.password);
+  const userStatus = approvalRequired ? 'pending' : 'active';
 
   await env.criahub_db.prepare(`
-    INSERT INTO saas_users (id, email, password_hash, name, status) VALUES (?, ?, ?, ?, 'active')
-  `).bind(userId, body.email.toLowerCase(), passwordHash, body.name).run();
+    INSERT INTO saas_users (id, email, password_hash, name, status) VALUES (?, ?, ?, ?, ?)
+  `).bind(userId, body.email.toLowerCase(), passwordHash, body.name, userStatus).run();
 
-  const subId = "sub_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
-  const expiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(); // 3 day trial
-  await env.criahub_db.prepare(`
-    INSERT INTO saas_subscriptions (id, user_id, plan_id, status, started_at, expires_at) VALUES (?, ?, 'plan_business', 'active', datetime('now'), ?)
-  `).bind(subId, userId, expiresAt).run();
+  if (!approvalRequired) {
+    // Auto-approve: create 3-day trial
+    const subId = "sub_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+    const expiresAt = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+    await env.criahub_db.prepare(`
+      INSERT INTO saas_subscriptions (id, user_id, plan_id, status, started_at, expires_at) VALUES (?, ?, 'plan_business', 'active', datetime('now'), ?)
+    `).bind(subId, userId, expiresAt).run();
+  }
+
+  if (approvalRequired) {
+    // Notify admin of new pending registration
+    try {
+      await env.criahub_db.prepare(`
+        INSERT INTO notifications (title, message, type, icon, active, created_at) VALUES (?, 'Utilizador aguarda aprovacao', 'info', '👤', 1, datetime('now'))
+      `).bind(`Novo registo: ${body.name}`).run();
+    } catch (_) {}
+    return jsonResponse({ ok: true, pending: true, message: "Registo enviado. Aguarda aprovacao do administrador." });
+  }
 
   const sessionToken = crypto.randomUUID().replace(/-/g, "");
   try {
     await env.criahub_db.prepare("INSERT OR REPLACE INTO processed_events (event_id) VALUES (?)").bind("session_" + sessionToken).run();
   } catch (_) {}
-
   try {
     await env.criahub_db.prepare(`
       INSERT INTO system_config (key, value, updated_at) VALUES (?, ?, datetime('now'))
@@ -2384,9 +2390,15 @@ async function handleLogin(request, env) {
     return jsonResponse({ error: "email and password required" }, 400);
   }
 
-  const user = await env.criahub_db.prepare("SELECT * FROM saas_users WHERE email = ? AND status = 'active'").bind(body.email.toLowerCase()).first();
+  const user = await env.criahub_db.prepare("SELECT * FROM saas_users WHERE email = ?").bind(body.email.toLowerCase()).first();
   if (!user) {
     return jsonResponse({ error: "Email or password incorrect" }, 401);
+  }
+  if (user.status === 'pending') {
+    return jsonResponse({ error: "Aguarde aprovacao do administrador" }, 403);
+  }
+  if (user.status === 'banned' || user.status === 'rejected') {
+    return jsonResponse({ error: "Conta desativada" }, 403);
   }
 
   const passwordHash = await hashPassword(body.password);

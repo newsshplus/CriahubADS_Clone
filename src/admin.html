@@ -153,6 +153,22 @@ tr:hover td{background:rgba(233,69,96,.03)}
   .btn-group{flex-direction:column}
   .btn{width:100%;justify-content:center}
 }
+@media(max-width:768px){#hamburgerBtn{display:block!important}}
+@media(max-width:768px){
+  .sidebar{position:fixed;left:-260px;z-index:1000;width:260px;height:100vh;transition:left .3s}
+  .sidebar.open{left:0}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999}
+  .sidebar.open~.sidebar-overlay{display:block}
+  .main{margin-left:0!important;padding:16px!important}
+  .stat-grid{grid-template-columns:1fr 1fr!important}
+  .topbar{flex-wrap:wrap;gap:8px}
+  .topbar h2{font-size:16px}
+  table{font-size:12px;display:block;overflow-x:auto}
+  th,td{padding:6px 8px!important;white-space:nowrap}
+  .btn-sm{font-size:11px;padding:4px 8px}
+  .card{padding:16px!important}
+  .lang-select{width:100%;margin-top:8px}
+}
 </style>
 </head>
 <body>
@@ -233,6 +249,7 @@ tr:hover td{background:rgba(233,69,96,.03)}
   </div>
 
   <div class="main" id="mainContent"></div>
+  <button onclick="document.querySelector('.sidebar').classList.toggle('open')" class="btn btn-sm" style="display:none;position:fixed;top:12px;left:12px;z-index:998" id="hamburgerBtn">&#9776;</button>
 </div>
 
 <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
@@ -962,12 +979,14 @@ async function renderSaasUsers(m){
       {id:'plan_business',name:'Business',price_eur_monthly:39.9}
     ];
 
+    const pendingCount=list.filter(u=>u.status==='pending').length;
     const userRows=list.map(u=>{
       const subBadge=u.sub_status==='active'?'<span class="badge badge-active">Ativa</span>':
         u.sub_status==='cancelled'?'<span class="badge badge-paused">Cancelada</span>':
         '<span class="badge badge-disconnected">'+esc(u.sub_status||'Nenhuma')+'</span>';
       const statusBadge=u.status==='active'?'<span class="badge badge-active">Ativo</span>':
         u.status==='banned'?'<span class="badge badge-disconnected">Banido</span>':
+        u.status==='pending'?'<span class="badge badge-paused">Pendente</span>':
         '<span class="badge badge-paused">'+esc(u.status||'Desconhecido')+'</span>';
       return `<tr>
         <td style="font-weight:600">${esc(u.name||'-')}</td>
@@ -978,6 +997,7 @@ async function renderSaasUsers(m){
         <td>${u.expires_at?new Date(u.expires_at).toLocaleDateString('pt-PT'):'-'}</td>
         <td>
           <div class="btn-group">
+            ${u.status==='pending'?`<button class="btn btn-sm btn-success" onclick="approveUser('${u.id}')">Aprovar</button><button class="btn btn-sm btn-danger" onclick="rejectUser('${u.id}')">Rejeitar</button>`:''}
             <button class="btn btn-sm btn-outline" onclick="editSaasUser('${u.id}','${esc(u.name)}','${esc(u.email)}')">Editar</button>
             <button class="btn btn-sm btn-outline" onclick="assignPlanSaas('${u.id}')">Plano</button>
             ${u.status==='active'?
@@ -991,7 +1011,7 @@ async function renderSaasUsers(m){
 
     m.innerHTML=`
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px">
-        <h2 style="margin:0">Gestão de Clientes</h2>
+        <h2 style="margin:0">Gestão de Clientes${pendingCount>0?' <span class="badge badge-paused" style="font-size:12px;margin-left:8px">'+pendingCount+' Pendentes</span>':''}</h2>
         <div class="btn-group">
           <button class="btn btn-primary" onclick="showNewSaasUser()">+ Novo Cliente</button>
           <button class="btn btn-outline btn-sm" onclick="loadPage('saasusers')">&#8635; Atualizar</button>
@@ -1130,6 +1150,17 @@ async function confirmAssignPlanSaas(userId){
   else{toast(r?.error||'Erro ao mudar plano','error')}
 }
 
+async function approveUser(userId){
+  if(!confirm('Aprovar este utilizador e criar trial de 3 dias?'))return;
+  const r=await api('POST','/admin/api/saas-users/'+userId+'/approve');
+  if(r&&r.ok){toast('Utilizador aprovado!','success');loadPage('saasusers')}else{toast(r?.error||'Erro','error')}
+}
+async function rejectUser(userId){
+  if(!confirm('Rejeitar este utilizador?'))return;
+  const r=await api('POST','/admin/api/saas-users/'+userId+'/reject');
+  if(r&&r.ok){toast('Utilizador rejeitado','success');loadPage('saasusers')}else{toast(r?.error||'Erro','error')}
+}
+
 async function banSaasUser(userId){
   if(!confirm('Tem certeza que quer banir este cliente?'))return;
   const r=await api('POST','/admin/api/saas-users/'+userId+'/ban');
@@ -1255,6 +1286,8 @@ async function renderSettings(m){
   const config=await api('GET','/admin/api/config');
   const groqKey=(config&&config.groq_api_key)?config.groq_api_key:'';
   const aiEnabled=groqKey?'checked':'';
+  const approvalCfg=await api('GET','/admin/api/config/approval');
+  const approvalEnabled=approvalCfg&&approvalCfg.enabled;
 
   m.innerHTML=`
     <h2>Configurações</h2>
@@ -1285,6 +1318,14 @@ async function renderSettings(m){
         <small>Se desativado, usa as mensagens estaticas que voce escreveu</small>
       </div>
       <button class="btn btn-primary" onclick="saveGroqConfig()">Salvar Configuracao IA</button>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <h3>Aprovacao de Registos</h3>
+      <p style="color:var(--text2);font-size:13px;margin:8px 0">Quando ativo, novos utilizadores precisam da tua aprovacao antes de usar a plataforma.</p>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:8px">
+        <input type="checkbox" id="approvalToggle" ${approvalEnabled?'checked':''} onchange="toggleApproval(this.checked)" style="width:18px;height:18px">
+        <span>Exigir aprovacao para novos registos</span>
+      </label>
     </div>
     <div class="card">
       <h3>Fluxo da Automação</h3>
@@ -1325,6 +1366,11 @@ async function saveGroqConfig(){
   const r=await api('POST','/admin/api/config',config);
   if(r&&r.ok){toast('Configuracao IA salva!','success')}
   else{toast('Erro ao salvar','error')}
+}
+
+async function toggleApproval(enabled){
+  await api('POST','/admin/api/config/approval',{enabled});
+  toast('Configuracao guardada','success');
 }
 
 function renderHelp(m){
@@ -1884,11 +1930,10 @@ async function disconnectAccount(id){
   if(r&&r.ok){toast('Conta desconectada','success');loadPage('accounts')}
 }
 
-async function deleteAccount(id,username){
-  if(!confirm('Tem certeza que deseja EXCLUIR a conta @'+username+'? Esta acao nao pode ser desfeita.'))return;
+async function deleteAccount(id){
+  if(!confirm('Excluir esta conta e todos os dados associados? Esta acao e irreversivel.'))return;
   const r=await api('DELETE','/admin/api/accounts/'+id);
-  if(r&&r.ok){toast('Conta excluida com sucesso','success');loadPage('accounts')}
-  else{toast(r?.error||'Erro ao excluir','error')}
+  if(r&&r.ok){toast('Conta excluida!','success');loadPage('accounts')}else{toast(r?.error||'Erro ao excluir','error')}
 }
 
 function showUpdateToken(accountId,username){
