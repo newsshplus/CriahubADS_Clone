@@ -272,6 +272,7 @@ async function doLogin(){
   }catch(e){document.getElementById('loginError').style.display='block'}
 }
 function doLogout(){TOKEN='';localStorage.removeItem('criahub_token');location.reload()}
+function getToken(){return TOKEN}
 
 // Theme toggle
 function toggleTheme(){
@@ -2651,14 +2652,17 @@ async function renderTikTok(m){
   ]);
   const cfg=configs&&configs.config?configs.config:{};
   const auts=autos&&autos.automations?autos.automations:[];
+  const isConnected=cfg.status==='connected';
+  const loc=window.location.origin;
   m.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
       <h2 style="margin:0">&#127916; TikTok</h2>
-      <button class="btn btn-primary btn-sm" onclick="openTikTokConfig()">+ Configurar</button>
+      ${isConnected?`<button class="btn btn-danger btn-sm" onclick="disconnectTikTok()">Desconectar</button>`:
+      `<a href="${loc}/tiktok/connect?session=${getToken()}" class="btn btn-primary btn-sm" style="text-decoration:none">Conectar TikTok</a>`}
     </div>
     <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px">
-      <div class="stat-card" style="border-left:3px solid ${cfg.enabled?'var(--success)':'var(--accent)'}">
-        <div class="number">${cfg.enabled?'&#10004; Ativo':'&#10006; Inativo'}</div>
+      <div class="stat-card" style="border-left:3px solid ${isConnected?'var(--success)':'var(--accent)'}">
+        <div class="number">${isConnected?`&#10004; @${esc(cfg.tiktok_username||'')}`:'&#10006; Desconectado'}</div>
         <div class="label">Estado</div>
       </div>
       <div class="stat-card" style="border-left:3px solid #8b5cf6">
@@ -2666,11 +2670,10 @@ async function renderTikTok(m){
         <div class="label">Automações</div>
       </div>
     </div>
-    <div class="card">
-      <h3>Automações TikTok</h3>
-      ${!auts.length?'<div class="empty"><div class="icon">&#127916;</div><p>Nenhuma automação TikTok configurada.</p><button class="btn btn-primary btn-sm" onclick="openTikTokAutomation()">+ Criar Automação</button></div>':
-      `<div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="openTikTokAutomation()">+ Criar Automação</button></div>
-      <div class="table-wrap"><table>
+    ${isConnected?`<div class="card" style="margin-bottom:24px"><h3>Automações TikTok</h3>
+      <div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn btn-primary btn-sm" onclick="openTikTokAutomation()">+ Criar Automação</button></div>
+      ${!auts.length?'<div class="empty"><div class="icon">&#127916;</div><p>Nenhuma automação TikTok configurada.</p></div>':
+      `<div class="table-wrap"><table>
         <thead><tr><th>Regra</th><th>Gatilho</th><th>Resposta</th><th>Estado</th></tr></thead>
         <tbody>${auts.map(a=>`<tr>
           <td><strong>${esc(a.keyword||a.name||'-')}</strong></td>
@@ -2679,48 +2682,39 @@ async function renderTikTok(m){
           <td><span class="badge badge-${a.enabled?'active':'paused'}">${a.enabled?'Ativo':'Inativo'}</span></td>
         </tr>`).join('')}</tbody>
       </table></div>`}
-    </div>`;
+    </div>`:
+    `<div class="card" style="text-align:center;padding:40px">
+      <div style="font-size:48px;margin-bottom:16px">&#127916;</div>
+      <h3>Conecta o teu TikTok</h3>
+      <p style="color:var(--text-secondary);margin-bottom:20px">Precisas de uma conta TikTok Business com Developer App criada.</p>
+      <a href="${loc}/tiktok/connect?session=${getToken()}" class="btn btn-primary" style="text-decoration:none;display:inline-block">Conectar via OAuth</a>
+      <p style="color:var(--text-secondary);font-size:12px;margin-top:12px">Precisas de ter a app TikTok criada em developers.tiktok.com</p>
+    </div>`}`;
 }
 
-function openTikTokConfig(){
-  openModal(`Configurar TikTok
-    <div class="form-group" style="margin-top:20px"><label>Access Token (API for Business)</label><input id="ttToken" type="password" placeholder="TikTok Access Token"></div>
-    <div class="form-group"><label>Open ID</label><input id="ttOpenId" placeholder="Seu Open ID"></div>
-    <div class="form-row"><div class="form-group"><label>Polling Interval (min)</label><input id="ttPolling" type="number" value="5" min="1"></div>
-    <div class="form-group"><label>Modo</label><select id="ttMode"><option value="api">API Comments</option><option value="connector">Browser Connector</option><option value="both">Ambos</option></select></div></div>
-    <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveTikTokConfig()">Guardar</button></div>`);
-}
-
-async function saveTikTokConfig(){
-  const r=await api('POST','/api/tiktok/config',{
-    access_token:document.getElementById('ttToken').value,
-    open_id:document.getElementById('ttOpenId').value,
-    polling_interval:parseInt(document.getElementById('ttPolling').value)||5,
-    mode:document.getElementById('ttMode').value,
-    enabled:true
-  });
-  if(r&&r.ok){closeModal();toast('TikTok configurado!','success');loadPage('tiktok')}
-  else toast(r?.error||'Erro ao guardar','error');
+async function disconnectTikTok(){
+  if(!confirm('Desconectar TikTok?'))return;
+  const r=await api('DELETE','/api/tiktok/config');
+  if(r&&r.ok){toast('TikTok desconectado','success');loadPage('tiktok')}
 }
 
 function openTikTokAutomation(){
   openModal(`Nova Automação TikTok
-    <div class="form-group" style="margin-top:20px"><label>Palavra-chave / Gatilho</label><input id="ttAutoKeyword" placeholder="ex: PREÇO, ACESSO, INFO"></div>
-    <div class="form-group"><label>Tipo de Gatilho</label><select id="ttAutoTrigger"><option value="comment">Comentário</option><option value="mention">Menção</option><option value="dm">DM</option></select></div>
+    <div class="form-group" style="margin-top:20px"><label>Nome da Automação</label><input id="ttAutoName" placeholder="ex: Resposta Comentário PREÇO"></div>
+    <div class="form-group"><label>Palavra-chave (opcional)</label><input id="ttAutoKeyword" placeholder="ex: PREÇO, ACESSO, INFO (deixa vazio para responder a todos)"></div>
+    <div class="form-group"><label>ID do Vídeo TikTok</label><input id="ttAutoVideoId" placeholder="ID do vídeo (obtém da URL do vídeo)"></div>
     <div class="form-group"><label>Texto de Resposta</label><textarea id="ttAutoResponse" rows="3" placeholder="Olá! Obrigado pelo interesse. Enviando as informações..."></textarea></div>
-    <div class="form-row"><div class="form-group"><label>ID do Post/Vídeo</label><input id="ttAutoMediaId" placeholder="Opcional"></div>
-    <div class="form-group"><label>ID da Conta</label><input id="ttAutoAccountId" placeholder="Opcional"></div></div>
+    <div class="form-group"><label>Usar IA para resposta</label><select id="ttAutoAI"><option value="0">Não — usar texto fixo</option><option value="1">Sim — IA responde automaticamente</option></select></div>
     <div class="modal-actions"><button class="btn btn-outline" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveTikTokAutomation()">Criar</button></div>`);
 }
 
 async function saveTikTokAutomation(){
   const r=await api('POST','/api/tiktok/automations',{
+    name:document.getElementById('ttAutoName').value,
     keyword:document.getElementById('ttAutoKeyword').value,
-    trigger_type:document.getElementById('ttAutoTrigger').value,
+    video_id:document.getElementById('ttAutoVideoId').value,
     response_template:document.getElementById('ttAutoResponse').value,
-    media_id:document.getElementById('ttAutoMediaId').value||null,
-    ig_user_id:document.getElementById('ttAutoAccountId').value||null,
-    enabled:true
+    ai_enabled:document.getElementById('ttAutoAI').value==='1'
   });
   if(r&&r.ok){closeModal();toast('Automação TikTok criada!','success');loadPage('tiktok')}
   else toast(r?.error||'Erro ao criar','error');

@@ -13,6 +13,16 @@ const IG_SCOPES = [
   "instagram_business_manage_comments",
 ].join(",");
 
+const TIKTOK_AUTHORIZE_URL = "https://www.tiktok.com/v2/auth/authorize/";
+const TIKTOK_TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/";
+const TIKTOK_API_BASE = "https://open.tiktokapis.com/v2";
+const TIKTOK_SCOPES = [
+  "user.info.basic",
+  "video.list",
+  "comment.read",
+  "comment.write",
+].join(",");
+
 import adminHtml from "./admin.html";
 import landingHtml from "./landing.html";
 import authHtml from "./auth.html";
@@ -294,6 +304,20 @@ self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;if(e.reques
       }
       if (method === "GET" && path === "/oauth/callback") {
         return handleOAuthCallback(url, env);
+      }
+
+      // === TIKTOK OAUTH ===
+      if (method === "GET" && path === "/tiktok/connect") {
+        return handleTikTokConnect(url, env);
+      }
+      if (method === "GET" && path === "/tiktok/callback") {
+        return handleTikTokCallback(url, env);
+      }
+      if (method === "GET" && path === "/tiktok/webhook") {
+        return handleTikTokWebhookVerify(url, env);
+      }
+      if (method === "POST" && path === "/tiktok/webhook") {
+        return handleTikTokWebhook(request, env);
       }
 
       // === SaaS: Landing Page ===
@@ -2246,6 +2270,239 @@ async function handleOAuthCallback(url, env) {
     <p>A conta <strong>@${escapeHtml(username || igUserId)}</strong> foi conectada à automação.</p>
     <p>Você já pode fechar esta janela.</p>
   `);
+}
+
+// ------------------------------------------------------------
+// TIKTOK OAuth — /tiktok/connect e /tiktok/callback
+// ------------------------------------------------------------
+async function handleTikTokConnect(url, env) {
+  if (!env.TIKTOK_CLIENT_KEY) {
+    return textResponse("TikTok OAuth não configurado. Adicione TIKTOK_CLIENT_KEY no Cloudflare.", 400);
+  }
+
+  // session_token from query (admin or SaaS user)
+  const sessionToken = url.searchParams.get("session") || "";
+  const sessionKey = sessionToken.startsWith("user_") ? "session_user_" + sessionToken.replace("user_", "") : "session_" + sessionToken;
+  const session = await env.criahub_db.prepare("SELECT value FROM system_config WHERE key = ?").bind(sessionKey).first();
+  if (!session && !sessionToken.startsWith("admin")) {
+    return textResponse("Sessão inválida. Faça login novamente.", 401);
+  }
+  const userId = session?.value || sessionToken;
+
+  const state = await signState(env, { user_id: userId, session_token: sessionToken, nonce: crypto.randomUUID() });
+  const redirectUri = `${url.origin}/tiktok/callback`;
+
+  const authorizeUrl = new URL(TIKTOK_AUTHORIZE_URL);
+  authorizeUrl.searchParams.set("client_key", env.TIKTOK_CLIENT_KEY);
+  authorizeUrl.searchParams.set("scope", TIKTOK_SCOPES);
+  authorizeUrl.searchParams.set("response_type", "code");
+  authorizeUrl.searchParams.set("redirect_uri", redirectUri);
+  authorizeUrl.searchParams.set("state", state);
+
+  return Response.redirect(authorizeUrl.toString(), 302);
+}
+
+async function handleTikTokCallback(url, env) {
+  const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+  const errorParam = url.searchParams.get("error");
+
+  if (errorParam) {
+    return textResponse(`O TikTok retornou um erro: ${errorParam}. Tente novamente.`, 400);
+  }
+  if (!code || !state) {
+    return textResponse("Parâmetros 'code' ou 'state' ausentes.", 400);
+  }
+
+  const statePayload = await verifyState(env, state);
+  if (!statePayload) {
+    return textResponse("State inválido ou expirado. Peça um novo link de conexão.", 400);
+  }
+
+  if (!env.TIKTOK_CLIENT_KEY || !env.TIKTOK_CLIENT_SECRET) {
+    return textResponse("TikTok OAuth não configurado no servidor.", 500);
+  }
+
+  const redirectUri = `${url.origin}/tiktok/callback`;
+
+  // 1) Trocar code por access token
+  const tokenBody = new URLSearchParams();
+  tokenBody.set("client_key", env.TIKTOK_CLIENT_KEY);
+  tokenBody.set("client_secret", env.TIKTOK_CLIENT_SECRET);
+  tokenBody.set("code", code);
+  tokenBody.set("grant_type", "authorization_code");
+  tokenBody.set("redirect_uri", redirectUri);
+
+  const tokenRes = await fetch(TIKTOK_TOKEN_URL, {
+    method: "POST",
+    body: tokenBody,
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+  });
+  const tokenData = await tokenRes.json();
+  console.log("DEBUG [TikTok callback] token response:", JSON.stringify(tokenData));
+
+  const accessToken = tokenData?.data?.access_token;
+  const openId = tokenData?.data?.open_id;
+  const refreshToken = tokenData?.data?.refresh_token;
+  const expiresIn = tokenData?.data?.expires_in || 86400;
+  const scope = tokenData?.data?.scope || "";
+
+  if (!accessToken || !openId) {
+    console.error("Falha ao obter token TikTok:", JSON.stringify(tokenData));
+    return textResponse("Falha ao autorizar com o TikTok. Verifique as permissões da app.", 400);
+  }
+
+  // 2) Buscar info do utilizador
+  const userRes = await fetch(`${TIKTOK_API_BASE}/user/info/?fields=display_name,username,avatar_url`, {
+    headers: { "Authorization": `Bearer ${accessToken}` },
+  });
+  const userData = await userRes.json();
+  const tiktokUsername = userData?.data?.user?.username || userData?.data?.user?.display_name || openId;
+  const tiktokDisplayName = userData?.data?.user?.display_name || tiktokUsername;
+
+  // 3) Salvar no banco
+  const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+  const userId = statePayload.user_id;
+
+  // Find which user this session belongs to
+  let targetUserId = userId;
+
+  await env.criahub_db.prepare(`INSERT OR REPLACE INTO tiktok_configs (user_id, account_id, access_token, refresh_token, token_expires_at, tiktok_username, tiktok_user_id, status, scopes, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'connected', ?, datetime('now'))`)
+    .bind(targetUserId, "tt_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16), accessToken, refreshToken || null, expiresAt, tiktokUsername, openId, scope)
+    .run();
+
+  return htmlResponse(`
+    <div style="text-align:center;padding:60px 20px;max-width:500px;margin:0 auto">
+      <div style="font-size:64px;margin-bottom:20px">&#127916;</div>
+      <h2 style="color:#00c853;margin-bottom:12px">TikTok conectado!</h2>
+      <p style="font-size:18px;color:#333">Conta: <strong>@${escapeHtml(tiktokDisplayName)}</strong></p>
+      <p style="color:#666;margin-top:20px">Pode fechar esta janela.</p>
+    </div>
+  `);
+}
+
+// ------------------------------------------------------------
+// TIKTOK WEBHOOK — Verificação + Receber comentários
+// ------------------------------------------------------------
+async function handleTikTokWebhookVerify(url, env) {
+  // TikTok sends a "challenge" query param for webhook verification
+  const challenge = url.searchParams.get("challenge");
+  if (challenge) {
+    return new Response(challenge, {
+      headers: { "Content-Type": "text/plain" },
+    });
+  }
+  return new Response("OK", { status: 200 });
+}
+
+async function handleTikTokWebhook(request, env) {
+  try {
+    const body = await request.json();
+    console.log("[TikTok Webhook] Recebido:", JSON.stringify(body).substring(0, 500));
+
+    // TikTok webhook events
+    const event = body?.event;
+    if (event === "comment") {
+      const comment = body?.comment;
+      if (comment) {
+        const videoId = comment?.video_id;
+        const commentId = comment?.id;
+        const text = comment?.text || "";
+        const userNickname = comment?.user?.nickname || "Utilizador";
+        const userOpenId = comment?.user?.open_id;
+
+        // Find automations matching this video
+        const automations = await env.criahub_db.prepare(
+          "SELECT * FROM tiktok_automations WHERE video_id = ? AND status = 'active'"
+        ).bind(videoId).all();
+
+        for (const auto of (automations.results || [])) {
+          // Check keyword match (if keyword set, match; otherwise, reply to all)
+          const matchKeyword = !auto.keyword || auto.keyword === "" ||
+            text.toLowerCase().includes(auto.keyword.toLowerCase());
+
+          if (!matchKeyword) continue;
+
+          // Generate response
+          let responseText = auto.response_template || "Obrigado pelo comentário!";
+
+          if (auto.ai_enabled) {
+            try {
+              const aiResponse = await generateTikTokReply(text, auto, env);
+              if (aiResponse) responseText = aiResponse;
+            } catch (e) {
+              console.log("[TikTok] AI reply failed, using template:", e.message);
+            }
+          }
+
+          // Reply to comment via TikTok API
+          if (commentId && auto.account_id) {
+            const account = await env.criahub_db.prepare(
+              "SELECT access_token FROM tiktok_configs WHERE user_id = ? AND status = 'connected'"
+            ).bind(auto.user_id).first();
+
+            if (account) {
+              await fetch(`${TIKTOK_API_BASE}/comment/reply/`, {
+                method: "POST",
+                headers: {
+                  "Authorization": `Bearer ${account.access_token}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  comment_id: commentId,
+                  text: responseText,
+                }),
+              });
+
+              // Update DM count
+              await env.criahub_db.prepare(
+                "UPDATE tiktok_automations SET dm_count = dm_count + 1 WHERE id = ?"
+              ).bind(auto.id).run();
+            }
+          }
+
+          // Log activity
+          await env.criahub_db.prepare(
+            `INSERT INTO activity_log (ig_account_id, type, details, created_at) VALUES (?, 'tiktok_comment', ?, datetime('now'))`
+          ).bind(auto.account_id || "tiktok", JSON.stringify({ video_id: videoId, comment: text.substring(0, 200), reply: responseText.substring(0, 200) })).run();
+        }
+      }
+    }
+
+    return jsonResponse({ ok: true });
+  } catch (err) {
+    console.error("[TikTok Webhook] Erro:", err.message);
+    return jsonResponse({ ok: true }); // Always return 200 to webhook
+  }
+}
+
+async function generateTikTokReply(commentText, automation, env) {
+  // Use Groq AI for TikTok reply (same as Instagram)
+  const groqKey = env.GROQ_API_KEY;
+  if (!groqKey) return null;
+
+  const systemPrompt = `Responde sempre em português de Portugal (PT-PT). És o assistente de uma empresa chamada CriaHub. Responde de forma breve, simpática e profissional a comentários no TikTok. Máximo 2-3 frases.`;
+
+  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${groqKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Comentário no TikTok: "${commentText}"\n\nContexto da automação: "${automation.name || ''}"` },
+      ],
+      max_tokens: 150,
+      temperature: 0.7,
+    }),
+  });
+
+  const data = await res.json();
+  return data?.choices?.[0]?.message?.content?.trim() || null;
 }
 
 // ------------------------------------------------------------
