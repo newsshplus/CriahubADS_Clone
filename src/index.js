@@ -600,17 +600,7 @@ async function handleAdminApi(request, env, path, method) {
     }
   }
 
-  // DELETE /admin/api/accounts/:id — permanently remove account
-  if (path.match(/^\/admin\/api\/accounts\/[^/]+$/) && method === "DELETE") {
-    const id = path.split("/").pop();
-    // Get account info before deleting
-    const account = await env.criahub_db.prepare("SELECT ig_account_id FROM campaigns WHERE ig_account_id = ?").bind(id).first();
-    if (account) {
-      return jsonResponse({ error: "Esta conta tem automacoes ativas. Exclua as automacoes antes de excluir a conta." }, 400);
-    }
-    await env.criahub_db.prepare("DELETE FROM ig_accounts WHERE id = ?").bind(id).run();
-    return jsonResponse({ ok: true });
-  }
+  // DELETE /admin/api/accounts/:id — handled by full cleanup endpoint below
 
   // GET /admin/api/clients
   if (path === "/admin/api/clients" && method === "GET") {
@@ -717,6 +707,7 @@ async function handleAdminApi(request, env, path, method) {
   if (path.match(/^\/admin\/api\/campaigns\/[^/]+$/) && method === "DELETE") {
     const id = path.split("/").pop();
     await env.criahub_db.prepare("DELETE FROM conversation_state WHERE campaign_id = ?").bind(id).run();
+    await env.criahub_db.prepare("DELETE FROM reply_variations WHERE campaign_id = ?").bind(id).run();
     await env.criahub_db.prepare("DELETE FROM campaigns WHERE id = ?").bind(id).run();
     return jsonResponse({ ok: true });
   }
@@ -730,6 +721,7 @@ async function handleAdminApi(request, env, path, method) {
     const ids = body.ids;
     const placeholders = ids.map(() => "?").join(",");
     await env.criahub_db.prepare(`DELETE FROM conversation_state WHERE campaign_id IN (${placeholders})`).bind(...ids).run();
+    await env.criahub_db.prepare(`DELETE FROM reply_variations WHERE campaign_id IN (${placeholders})`).bind(...ids).run();
     await env.criahub_db.prepare(`DELETE FROM campaigns WHERE id IN (${placeholders})`).bind(...ids).run();
     return jsonResponse({ ok: true, deleted: ids.length });
   }
