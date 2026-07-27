@@ -2800,9 +2800,15 @@ async function handleGetSubscriptions(env) {
 async function handleWhatsApp(request, env, path, method) {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
-  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_user_" + token).first();
-  if (!session) return jsonResponse({ error: "Invalid session" }, 401);
-  const userId = session.value;
+  let userId;
+  const adminSession = await env.criahub_db.prepare("SELECT 1 FROM processed_events WHERE event_id = ?").bind("session_" + token).first();
+  if (adminSession) {
+    userId = "admin";
+  } else {
+    const session = await env.criahub_db.prepare("SELECT value FROM system_config WHERE key = ?").bind("session_user_" + token).first();
+    if (!session) return jsonResponse({ error: "Invalid session" }, 401);
+    userId = session.value;
+  }
 
   if (path === "/api/whatsapp/config" && method === "GET") {
     const config = await env.criahub_db.prepare("SELECT * FROM whatsapp_configs WHERE user_id = ?").bind(userId).first();
@@ -2866,9 +2872,16 @@ async function handleWhatsApp(request, env, path, method) {
 async function handleTikTok(request, env, path, method) {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
-  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_user_" + token).first();
-  if (!session) return jsonResponse({ error: "Invalid session" }, 401);
-  const userId = session.value;
+  // Check both admin session and SaaS user session
+  let userId;
+  const adminSession = await env.criahub_db.prepare("SELECT 1 FROM processed_events WHERE event_id = ?").bind("session_" + token).first();
+  if (adminSession) {
+    userId = "admin";
+  } else {
+    const session = await env.criahub_db.prepare("SELECT value FROM system_config WHERE key = ?").bind("session_user_" + token).first();
+    if (!session) return jsonResponse({ error: "Invalid session" }, 401);
+    userId = session.value;
+  }
 
   if (path === "/api/tiktok/config" && method === "GET") {
     const config = await env.criahub_db.prepare("SELECT id, account_id, tiktok_username, tiktok_user_id, status, scopes, created_at FROM tiktok_configs WHERE user_id = ?").bind(userId).first();
@@ -2910,9 +2923,16 @@ async function handleTikTok(request, env, path, method) {
 async function handleMetaAds(request, env, path, method) {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
-  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_user_" + token).first();
-  if (!session) return jsonResponse({ error: "Invalid session" }, 401);
-  const userId = session.value;
+  // Check both admin session and SaaS user session
+  let userId;
+  const adminSession = await env.criahub_db.prepare("SELECT 1 FROM processed_events WHERE event_id = ?").bind("session_" + token).first();
+  if (adminSession) {
+    userId = "admin";
+  } else {
+    const session = await env.criahub_db.prepare("SELECT value FROM system_config WHERE key = ?").bind("session_user_" + token).first();
+    if (!session) return jsonResponse({ error: "Invalid session" }, 401);
+    userId = session.value;
+  }
 
   if (path === "/api/meta-ads/config" && method === "GET") {
     const config = await env.criahub_db.prepare("SELECT id, ad_account_id, business_id, status, last_sync FROM meta_ads_configs WHERE user_id = ?").bind(userId).first();
@@ -2920,9 +2940,9 @@ async function handleMetaAds(request, env, path, method) {
   }
   if (path === "/api/meta-ads/config" && method === "POST") {
     const body = await request.json();
-    const { ad_account_id, access_token, business_id } = body;
+    const { ad_account_id, access_token, business_id, app_id, app_secret, enabled } = body;
     await env.criahub_db.prepare(`INSERT OR REPLACE INTO meta_ads_configs (user_id, ad_account_id, access_token, business_id, status, updated_at)
-      VALUES (?, ?, ?, ?, 'connected', datetime('now'))`).bind(userId, ad_account_id, access_token, business_id).run();
+      VALUES (?, ?, ?, ?, 'connected', datetime('now'))`).bind(userId, ad_account_id || null, access_token || null, business_id || null).run();
     return jsonResponse({ ok: true });
   }
   if (path === "/api/meta-ads/insights" && method === "GET") {
@@ -2950,9 +2970,16 @@ async function handleMetaAds(request, env, path, method) {
 async function handleGA4(request, env, path, method) {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
-  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_user_" + token).first();
-  if (!session) return jsonResponse({ error: "Invalid session" }, 401);
-  const userId = session.value;
+  // Check both admin session and SaaS user session
+  let userId;
+  const adminSession = await env.criahub_db.prepare("SELECT 1 FROM processed_events WHERE event_id = ?").bind("session_" + token).first();
+  if (adminSession) {
+    userId = "admin";
+  } else {
+    const session = await env.criahub_db.prepare("SELECT value FROM system_config WHERE key = ?").bind("session_user_" + token).first();
+    if (!session) return jsonResponse({ error: "Invalid session" }, 401);
+    userId = session.value;
+  }
 
   if (path === "/api/ga4/config" && method === "GET") {
     const config = await env.criahub_db.prepare("SELECT id, property_id, property_name, service_account_email, status, last_sync FROM ga4_configs WHERE user_id = ?").bind(userId).first();
@@ -2960,9 +2987,19 @@ async function handleGA4(request, env, path, method) {
   }
   if (path === "/api/ga4/config" && method === "POST") {
     const body = await request.json();
-    const { property_id, property_name, service_account_email, private_key } = body;
+    const { property_id, property_name, service_account_email, private_key, service_account_json, period, enabled } = body;
+    // Parse service_account_json if provided (frontend sends full JSON)
+    let parsedEmail = service_account_email || null;
+    let parsedKey = private_key || null;
+    if (service_account_json && !parsedEmail) {
+      try {
+        const sa = JSON.parse(service_account_json);
+        parsedEmail = sa.client_email || null;
+        parsedKey = sa.private_key || null;
+      } catch (e) {}
+    }
     await env.criahub_db.prepare(`INSERT OR REPLACE INTO ga4_configs (user_id, property_id, property_name, service_account_email, private_key, status, updated_at)
-      VALUES (?, ?, ?, ?, ?, 'connected', datetime('now'))`).bind(userId, property_id, property_name, service_account_email, private_key).run();
+      VALUES (?, ?, ?, ?, ?, 'connected', datetime('now'))`).bind(userId, property_id || null, property_name || null, parsedEmail, parsedKey).run();
     return jsonResponse({ ok: true });
   }
   if (path === "/api/ga4/data" && method === "GET") {
@@ -2983,9 +3020,15 @@ async function handleGA4(request, env, path, method) {
 async function handleLeads(request, env, path, method) {
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
-  const session = await env.criahub_db.prepare("SELECT * FROM system_config WHERE key = ?").bind("session_user_" + token).first();
-  if (!session) return jsonResponse({ error: "Invalid session" }, 401);
-  const userId = session.value;
+  let userId;
+  const adminSession = await env.criahub_db.prepare("SELECT 1 FROM processed_events WHERE event_id = ?").bind("session_" + token).first();
+  if (adminSession) {
+    userId = "admin";
+  } else {
+    const session = await env.criahub_db.prepare("SELECT value FROM system_config WHERE key = ?").bind("session_user_" + token).first();
+    if (!session) return jsonResponse({ error: "Invalid session" }, 401);
+    userId = session.value;
+  }
 
   if (path === "/api/leads" && method === "GET") {
     const url = new URL(request.url);
