@@ -2912,9 +2912,11 @@ async function disconnectMetaAds(){
 // GA4 ANALYTICS
 // ============================================================
 async function renderGA4(m){
+  const today=new Date().toISOString().split('T')[0];
+  const thirtyAgo=new Date(Date.now()-30*86400000).toISOString().split('T')[0];
   const [configs,analytics]=await Promise.all([
     api('GET','/api/ga4/config'),
-    api('GET','/api/ga4/data')
+    api('GET',`/api/ga4/data?from=${thirtyAgo}&to=${today}`)
   ]);
   const cfg=configs&&configs.config?configs.config:{};
   const anl=analytics&&analytics.data?analytics.data:{};
@@ -2922,24 +2924,50 @@ async function renderGA4(m){
   m.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
       <h2 style="margin:0">&#128202; Google Analytics 4</h2>
-      ${isConnected?`<button class="btn btn-danger btn-sm" onclick="disconnectGA4()">Desconectar</button>`:
-      `<button class="btn btn-primary btn-sm" onclick="openGA4Config()">+ Configurar</button>`}
+      <div style="display:flex;gap:8px">
+        ${isConnected?`<button class="btn btn-danger btn-sm" onclick="disconnectGA4()">Desconectar</button>`:
+        `<button class="btn btn-primary btn-sm" onclick="openGA4Config()">+ Configurar</button>`}
+      </div>
     </div>
     <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px">
       <div class="stat-card" style="border-left:3px solid ${isConnected?'var(--success)':'var(--accent)'}">
         <div class="number">${isConnected?'&#10004; Ativo':'&#10006; Inativo'}</div>
         <div class="label">Estado</div>
       </div>
-      <div class="stat-card" style="border-left:3px solid #8b5cf6"><div class="number">${anl.activeUsers||anl.totalUsers||0}</div><div class="label">Utilizadores Ativos</div></div>
+      <div class="stat-card" style="border-left:3px solid #8b5cf6"><div class="number">${anl.activeUsers||0}</div><div class="label">Utilizadores Ativos</div></div>
       <div class="stat-card" style="border-left:3px solid var(--accent)"><div class="number">${anl.sessions||0}</div><div class="label">Sessões</div></div>
-      <div class="stat-card" style="border-left:3px solid var(--success)"><div class="number">${anl.conversions||0}</div><div class="label">Conversões</div></div>
+      <div class="stat-card" style="border-left:3px solid var(--success)"><div class="number">${anl.pageViews||0}</div><div class="label">Page Views</div></div>
+      <div class="stat-card" style="border-left:3px solid var(--warning)"><div class="number">${anl.bounceRate?(anl.bounceRate*100).toFixed(1)+'%':'-'}</div><div class="label">Bounce Rate</div></div>
+      <div class="stat-card" style="border-left:3px solid #8b5cf6"><div class="number">${anl.conversions||0}</div><div class="label">Conversões</div></div>
     </div>
     <div class="card">
-      <h3>Dados Recentes</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px">
+        <h3 style="margin:0">Dados Analíticos</h3>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <label style="font-size:12px;color:var(--text2)">De:</label>
+          <input type="date" id="ga4DateFrom" value="${thirtyAgo}" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--input);color:var(--text);font-size:13px">
+          <label style="font-size:12px;color:var(--text2)">Até:</label>
+          <input type="date" id="ga4DateTo" value="${today}" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--input);color:var(--text);font-size:13px">
+          <button class="btn btn-primary btn-sm" onclick="loadGA4Data()">Atualizar Métricas</button>
+        </div>
+      </div>
       ${Object.keys(anl).length?`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
         ${Object.entries(anl).map(([k,v])=>`<div style="padding:12px;background:var(--input);border-radius:8px"><div style="font-size:11px;text-transform:uppercase;color:var(--text2);margin-bottom:4px;letter-spacing:.5px">${esc(k)}</div><div style="font-size:18px;font-weight:700">${typeof v==='number'?v.toLocaleString():esc(String(v))}</div></div>`).join('')}
-      </div>`:'<div class="empty"><div class="icon">&#128202;</div><p>Configure a propriedade GA4 para ver dados analíticos.</p></div>'}
+      </div>`:'<div class="empty"><div class="icon">&#128202;</div><p>Configure a propriedade GA4 e clica em "Atualizar Métricas" para buscar dados.</p></div>'}
     </div>`;
+}
+
+async function loadGA4Data(){
+  const dateFrom=document.getElementById('ga4DateFrom').value;
+  const dateTo=document.getElementById('ga4DateTo').value;
+  toast('Buscando dados do Google Analytics...','info');
+  const syncResult=await api('POST','/api/ga4/sync',{date_from:dateFrom,date_to:dateTo});
+  if(syncResult&&syncResult.ok){
+    toast(`GA4 sincronizado! ${syncResult.count||0} registos.`,'success');
+    loadPage('ga4');
+  } else {
+    toast(syncResult?.error||'Erro ao sincronizar GA4','error');
+  }
 }
 
 function openGA4Config(){

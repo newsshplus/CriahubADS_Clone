@@ -3043,9 +3043,10 @@ async function handleMetaAds(request, env, path, method) {
         await env.criahub_db.prepare(`DELETE FROM campaign_insights WHERE user_id = ? AND platform = 'meta' AND campaign_id = ? AND date_start >= ? AND date_start <= ?`)
           .bind(userId, row.campaign_id || "unknown", dateFrom, dateTo).run();
 
-        await env.criahub_db.prepare(`INSERT INTO campaign_insights (user_id, platform, campaign_id, campaign_name, date_start, impressions, clicks, ctr, spend, leads_count, reach)
-          VALUES (?, 'meta', ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        await env.criahub_db.prepare(`INSERT INTO campaign_insights (account_id, user_id, platform, campaign_id, campaign_name, date_start, impressions, clicks, ctr, spend, leads_count, reach)
+          VALUES (?, ?, 'meta', ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
           .bind(
+            config.ad_account_id || "unknown",
             userId,
             row.campaign_id || "unknown",
             campaignName,
@@ -3118,14 +3119,177 @@ async function handleGA4(request, env, path, method) {
     const url = new URL(request.url);
     const dateFrom = url.searchParams.get("from") || new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
     const dateTo = url.searchParams.get("to") || new Date().toISOString().split("T")[0];
+    const config = await env.criahub_db.prepare("SELECT account_id, property_id FROM ga4_configs WHERE user_id = ?").bind(userId).first();
+    const accountId = config?.account_id || "ga4";
     const results = await env.criahub_db.prepare(`SELECT * FROM ga4_data
-      WHERE user_id = ? AND date >= ? AND date <= ?
-      ORDER BY date DESC LIMIT 200`).bind(userId, dateFrom, dateTo).all();
-    return jsonResponse({ data: results.results || [] });
+      WHERE account_id = ? AND date >= ? AND date <= ?
+      ORDER BY date DESC LIMIT 500`).bind(accountId, dateFrom, dateTo).all();
+
+    // Aggregate into totals
+    const totals = {};
+    for (const row of (results.results || [])) {
+      const name = row.metric_name;
+      totals[name] = (totals[name] || 0) + (row.metric_value || 0);
+    }
+    return jsonResponse({ data: totals, rows: results.results || [] });
   }
   if (path === "/api/ga4/config" && method === "DELETE") {
     await env.criahub_db.prepare("DELETE FROM ga4_configs WHERE user_id = ?").bind(userId).run();
     return jsonResponse({ ok: true });
+  }
+  // POST /api/ga4/sync — fetch data from Google Analytics Data API
+  if (path === "/api/ga4/sync" && method === "POST") {
+    const body = await request.json().catch(() => ({}));
+    const dateFrom = body.date_from || new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
+    const dateTo = body.date_to || new Date().toISOString().split("T")[0];
+
+    const config = await env.criahub_db.prepare("SELECT * FROM ga4_configs WHERE user_id = ? AND status = 'connected'").bind(userId).first();
+    if (!config || !config.service_account_email || !config.private_key || !config.property_id) {
+      return jsonResponse({ error: "GA4 não configurado ou sem credenciais completas (precisa de Property ID, Service Account Email e Private Key)" }, 400);
+    }
+
+    try {
+      // Step 1: Create JWT and get access token from Google
+      const now = Math.floor(Date.now() / 1000);
+      const header = { alg: "RS256", typ: "JWT" };
+      const payload = {
+        iss: config.service_account_email,
+        scope: "https://www.googleapis.com/auth/analytics.readonly",
+        aud: "https://oauth2.googleapis.com/token",
+        iat: now,
+        exp: now + 3600,
+      };
+
+      const encodedHeader = btoa(JSON.stringify(header)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      const encodedPayload = btoa(JSON.stringify(payload)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      const signingInput = `${encodedHeader}.${encodedPayload}`;
+
+      // Import private key for signing
+      const pemKey = config.private_key;
+      const pemBody = pemKey.replace(/-----BEGIN PRIVATE KEY-----/, "").replace(/-----END PRIVATE KEY-----/, "").replace(/\s/g, "");
+      const binaryKey = Uint8Array.from(atob(pemBody), c => c.charCodeAt(0));
+
+      const cryptoKey = await crypto.subtle.importKey(
+        "pkcs8", binaryKey, { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" }, false, ["sign"]
+      );
+
+      const signature = await crypto.subtle.sign("RSASSA-PKCS1-v1_5", cryptoKey, new TextEncoder().encode(signingInput));
+      const encodedSignature = btoa(String.fromCharCode(...new Uint8Array(signature))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      const jwt = `${signingInput}.${encodedSignature}`;
+
+      // Step 2: Exchange JWT for access token
+      const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: jwt }),
+      });
+      const tokenData = await tokenRes.json();
+
+      if (!tokenData.access_token) {
+        console.error("[GA4 Sync] Token error:", JSON.stringify(tokenData));
+        return jsonResponse({ error: "Erro ao obter token GA4: " + (tokenData.error_description || tokenData.error || "Credenciais inválidas") }, 400);
+      }
+
+      // Step 3: Call GA4 Data API
+      const propertyId = config.property_id;
+      const reportUrl = `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runReport`;
+
+      const reportBody = {
+        dateRanges: [{ startDate: dateFrom, endDate: dateTo }],
+        metrics: [
+          { name: "activeUsers" },
+          { name: "sessions" },
+          { name: "screenPageViews" },
+          { name: "bounceRate" },
+          { name: "averageSessionDuration" },
+          { name: "conversions" },
+        ],
+        dimensions: [
+          { name: "date" },
+        ],
+      };
+
+      const reportRes = await fetch(reportUrl, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${tokenData.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(reportBody),
+      });
+      const reportData = await reportRes.json();
+      console.log("[GA4 Sync] Report:", JSON.stringify(reportData).substring(0, 500));
+
+      if (reportData.error) {
+        return jsonResponse({ error: "Erro GA4 API: " + (reportData.error.message || JSON.stringify(reportData.error)) }, 400);
+      }
+
+      // Step 4: Store results
+      const rows = reportData.rows || [];
+      let count = 0;
+
+      // Clear old data for this user + period
+      await env.criahub_db.prepare("DELETE FROM ga4_data WHERE account_id = ? AND date >= ? AND date <= ?")
+        .bind(config.account_id || "ga4", dateFrom, dateTo).run();
+
+      for (const row of rows) {
+        const date = row.dimensionValues?.[0]?.value || dateFrom;
+        const metrics = row.metricValues || [];
+        const metricNames = ["activeUsers", "sessions", "pageViews", "bounceRate", "avgSessionDuration", "conversions"];
+
+        for (let i = 0; i < metricNames.length; i++) {
+          const val = parseFloat(metrics[i]?.value) || 0;
+          if (val > 0 || i < 3) { // store always: activeUsers, sessions, pageViews
+            await env.criahub_db.prepare(`INSERT INTO ga4_data (account_id, property_id, metric_name, metric_value, dimension, dimension_value, date)
+              VALUES (?, ?, ?, ?, 'date', ?, ?)`)
+              .bind(config.account_id || "ga4", config.property_id, metricNames[i], val, date, date).run();
+            count++;
+          }
+        }
+      }
+
+      // Also fetch totals (without date dimension)
+      const totalsBody = {
+        dateRanges: [{ startDate: dateFrom, endDate: dateTo }],
+        metrics: [
+          { name: "activeUsers" },
+          { name: "sessions" },
+          { name: "screenPageViews" },
+          { name: "bounceRate" },
+          { name: "averageSessionDuration" },
+          { name: "conversions" },
+        ],
+      };
+
+      const totalsRes = await fetch(reportUrl, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${tokenData.access_token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(totalsBody),
+      });
+      const totalsData = await totalsRes.json();
+      const totalsRow = totalsData.rows?.[0]?.metricValues || [];
+
+      await env.criahub_db.prepare("UPDATE ga4_configs SET last_sync = datetime('now') WHERE user_id = ?").bind(userId).run();
+
+      return jsonResponse({
+        ok: true, count,
+        totals: {
+          activeUsers: parseInt(totalsRow[0]?.value) || 0,
+          sessions: parseInt(totalsRow[1]?.value) || 0,
+          pageViews: parseInt(totalsRow[2]?.value) || 0,
+          bounceRate: parseFloat(totalsRow[3]?.value) || 0,
+          avgSessionDuration: parseFloat(totalsRow[4]?.value) || 0,
+          conversions: parseInt(totalsRow[5]?.value) || 0,
+        },
+        period: { from: dateFrom, to: dateTo },
+      });
+    } catch (err) {
+      console.error("[GA4 Sync] Error:", err.message);
+      return jsonResponse({ error: "Erro ao sincronizar GA4: " + err.message }, 500);
+    }
   }
   return jsonResponse({ error: "Not found" }, 404);
 }
