@@ -1679,7 +1679,14 @@ async function handleComment(value, igUserId, token, env) {
   // === STEP 1: PUBLIC REPLY (visible to everyone) ===
   const publicReply = await generateCommentReply(text, postCaption, matchedCampaign?.delivery_content || "o conteudo", env);
   if (publicReply) {
-    await postPublicReply(commentId, publicReply, token);
+    const replyOk = await postPublicReply(commentId, publicReply, token);
+    try {
+      const acc = await env.criahub_db.prepare("SELECT id FROM ig_accounts WHERE ig_user_id = ?").bind(igUserId).first();
+      if (acc) {
+        await env.criahub_db.prepare(`INSERT INTO activity_log (ig_account_id, event_type, event_detail, status) VALUES (?, 'comment_reply', ?, ?)`)
+          .bind(acc.id, `Reply to @${username || '?'}: "${publicReply.substring(0, 80)}"`, replyOk ? 'success' : 'failed').run();
+      }
+    } catch (_) {}
   }
 
   // === STEP 2: CHECK IF ALREADY DELIVERED ===
@@ -2404,21 +2411,37 @@ async function handleOAuthCallback(url, env) {
   const profileData = await profileRes.json();
   const username = profileData.username || null;
 
+  // 3b) Try to get Page Access Token (needed for comment replies)
+  let finalToken = longLivedToken;
+  let detectedPageId = null;
+  try {
+    const pagesRes = await fetch(`https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token&access_token=${longLivedToken}`);
+    const pagesData = await pagesRes.json();
+    if (pagesRes.ok && pagesData.data && pagesData.data.length > 0) {
+      finalToken = pagesData.data[0].access_token;
+      detectedPageId = pagesData.data[0].id;
+      console.log(`[OAUTH] Got Page Access Token for page: ${pagesData.data[0].name} (id: ${detectedPageId})`);
+    }
+  } catch (e) {
+    console.log(`[OAUTH] Could not get Page token, using user token: ${e.message}`);
+  }
+
   // 4) Salvar (ou atualizar) a conta conectada no banco
   const igAccountId = "ig_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
 
   await env.criahub_db
     .prepare(
-      `INSERT INTO ig_accounts (id, client_id, ig_user_id, username, access_token, token_expires_at, status)
-       VALUES (?, ?, ?, ?, ?, ?, 'connected')
+      `INSERT INTO ig_accounts (id, client_id, ig_user_id, username, access_token, token_expires_at, status, page_id)
+       VALUES (?, ?, ?, ?, ?, ?, 'connected', ?)
        ON CONFLICT(ig_user_id) DO UPDATE SET
          client_id = excluded.client_id,
          username = excluded.username,
          access_token = excluded.access_token,
          token_expires_at = excluded.token_expires_at,
-         status = 'connected'`
+         status = 'connected',
+         page_id = COALESCE(excluded.page_id, ig_accounts.page_id)`
     )
-    .bind(igAccountId, clientId, igUserId, username, longLivedToken, expiresAt)
+    .bind(igAccountId, clientId, igUserId, username, finalToken, expiresAt, detectedPageId)
     .run();
 
   return htmlResponse(`
