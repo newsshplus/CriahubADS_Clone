@@ -11,6 +11,8 @@ const IG_SCOPES = [
   "instagram_business_basic",
   "instagram_business_manage_messages",
   "instagram_business_manage_comments",
+  "pages_show_list",
+  "pages_read_engagement",
 ].join(",");
 
 const TIKTOK_AUTHORIZE_URL = "https://www.tiktok.com/v2/auth/authorize/";
@@ -347,6 +349,14 @@ self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;if(e.reques
       if (method === "GET" && path === "/tiktok/callback") {
         return handleTikTokCallback(url, env);
       }
+
+      // === FACEBOOK OAUTH (para Page Access Token — replies) ===
+      if (method === "GET" && path === "/fb/connect") {
+        return handleFBConnect(url, env);
+      }
+      if (method === "GET" && path === "/fb/callback") {
+        return handleFBCallback(url, env);
+      }
       if (method === "GET" && path === "/tiktok/webhook") {
         return handleTikTokWebhookVerify(url, env);
       }
@@ -601,7 +611,7 @@ async function handleAdminApi(request, env, path, method) {
   if (path === "/admin/api/accounts" && method === "GET") {
     const rows = await env.criahub_db.prepare(`
       SELECT a.id, a.ig_user_id, a.username, a.status, a.token_expires_at, a.connected_at,
-             a.client_id, c.name as client_name
+             a.client_id, c.name as client_name, a.page_id, a.page_access_token
       FROM ig_accounts a
       LEFT JOIN clients c ON a.client_id = c.id
       ORDER BY a.connected_at DESC
@@ -1679,7 +1689,13 @@ async function handleComment(value, igUserId, token, env) {
   // === STEP 1: PUBLIC REPLY (visible to everyone) ===
   const publicReply = await generateCommentReply(text, postCaption, matchedCampaign?.delivery_content || "o conteudo", env);
   if (publicReply) {
-    const replyOk = await postPublicReply(commentId, publicReply, token);
+    // Fetch page_access_token for comment reply via graph.facebook.com
+    let pageAccessToken = null;
+    try {
+      const accRow = await env.criahub_db.prepare("SELECT page_access_token FROM ig_accounts WHERE ig_user_id = ?").bind(igUserId).first();
+      pageAccessToken = accRow?.page_access_token || null;
+    } catch (_) {}
+    const replyOk = await postPublicReply(commentId, publicReply, token, pageAccessToken);
     try {
       const acc = await env.criahub_db.prepare("SELECT id FROM ig_accounts WHERE ig_user_id = ?").bind(igUserId).first();
       if (acc) {
@@ -2000,26 +2016,26 @@ async function sendDMRich(recipientId, text, quickReplies, token) {
 // ============================================================
 // postPublicReply — reply publicly to a comment
 // ============================================================
-async function postPublicReply(commentId, text, token) {
+async function postPublicReply(commentId, text, token, pageAccessToken) {
   try {
-    const res = await fetch(`https://graph.facebook.com/v21.0/${commentId}/replies`, {
+    // Prefer Page Access Token for graph.facebook.com comment replies
+    const fbToken = pageAccessToken || token;
+    const url = `https://graph.facebook.com/v21.0/${commentId}/replies?access_token=${fbToken}`;
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: text,
-        access_token: token
-      })
+      body: JSON.stringify({ message: text })
     });
     const data = await res.json();
     if (res.ok) {
-      console.log(`Public reply sent to comment ${commentId}`);
+      console.log(`[COMMENT_REPLY] Success for comment ${commentId}`);
       return true;
     } else {
-      console.error(`Public reply failed: ${JSON.stringify(data)}`);
+      console.error(`[COMMENT_REPLY] Failed (code: ${data.error?.code}, type: ${data.error?.type}, msg: ${data.error?.message})`);
       return false;
     }
   } catch (err) {
-    console.error(`Public reply exception: ${err.message}`);
+    console.error(`[COMMENT_REPLY] Exception: ${err.message}`);
     return false;
   }
 }
@@ -2449,6 +2465,81 @@ async function handleOAuthCallback(url, env) {
     <p>A conta <strong>@${escapeHtml(username || igUserId)}</strong> foi conectada à automação.</p>
     <p>Você já pode fechar esta janela.</p>
   `);
+}
+
+// ------------------------------------------------------------
+// FACEBOOK OAUTH — /fb/connect e /fb/callback
+// (Obtém Page Access Token para comment replies via graph.facebook.com)
+// ------------------------------------------------------------
+async function handleFBConnect(url, env) {
+  const igUserId = url.searchParams.get("ig_user_id");
+  if (!igUserId) {
+    return textResponse("Parâmetro 'ig_user_id' obrigatório.", 400);
+  }
+
+  const state = await signState(env, { ig_user_id: igUserId, nonce: crypto.randomUUID() });
+  const redirectUri = `${url.origin}/fb/callback`;
+
+  const fbAuthUrl = new URL("https://www.facebook.com/v21.0/dialog/oauth");
+  fbAuthUrl.searchParams.set("client_id", env.IG_APP_ID);
+  fbAuthUrl.searchParams.set("redirect_uri", redirectUri);
+  fbAuthUrl.searchParams.set("scope", "instagram_manage_comments,instagram_manage_messages,pages_show_list,pages_read_engagement");
+  fbAuthUrl.searchParams.set("state", state);
+  fbAuthUrl.searchParams.set("response_type", "code");
+
+  return Response.redirect(fbAuthUrl.toString(), 302);
+}
+
+async function handleFBCallback(url, env) {
+  const code = url.searchParams.get("code");
+  const state = url.searchParams.get("state");
+  if (!code || !state) return textResponse("Parâmetros ausentes.", 400);
+
+  const statePayload = await verifyState(env, state);
+  if (!statePayload) return textResponse("State inválido ou expirado.", 400);
+
+  const igUserId = statePayload.ig_user_id;
+  const redirectUri = `${url.origin}/fb/callback`;
+
+  // 1) Exchange code for short-lived token
+  const tokenRes = await fetch(`https://graph.facebook.com/v21.0/oauth/access_token?client_id=${env.IG_APP_ID}&client_secret=${env.IG_APP_SECRET}&redirect_uri=${encodeURIComponent(redirectUri)}&code=${code}`);
+  const tokenData = await tokenRes.json();
+  if (!tokenData.access_token) {
+    console.error("[FB_OAUTH] Token exchange failed:", JSON.stringify(tokenData));
+    return textResponse("Falha ao obter token do Facebook.", 400);
+  }
+
+  // 2) Exchange for long-lived token
+  const llRes = await fetch(`https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${env.IG_APP_ID}&client_secret=${env.IG_APP_SECRET}&fb_exchange_token=${tokenData.access_token}`);
+  const llData = await llRes.json();
+  const longToken = llData.access_token || tokenData.access_token;
+  console.log("[FB_OAUTH] Long-lived token obtained:", longToken.substring(0, 20) + "...");
+
+  // 3) Get Pages and their access tokens
+  const pagesRes = await fetch(`https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token&access_token=${longToken}`);
+  const pagesData = await pagesRes.json();
+  console.log("[FB_OAUTH] Pages:", JSON.stringify(pagesData.data?.map(p => ({ id: p.id, name: p.name })) || []));
+
+  if (pagesData.data && pagesData.data.length > 0) {
+    const pageToken = pagesData.data[0].access_token;
+    const pageId = pagesData.data[0].id;
+    const pageName = pagesData.data[0].name;
+
+    // Store page_access_token + page_id for this IG account
+    await env.criahub_db.prepare(
+      `UPDATE ig_accounts SET page_access_token = ?, page_id = ? WHERE ig_user_id = ?`
+    ).bind(pageToken, pageId, igUserId).run();
+
+    console.log(`[FB_OAUTH] Saved page token for @${igUserId} — page: ${pageName} (${pageId})`);
+
+    return htmlResponse(`
+      <h2>Facebook Page conectado!</h2>
+      <p>Página: <strong>${escapeHtml(pageName)}</strong> (${pageId})</p>
+      <p>Agora replies a comentários devem funcionar. Pode fechar esta janela.</p>
+    `);
+  }
+
+  return textResponse("Nenhuma Página Facebook encontrada. Certifica-se de ter uma Página associada à tua conta Instagram.", 400);
 }
 
 // ------------------------------------------------------------

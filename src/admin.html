@@ -647,6 +647,7 @@ async function renderAccounts(m){
           <div class="id">ID: ${a.ig_user_id} | ${a.client_name?'Empresa: <strong>'+esc(a.client_name)+'</strong>':'<span style="color:var(--warning)">Sem empresa</span>'}</div>
         </div>
         <span class="badge badge-${a.status==='connected'?'active':'paused'}">${a.status}</span>
+        ${a.page_access_token?'<span class="badge badge-active" title="Page Token OK">&#10003; FB Page</span>':'<button class="btn btn-primary btn-sm" onclick="connectFBPage(\''+a.ig_user_id+'\')">Ligar Facebook Page</button>'}
         <button class="btn btn-outline btn-sm" onclick="showUpdateToken('${a.id}','${esc(a.username||a.ig_user_id)}')">Atualizar Token</button>
         <button class="btn btn-danger btn-sm" onclick="deleteAccount('${a.id}','${esc(a.username||a.ig_user_id)}')">&#10005; Excluir</button>
       </div>
@@ -1929,6 +1930,10 @@ async function disconnectAccount(id){
   if(!confirm('Desconectar esta conta?'))return;
   const r=await api('DELETE','/admin/api/accounts/'+id);
   if(r&&r.ok){toast('Conta desconectada','success');loadPage('accounts')}
+}
+
+function connectFBPage(igUserId){
+  window.location.href='/fb/connect?ig_user_id='+igUserId;
 }
 
 async function deleteAccount(id){
