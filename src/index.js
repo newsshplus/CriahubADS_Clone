@@ -1594,11 +1594,11 @@ async function handleComment(value, igUserId, token, env) {
       if (aiDm) {
         dmText = aiDm;
       } else {
-        dmText = `Ola ${username || ''}! Obrigado pelo teu interesse!\n\n${deliveryContent}\n\nResponda "${campaignKeyword}" ou toque no botao abaixo para receber agora!`;
+        dmText = `Ola ${username || ''}! Obrigado pelo teu interesse!\n\n${deliveryContent}\n\nClica num botao abaixo:`;
       }
       const buttons = [
-        { title: "Receber Agora", payload: "QUERO" },
-        { title: "Saber Mais", payload: "INFO" }
+        { title: "Quero Receber", payload: "QUERO" },
+        { title: "Nao Quero Mais", payload: "CANCELAR" }
       ];
       await sendDMRich(igsid, dmText, buttons, token);
 
@@ -1617,10 +1617,10 @@ async function handleComment(value, igUserId, token, env) {
       } catch (_) {}
     } else {
       // Not a follower — ask to follow with buttons
-      const followMsg = `Ola ${username || ''}! Obrigado pelo comentario!\n\nPara receberes "${deliveryContent}", precisamos que nos sigas primeiro!\n\nDepois de seguir, responda "${campaignKeyword}" ou toque no botao.`;
+      const followMsg = `Ola ${username || ''}! Obrigado pelo comentario!\n\nPara receberes "${deliveryContent}", precisamos que nos sigas primeiro!\n\nDepois de seguir, clica no botao.`;
       const buttons = [
         { title: "Ja Segui!", payload: "SEGUI" },
-        { title: "Ver Perfil", payload: "PERFIL" }
+        { title: "Nao Quero Mais", payload: "CANCELAR" }
       ];
       await sendDMRich(igsid, followMsg, buttons, token);
 
@@ -1724,9 +1724,20 @@ async function handleMessage(msg, igUserId, token, env) {
   for (const conv of (convStates.results || [])) {
     if (conv.stage === "entregue") continue;
 
+    // Handle CANCELAR button — user doesn't want the content
+    if (text === "cancelar" || text === "nao quero mais" || text === "não quero mais") {
+      await env.criahub_db
+        .prepare("UPDATE conversation_state SET stage = 'cancelado', updated_at = datetime('now') WHERE contact_id = ? AND campaign_id = ?")
+        .bind(contact.id, conv.campaign_id).run();
+      await sendDM(igsid, "Sem problemas! Se mudares de ideias, e so comentares novamente no post. Ate breve! 👋", token);
+      console.log(`[DM] User ${igsid} cancelled campaign ${conv.campaign_id}`);
+      handled = true;
+      break;
+    }
+
     // Build accepted keywords: hardcoded + campaign keyword
     const campaignKw = (conv.keyword || "").toLowerCase().trim();
-    const queroKeywords = ["quero", "receber agora", "saber mais", "quero receber", "sim", "info"];
+    const queroKeywords = ["quero", "receber agora", "saber mais", "quero receber", "sim", "info", "quero receber"];
     const followKeywords = ["pronto", "sim", "ok", "ja segui", "segui", "feito", "quero", "ja segui!", "perfil", "seguir", "segui!"];
 
     if (campaignKw && !queroKeywords.includes(campaignKw)) {
