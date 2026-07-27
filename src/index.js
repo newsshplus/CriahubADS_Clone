@@ -1683,62 +1683,75 @@ async function handleComment(value, igUserId, token, env) {
   }
 
   // === STEP 2: CHECK IF ALREADY DELIVERED ===
+  let alreadyDelivered = false;
   if (matchedCampaign) {
     const existingState = await env.criahub_db
       .prepare("SELECT stage FROM conversation_state WHERE contact_id = ? AND campaign_id = ?")
       .bind(contactId, matchedCampaign.id).first();
     if (existingState && existingState.stage === 'entregue') {
-      try { await env.criahub_db.prepare("INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)").bind(commentId).run(); } catch (_) {}
-      return;
+      alreadyDelivered = true;
     }
   }
 
   // === STEP 3: DM with rich format (any comment triggers DM) ===
   if (matchedCampaign) {
-    const isFollower = await checkFollow(igsid, igUserId, token);
-    const deliveryContent = matchedCampaign.delivery_content || "o conteudo que solicitaste";
-    const campaignKeyword = matchedCampaign.keyword || "QUERO";
-
-    if (isFollower) {
-      // Follower — send rich DM with quick reply buttons
-      let dmText;
-      const aiDm = await generateDMMessage("intro", postCaption, { keyword: campaignKeyword, delivery_content: deliveryContent }, null, env);
-      if (aiDm) {
-        dmText = aiDm;
-      } else {
-        dmText = `Ola ${username || ''}! Obrigado pelo teu interesse!\n\n${deliveryContent}\n\nClica num botao abaixo:`;
-      }
-      const buttons = [
-        { title: "Quero Receber", payload: "QUERO" },
-        { title: "Nao Quero Mais", payload: "CANCELAR" }
-      ];
-      await sendDMRich(igsid, dmText, buttons, token);
-
-      // Set conversation state
-      await env.criahub_db
-        .prepare("INSERT OR IGNORE INTO conversation_state (contact_id, campaign_id, stage) VALUES (?, ?, 'aguardando_quero')")
-        .bind(contactId, matchedCampaign.id).run();
-
-      // Log
+    if (alreadyDelivered) {
+      // Already delivered — send a short thank-you DM instead of full flow
+      const thankMsg = `Obrigado pelo teu comentario! Ja enviámos o conteudo anteriormente no direct. Se precisares de mais alguma coisa, e so dizer!`;
+      await sendDMRich(igsid, thankMsg, [], token);
       try {
         const acc = await env.criahub_db.prepare("SELECT id FROM ig_accounts WHERE ig_user_id = ?").bind(igUserId).first();
         if (acc) {
           await env.criahub_db.prepare(`INSERT INTO activity_log (ig_account_id, contact_id, campaign_id, event_type, event_detail, status) VALUES (?, ?, ?, 'dm_sent', ?, 'success')`)
-            .bind(acc.id, contactId, matchedCampaign.id, `Rich DM to @${username || '?'}: "${dmText.substring(0, 80)}..."`).run();
+            .bind(acc.id, contactId, matchedCampaign.id, `Thank-you DM to @${username || '?'}`).run();
         }
       } catch (_) {}
     } else {
-      // Not a follower — ask to follow with buttons
-      const followMsg = `Ola ${username || ''}! Obrigado pelo comentario!\n\nPara receberes "${deliveryContent}", precisamos que nos sigas primeiro!\n\nDepois de seguir, clica no botao.`;
-      const buttons = [
-        { title: "Ja Segui!", payload: "SEGUI" },
-        { title: "Nao Quero Mais", payload: "CANCELAR" }
-      ];
-      await sendDMRich(igsid, followMsg, buttons, token);
+      const isFollower = await checkFollow(igsid, igUserId, token);
+      const deliveryContent = matchedCampaign.delivery_content || "o conteudo que solicitaste";
+      const campaignKeyword = matchedCampaign.keyword || "QUERO";
 
-      await env.criahub_db
-        .prepare("INSERT OR IGNORE INTO conversation_state (contact_id, campaign_id, stage) VALUES (?, ?, 'aguardando_follow')")
-        .bind(contactId, matchedCampaign.id).run();
+      if (isFollower) {
+        // Follower — send rich DM with quick reply buttons
+        let dmText;
+        const aiDm = await generateDMMessage("intro", postCaption, { keyword: campaignKeyword, delivery_content: deliveryContent }, null, env);
+        if (aiDm) {
+          dmText = aiDm;
+        } else {
+          dmText = `Ola ${username || ''}! Obrigado pelo teu interesse!\n\n${deliveryContent}\n\nClica num botao abaixo:`;
+        }
+        const buttons = [
+          { title: "Quero Receber", payload: "QUERO" },
+          { title: "Nao Quero Mais", payload: "CANCELAR" }
+        ];
+        await sendDMRich(igsid, dmText, buttons, token);
+
+        // Set conversation state
+        await env.criahub_db
+          .prepare("INSERT OR IGNORE INTO conversation_state (contact_id, campaign_id, stage) VALUES (?, ?, 'aguardando_quero')")
+          .bind(contactId, matchedCampaign.id).run();
+
+        // Log
+        try {
+          const acc = await env.criahub_db.prepare("SELECT id FROM ig_accounts WHERE ig_user_id = ?").bind(igUserId).first();
+          if (acc) {
+            await env.criahub_db.prepare(`INSERT INTO activity_log (ig_account_id, contact_id, campaign_id, event_type, event_detail, status) VALUES (?, ?, ?, 'dm_sent', ?, 'success')`)
+              .bind(acc.id, contactId, matchedCampaign.id, `Rich DM to @${username || '?'}: "${dmText.substring(0, 80)}..."`).run();
+          }
+        } catch (_) {}
+      } else {
+        // Not a follower — ask to follow with buttons
+        const followMsg = `Ola ${username || ''}! Obrigado pelo comentario!\n\nPara receberes "${deliveryContent}", precisamos que nos sigas primeiro!\n\nDepois de seguir, clica no botao.`;
+        const buttons = [
+          { title: "Ja Segui!", payload: "SEGUI" },
+          { title: "Nao Quero Mais", payload: "CANCELAR" }
+        ];
+        await sendDMRich(igsid, followMsg, buttons, token);
+
+        await env.criahub_db
+          .prepare("INSERT OR IGNORE INTO conversation_state (contact_id, campaign_id, stage) VALUES (?, ?, 'aguardando_follow')")
+          .bind(contactId, matchedCampaign.id).run();
+      }
     }
   }
 
