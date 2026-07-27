@@ -1,0 +1,2 @@
+ALTER TABLE ig_accounts ADD COLUMN page_id TEXT DEFAULT NULL;
+UPDATE ig_accounts SET page_id = '17841404499028851' WHERE ig_user_id = '27608614755435050';

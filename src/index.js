@@ -230,6 +230,40 @@ export default {
         return textResponse(challenge);
       }
 
+      // GET /debug/webhook — view last 20 raw webhook payloads (admin only)
+      if (method === "GET" && path === "/debug/webhook") {
+        const sessionToken = url.searchParams.get("token");
+        if (!sessionToken) return jsonResponse({ error: "No token" }, 401);
+        const session = await env.criahub_db.prepare("SELECT * FROM processed_events WHERE event_id = ?").bind(`session_${sessionToken}`).first();
+        if (!session) return jsonResponse({ error: "Invalid session" }, 401);
+        try {
+          const logs = await env.criahub_db.prepare("SELECT * FROM webhook_log ORDER BY rowid DESC LIMIT 20").all();
+          return jsonResponse({ logs: logs.results || [] });
+        } catch (e) {
+          return jsonResponse({ error: e.message }, 500);
+        }
+      }
+
+      // POST /debug/webhook-test — send a fake webhook event to test processing
+      if (method === "POST" && path === "/debug/webhook-test") {
+        const testBody = {
+          object: "instagram",
+          entry: [{
+            id: "27608614755435050",
+            time: Math.floor(Date.now() / 1000),
+            changes: [{
+              field: "comments",
+              value: {
+                id: "debug_" + Date.now(),
+                text: "debug test comment",
+                from: { id: "999999", username: "debug_test_user" }
+              }
+            }]
+          }]
+        };
+        return handleWebhook(new Request(request.url, { method: "POST", body: JSON.stringify(testBody), headers: { "Content-Type": "application/json" } }), env);
+      }
+
       // POST / webhook events
       if (method === "POST" && path === "/") {
         return handleWebhook(request, env);
@@ -1428,17 +1462,38 @@ async function handleClientNotifications(request, env, path, method) {
 // ============================================================
 async function handleWebhook(request, env) {
   const body = await request.json();
-  console.log("Webhook event received");
+  const ts = new Date().toISOString();
+  console.log(`[WEBHOOK ${ts}] event received, entries: ${(body.entry||[]).length}`);
+
+  // Save raw webhook to debug table (always)
+  try {
+    const snippet = JSON.stringify(body).substring(0, 2000);
+    await env.criahub_db.prepare(
+      "INSERT INTO webhook_log (received_at, payload_snippet) VALUES (?, ?)"
+    ).bind(ts, snippet).run();
+  } catch (e) { console.error(`[WEBHOOK] log save failed: ${e.message}`); }
 
   for (const entry of (body.entry || [])) {
-    const igUserId = String(entry.id);
+    const entryId = String(entry.id);
+    console.log(`[WEBHOOK] entry.id=${entryId}, changes=${(entry.changes||[]).length}, messaging=${(entry.messaging||[]).length}, standby=${(entry.standby||[]).length}`);
 
+    // Try to find account by ig_user_id, page_id, username, or media_id
     let account = await env.criahub_db
       .prepare("SELECT * FROM ig_accounts WHERE ig_user_id = ? AND status = 'connected'")
-      .bind(igUserId)
+      .bind(entryId)
       .first();
 
     if (!account) {
+      // Try by page_id (Meta sends Page ID in webhook, not IG User ID)
+      account = await env.criahub_db
+        .prepare("SELECT * FROM ig_accounts WHERE page_id = ? AND status = 'connected'")
+        .bind(entryId)
+        .first();
+      if (account) console.log(`[WEBHOOK] Found account by page_id: @${account.username}`);
+    }
+
+    if (!account) {
+      // Try by comment author username
       const entryChanges = entry.changes || [];
       let username = null;
       for (const change of entryChanges) {
@@ -1452,18 +1507,73 @@ async function handleWebhook(request, env) {
           .prepare("SELECT * FROM ig_accounts WHERE LOWER(username) = LOWER(?) AND status = 'connected'")
           .bind(username)
           .first();
+        if (account) console.log(`[WEBHOOK] Found account by username: @${account.username}`);
       }
-      if (!account) {
-        console.log(`No account found for ${igUserId}, even with username fallback; skipping`);
-        continue;
-      }
-      console.log(`Found account by username ${username} for entry ${igUserId}`);
     }
 
+    if (!account) {
+      // Try by media_id through campaigns (for comments)
+      for (const change of (entry.changes || [])) {
+        if (change.value && change.value.media && change.value.media.id) {
+          account = await env.criahub_db
+            .prepare("SELECT a.* FROM ig_accounts a INNER JOIN campaigns c ON c.ig_account_id = a.id WHERE c.media_id = ? AND a.status = 'connected' LIMIT 1")
+            .bind(String(change.value.media.id))
+            .first();
+          if (account) {
+            console.log(`[WEBHOOK] Found account by media_id ${change.value.media.id}: @${account.username}`);
+            // Store page_id for future lookups
+            try {
+              await env.criahub_db.prepare("UPDATE ig_accounts SET page_id = ? WHERE id = ?").bind(entryId, account.id).run();
+              console.log(`[WEBHOOK] Stored page_id ${entryId} for @${account.username}`);
+            } catch(_) {}
+            break;
+          }
+        }
+      }
+    }
+
+    if (!account) {
+      // Try by sender_id through contacts (for messages/DMs)
+      const firstMsg = (entry.messaging || [])[0] || (entry.standby || [])[0];
+      if (firstMsg && firstMsg.sender && firstMsg.sender.id) {
+        const senderId = String(firstMsg.sender.id);
+        account = await env.criahub_db
+          .prepare("SELECT a.* FROM ig_accounts a INNER JOIN contacts c ON c.ig_account_id = a.id WHERE c.igsid = ? AND a.status = 'connected' LIMIT 1")
+          .bind(senderId)
+          .first();
+        if (account) console.log(`[WEBHOOK] Found account by sender contact: @${account.username}`);
+      }
+    }
+
+    if (!account) {
+      // Last resort: if only one connected account, use it
+      const allAccounts = await env.criahub_db
+        .prepare("SELECT * FROM ig_accounts WHERE status = 'connected'")
+        .all();
+      const accounts = allAccounts.results || [];
+      if (accounts.length === 1) {
+        account = accounts[0];
+        console.log(`[WEBHOOK] Using only connected account: @${account.username}`);
+        // Store page_id for future lookups
+        try {
+          await env.criahub_db.prepare("UPDATE ig_accounts SET page_id = ? WHERE id = ?").bind(entryId, account.id).run();
+        } catch(_) {}
+      }
+    }
+
+    if (!account) {
+      console.log(`[WEBHOOK] No account found for entry ${entryId}; skipping`);
+      continue;
+    }
+
+    console.log(`[WEBHOOK] Account matched: @${account.username} (${account.ig_user_id}, page: ${account.page_id || 'none'})`);
+
     const token = account.access_token;
+    const igUserId = account.ig_user_id;
 
     // Process comments (changes with field "comments")
     for (const change of (entry.changes || [])) {
+      console.log(`[WEBHOOK] change.field=${change.field}`);
       if (change.field === "comments") {
         await handleComment(change.value, igUserId, token, env);
       }
@@ -1471,12 +1581,14 @@ async function handleWebhook(request, env) {
 
     // Process messages (messaging array)
     for (const msg of (entry.messaging || [])) {
+      console.log(`[WEBHOOK] messaging event from ${msg.sender?.id} to ${msg.recipient?.id}`);
       if (msg.message && msg.message.is_echo) continue;
       await handleMessage(msg, igUserId, token, env);
     }
 
     // Process standby messages
     for (const msg of (entry.standby || [])) {
+      console.log(`[WEBHOOK] standby event from ${msg.sender?.id}`);
       if (msg.message && msg.message.is_echo) continue;
       await handleMessage(msg, igUserId, token, env);
     }
