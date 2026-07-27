@@ -1594,7 +1594,7 @@ async function handleComment(value, igUserId, token, env) {
       if (aiDm) {
         dmText = aiDm;
       } else {
-        dmText = `Ola ${username || ''}! Obrigado pelo teu interesse!\n\nO teu conteudo esta pronto:\n\n${deliveryContent}\n\nToque no botao abaixo para receber agora!`;
+        dmText = `Ola ${username || ''}! Obrigado pelo teu interesse!\n\n${deliveryContent}\n\nResponda "${campaignKeyword}" ou toque no botao abaixo para receber agora!`;
       }
       const buttons = [
         { title: "Receber Agora", payload: "QUERO" },
@@ -1617,7 +1617,7 @@ async function handleComment(value, igUserId, token, env) {
       } catch (_) {}
     } else {
       // Not a follower — ask to follow with buttons
-      const followMsg = `Ola ${username || ''}! Obrigado pelo comentario!\n\nPara receberes o conteudo "${deliveryContent}", precisamos que nos sigas primeiro!`;
+      const followMsg = `Ola ${username || ''}! Obrigado pelo comentario!\n\nPara receberes "${deliveryContent}", precisamos que nos sigas primeiro!\n\nDepois de seguir, responda "${campaignKeyword}" ou toque no botao.`;
       const buttons = [
         { title: "Ja Segui!", payload: "SEGUI" },
         { title: "Ver Perfil", payload: "PERFIL" }
@@ -1642,8 +1642,15 @@ async function handleMessage(msg, igUserId, token, env) {
   if (!senderId || String(senderId) === igUserId) return;
 
   const igsid = String(senderId);
-  const text = (msg.message ? msg.message.text : "").toLowerCase().trim();
+  const rawText = (msg.message ? msg.message.text : "").toLowerCase().trim();
+  // Quick reply button payload takes priority over text
+  const payload = (msg.message && msg.message.quick_reply && msg.message.quick_reply.payload)
+    ? msg.message.quick_reply.payload.toLowerCase().trim()
+    : "";
+  const text = payload || rawText;
   const messageId = msg.message ? (msg.message.mid || msg.message.message_id) : null;
+
+  console.log(`[DM] From ${igsid}: text="${rawText}" payload="${payload}" resolved="${text}"`);
 
   // Dedup
   if (messageId) {
@@ -1661,25 +1668,12 @@ async function handleMessage(msg, igUserId, token, env) {
     .first();
 
   if (!contact) {
-    console.log(`Message from unknown contact ${igsid}, skipping`);
+    console.log(`[DM] Message from unknown contact ${igsid}, skipping`);
     return;
   }
 
-  // Get conversation states
-  const convStates = await env.criahub_db
-    .prepare(`
-      SELECT cs.*, cp.private_reply_message, cp.follow_request_message, cp.delivery_content, cp.media_id, cp.id AS campaign_id
-      FROM conversation_state cs
-      INNER JOIN campaigns cp ON cs.campaign_id = cp.id
-      WHERE cs.contact_id = ?
-    `)
-    .bind(contact.id)
-    .all();
-
-  for (const conv of (convStates.results || [])) {
-    if (conv.stage === "entregue") continue;
-
-    // Fetch post caption for AI context
+  // Helper: deliver content to contact
+  async function deliverContent(conv) {
     let postCaption = null;
     if (conv.media_id) {
       try {
@@ -1689,71 +1683,98 @@ async function handleMessage(msg, igUserId, token, env) {
       } catch (_) {}
     }
 
+    const following = await checkFollow(igsid, igUserId, token);
+    if (following) {
+      let deliveryMsg = conv.delivery_content;
+      const aiDelivery = await generateDMMessage("entrega", postCaption, conv, null, env);
+      if (aiDelivery) deliveryMsg = aiDelivery + "\n\n" + conv.delivery_content;
+      await sendDM(igsid, deliveryMsg, token);
+      await env.criahub_db
+        .prepare("UPDATE conversation_state SET stage = 'entregue', updated_at = datetime('now') WHERE contact_id = ? AND campaign_id = ?")
+        .bind(contact.id, conv.campaign_id).run();
+      console.log(`[DM] Delivered to ${igsid}`);
+      return true;
+    } else {
+      let followMsg = conv.follow_request_message || "Precisas seguir o nosso perfil para receber o conteudo!";
+      const aiFollow = await generateDMMessage("follow", postCaption, conv, null, env);
+      if (aiFollow) followMsg = aiFollow;
+      await sendDM(igsid, followMsg, token);
+      await env.criahub_db
+        .prepare("UPDATE conversation_state SET stage = 'aguardando_follow', updated_at = datetime('now') WHERE contact_id = ? AND campaign_id = ?")
+        .bind(contact.id, conv.campaign_id).run();
+      console.log(`[DM] Asked ${igsid} to follow`);
+      return false;
+    }
+  }
+
+  // Get conversation states
+  const convStates = await env.criahub_db
+    .prepare(`
+      SELECT cs.*, cp.keyword, cp.private_reply_message, cp.follow_request_message,
+             cp.delivery_content, cp.media_id, cp.id AS campaign_id
+      FROM conversation_state cs
+      INNER JOIN campaigns cp ON cs.campaign_id = cp.id
+      WHERE cs.contact_id = ?
+    `)
+    .bind(contact.id)
+    .all();
+
+  let handled = false;
+
+  for (const conv of (convStates.results || [])) {
+    if (conv.stage === "entregue") continue;
+
+    // Build accepted keywords: hardcoded + campaign keyword
+    const campaignKw = (conv.keyword || "").toLowerCase().trim();
+    const queroKeywords = ["quero", "receber agora", "saber mais", "quero receber", "sim", "info"];
+    const followKeywords = ["pronto", "sim", "ok", "ja segui", "segui", "feito", "quero", "ja segui!", "perfil", "seguir", "segui!"];
+
+    if (campaignKw && !queroKeywords.includes(campaignKw)) {
+      queroKeywords.push(campaignKw);
+    }
+
     if (conv.stage === "aguardando_quero") {
-      if (["quero", "receber agora", "saber mais", "quero receber", "sim"].includes(text)) {
-        const following = await checkFollow(igsid, igUserId, token);
-        if (following) {
-          // AI delivery message
-          let deliveryMsg = conv.delivery_content;
-          const aiDelivery = await generateDMMessage("entrega", postCaption, conv, null, env);
-          if (aiDelivery) deliveryMsg = aiDelivery + "\n\n" + conv.delivery_content;
-          await sendDM(igsid, deliveryMsg, token);
-          await env.criahub_db
-            .prepare("UPDATE conversation_state SET stage = 'entregue', updated_at = datetime('now') WHERE contact_id = ? AND campaign_id = ?")
-            .bind(contact.id, conv.campaign_id)
-            .run();
-          console.log(`Delivered to ${igsid}`);
-        } else {
-          // AI follow request
-          let followMsg = conv.follow_request_message;
-          const aiFollow = await generateDMMessage("follow", postCaption, conv, null, env);
-          if (aiFollow) followMsg = aiFollow;
-          await sendDM(igsid, followMsg, token);
-          await env.criahub_db
-            .prepare("UPDATE conversation_state SET stage = 'aguardando_follow', updated_at = datetime('now') WHERE contact_id = ? AND campaign_id = ?")
-            .bind(contact.id, conv.campaign_id)
-            .run();
-          console.log(`Asked ${igsid} to follow`);
-        }
+      if (queroKeywords.includes(text) || (campaignKw && text.includes(campaignKw))) {
+        await deliverContent(conv);
+        handled = true;
+        break;
       }
     } else if (conv.stage === "aguardando_follow") {
-      if (["pronto", "sim", "ok", "ja segui", "segui", "feito", "quero", "ja segui!", "perfil"].includes(text)) {
-        const following = await checkFollow(igsid, igUserId, token);
-        if (following) {
-          // AI delivery message
-          let deliveryMsg = conv.delivery_content;
-          const aiDelivery = await generateDMMessage("entrega", postCaption, conv, null, env);
-          if (aiDelivery) deliveryMsg = aiDelivery + "\n\n" + conv.delivery_content;
-          await sendDM(igsid, deliveryMsg, token);
-          await env.criahub_db
-            .prepare("UPDATE conversation_state SET stage = 'entregue', updated_at = datetime('now') WHERE contact_id = ? AND campaign_id = ?")
-            .bind(contact.id, conv.campaign_id)
-            .run();
-          console.log(`Delivered to ${igsid} after follow`);
-        } else {
-          // AI follow re-request
-          let followMsg = conv.follow_request_message;
-          const aiFollow = await generateDMMessage("follow", postCaption, conv, null, env);
-          if (aiFollow) followMsg = aiFollow;
-          await sendDM(igsid, followMsg, token);
-          console.log(`Re-asked ${igsid} to follow`);
-        }
-      } else if (text === "quero") {
-        const following = await checkFollow(igsid, igUserId, token);
-        if (following) {
-          let deliveryMsg = conv.delivery_content;
-          const aiDelivery = await generateDMMessage("entrega", postCaption, conv, null, env);
-          if (aiDelivery) deliveryMsg = aiDelivery + "\n\n" + conv.delivery_content;
-          await sendDM(igsid, deliveryMsg, token);
-          await env.criahub_db
-            .prepare("UPDATE conversation_state SET stage = 'entregue', updated_at = datetime('now') WHERE contact_id = ? AND campaign_id = ?")
-            .bind(contact.id, conv.campaign_id)
-            .run();
-        } else {
-          let followMsg = conv.follow_request_message;
-          const aiFollow = await generateDMMessage("follow", postCaption, conv, null, env);
-          if (aiFollow) followMsg = aiFollow;
-          await sendDM(igsid, followMsg, token);
+      if (followKeywords.includes(text) || text === campaignKw) {
+        const delivered = await deliverContent(conv);
+        handled = true;
+        if (!delivered) break; // still not following, stop
+        break;
+      }
+    }
+  }
+
+  // If no conversation state matched but user typed a campaign keyword, start fresh flow
+  if (!handled && text) {
+    const campaigns = await env.criahub_db
+      .prepare("SELECT c.* FROM campaigns c INNER JOIN ig_accounts a ON c.ig_account_id = a.id WHERE a.ig_user_id = ? AND c.status = 'active'")
+      .bind(igUserId).all();
+
+    for (const campaign of (campaigns.results || [])) {
+      const kw = (campaign.keyword || "").toLowerCase().trim();
+      if (kw && (text === kw || text.includes(kw))) {
+        // Check if already has active conversation for this campaign
+        const existing = await env.criahub_db
+          .prepare("SELECT stage FROM conversation_state WHERE contact_id = ? AND campaign_id = ? AND stage != 'entregue'")
+          .bind(contact.id, campaign.id).first();
+        if (!existing) {
+          // Start new flow via DM
+          const isFollower = await checkFollow(igsid, igUserId, token);
+          if (isFollower) {
+            await env.criahub_db
+              .prepare("INSERT OR IGNORE INTO conversation_state (contact_id, campaign_id, stage) VALUES (?, ?, 'aguardando_quero')")
+              .bind(contact.id, campaign.id).run();
+            // Re-trigger delivery
+            const conv = { ...campaign, campaign_id: campaign.id };
+            await deliverContent(conv);
+            handled = true;
+            break;
+          }
         }
       }
     }
@@ -1769,7 +1790,6 @@ async function handleMessage(msg, igUserId, token, env) {
     } catch (_) {}
   }
 }
-
 // ============================================================
 // sendDM — envia mensagem no direct
 // ============================================================
@@ -2969,6 +2989,75 @@ async function handleMetaAds(request, env, path, method) {
   if (path === "/api/meta-ads/config" && method === "DELETE") {
     await env.criahub_db.prepare("DELETE FROM meta_ads_configs WHERE user_id = ?").bind(userId).run();
     return jsonResponse({ ok: true });
+  }
+  // POST /api/meta-ads/sync — fetch insights from Meta Graph API and store
+  if (path === "/api/meta-ads/sync" && method === "POST") {
+    const body = await request.json().catch(() => ({}));
+    const dateFrom = body.date_from || new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
+    const dateTo = body.date_to || new Date().toISOString().split("T")[0];
+
+    const config = await env.criahub_db.prepare("SELECT ad_account_id, access_token FROM meta_ads_configs WHERE user_id = ? AND status = 'connected'").bind(userId).first();
+    if (!config || !config.ad_account_id || !config.access_token) {
+      return jsonResponse({ error: "Meta Ads não configurado ou sem credenciais" }, 400);
+    }
+
+    try {
+      // Fetch insights from Meta Graph API
+      const insightsUrl = new URL(`https://graph.facebook.com/v21.0/${config.ad_account_id}/insights`);
+      insightsUrl.searchParams.set("access_token", config.access_token);
+      insightsUrl.searchParams.set("fields", "campaign_name,campaign_id,impressions,clicks,ctr,spend,actions,reach,unique_clicks");
+      insightsUrl.searchParams.set("time_range", JSON.stringify({ since: dateFrom, until: dateTo }));
+      insightsUrl.searchParams.set("level", "campaign");
+      insightsUrl.searchParams.set("limit", "500");
+
+      console.log("[Meta Ads Sync] Fetching:", insightsUrl.toString());
+      const res = await fetch(insightsUrl.toString());
+      const data = await res.json();
+      console.log("[Meta Ads Sync] Response:", JSON.stringify(data).substring(0, 500));
+
+      if (data.error) {
+        return jsonResponse({ error: data.error.message || "Erro ao buscar dados do Meta" }, 400);
+      }
+
+      const rows = data.data || [];
+      let count = 0;
+
+      for (const row of rows) {
+        const actions = row.actions || [];
+        const leadAction = actions.find(a => a.action_type === "lead" || a.action_type === "offsite_conversion.fb_pixel_lead");
+        const leadsCount = leadAction ? parseInt(leadAction.value) : 0;
+        const campaignName = row.campaign_name || "Campanha";
+
+        // Delete old data for same campaign + date range, then insert
+        await env.criahub_db.prepare(`DELETE FROM campaign_insights WHERE user_id = ? AND platform = 'meta' AND campaign_id = ? AND date_start >= ? AND date_start <= ?`)
+          .bind(userId, row.campaign_id || "unknown", dateFrom, dateTo).run();
+
+        await env.criahub_db.prepare(`INSERT INTO campaign_insights (user_id, platform, campaign_id, campaign_name, date_start, impressions, clicks, ctr, spend, leads_count, reach, unique_clicks)
+          VALUES (?, 'meta', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+          .bind(
+            userId,
+            row.campaign_id || "unknown",
+            campaignName,
+            row.date_start || dateFrom,
+            parseInt(row.impressions) || 0,
+            parseInt(row.clicks) || 0,
+            parseFloat(row.ctr) || 0,
+            parseFloat(row.spend) || 0,
+            leadsCount,
+            parseInt(row.reach) || 0,
+            parseInt(row.unique_clicks) || 0
+          ).run();
+        count++;
+      }
+
+      // Update last_sync
+      await env.criahub_db.prepare("UPDATE meta_ads_configs SET last_sync = datetime('now') WHERE user_id = ?").bind(userId).run();
+
+      return jsonResponse({ ok: true, count, period: { from: dateFrom, to: dateTo } });
+    } catch (err) {
+      console.error("[Meta Ads Sync] Error:", err.message);
+      return jsonResponse({ error: "Erro ao sincronizar: " + err.message }, 500);
+    }
   }
   return jsonResponse({ error: "Not found" }, 404);
 }
