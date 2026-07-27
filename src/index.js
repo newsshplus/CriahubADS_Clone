@@ -3016,7 +3016,7 @@ async function handleMetaAds(request, env, path, method) {
       // Fetch insights from Meta Graph API
       const insightsUrl = new URL(`https://graph.facebook.com/v21.0/${config.ad_account_id}/insights`);
       insightsUrl.searchParams.set("access_token", config.access_token);
-      insightsUrl.searchParams.set("fields", "campaign_name,campaign_id,impressions,clicks,ctr,spend,actions,reach,unique_clicks");
+      insightsUrl.searchParams.set("fields", "campaign_name,campaign_id,impressions,clicks,ctr,spend,actions,reach");
       insightsUrl.searchParams.set("time_range", JSON.stringify({ since: dateFrom, until: dateTo }));
       insightsUrl.searchParams.set("level", "campaign");
       insightsUrl.searchParams.set("limit", "500");
@@ -3043,8 +3043,8 @@ async function handleMetaAds(request, env, path, method) {
         await env.criahub_db.prepare(`DELETE FROM campaign_insights WHERE user_id = ? AND platform = 'meta' AND campaign_id = ? AND date_start >= ? AND date_start <= ?`)
           .bind(userId, row.campaign_id || "unknown", dateFrom, dateTo).run();
 
-        await env.criahub_db.prepare(`INSERT INTO campaign_insights (user_id, platform, campaign_id, campaign_name, date_start, impressions, clicks, ctr, spend, leads_count, reach, unique_clicks)
-          VALUES (?, 'meta', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+        await env.criahub_db.prepare(`INSERT INTO campaign_insights (user_id, platform, campaign_id, campaign_name, date_start, impressions, clicks, ctr, spend, leads_count, reach)
+          VALUES (?, 'meta', ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
           .bind(
             userId,
             row.campaign_id || "unknown",
@@ -3055,8 +3055,7 @@ async function handleMetaAds(request, env, path, method) {
             parseFloat(row.ctr) || 0,
             parseFloat(row.spend) || 0,
             leadsCount,
-            parseInt(row.reach) || 0,
-            parseInt(row.unique_clicks) || 0
+            parseInt(row.reach) || 0
           ).run();
         count++;
       }
