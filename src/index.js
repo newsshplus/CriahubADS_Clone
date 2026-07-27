@@ -2941,8 +2941,13 @@ async function handleMetaAds(request, env, path, method) {
   if (path === "/api/meta-ads/config" && method === "POST") {
     const body = await request.json();
     const { ad_account_id, access_token, business_id, app_id, app_secret, enabled } = body;
-    await env.criahub_db.prepare(`INSERT OR REPLACE INTO meta_ads_configs (user_id, ad_account_id, access_token, business_id, status, updated_at)
-      VALUES (?, ?, ?, ?, 'connected', datetime('now'))`).bind(userId, ad_account_id || null, access_token || null, business_id || null).run();
+    const existing = await env.criahub_db.prepare("SELECT id FROM meta_ads_configs WHERE user_id = ?").bind(userId).first();
+    if (existing) {
+      await env.criahub_db.prepare(`UPDATE meta_ads_configs SET ad_account_id = ?, access_token = ?, business_id = ?, status = 'connected', updated_at = datetime('now') WHERE user_id = ?`).bind(ad_account_id || null, access_token || null, business_id || null, userId).run();
+    } else {
+      await env.criahub_db.prepare(`INSERT INTO meta_ads_configs (account_id, user_id, ad_account_id, access_token, business_id, status)
+        VALUES (?, ?, ?, ?, ?, 'connected')`).bind("ma_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16), userId, ad_account_id || null, access_token || null, business_id || null).run();
+    }
     return jsonResponse({ ok: true });
   }
   if (path === "/api/meta-ads/insights" && method === "GET") {
@@ -2988,7 +2993,6 @@ async function handleGA4(request, env, path, method) {
   if (path === "/api/ga4/config" && method === "POST") {
     const body = await request.json();
     const { property_id, property_name, service_account_email, private_key, service_account_json, period, enabled } = body;
-    // Parse service_account_json if provided (frontend sends full JSON)
     let parsedEmail = service_account_email || null;
     let parsedKey = private_key || null;
     if (service_account_json && !parsedEmail) {
@@ -2998,8 +3002,13 @@ async function handleGA4(request, env, path, method) {
         parsedKey = sa.private_key || null;
       } catch (e) {}
     }
-    await env.criahub_db.prepare(`INSERT OR REPLACE INTO ga4_configs (user_id, property_id, property_name, service_account_email, private_key, status, updated_at)
-      VALUES (?, ?, ?, ?, ?, 'connected', datetime('now'))`).bind(userId, property_id || null, property_name || null, parsedEmail, parsedKey).run();
+    const existing = await env.criahub_db.prepare("SELECT id FROM ga4_configs WHERE user_id = ?").bind(userId).first();
+    if (existing) {
+      await env.criahub_db.prepare(`UPDATE ga4_configs SET property_id = ?, property_name = ?, service_account_email = ?, private_key = ?, status = 'connected', updated_at = datetime('now') WHERE user_id = ?`).bind(property_id || null, property_name || null, parsedEmail, parsedKey, userId).run();
+    } else {
+      await env.criahub_db.prepare(`INSERT INTO ga4_configs (account_id, user_id, property_id, property_name, service_account_email, private_key, status)
+        VALUES (?, ?, ?, ?, ?, ?, 'connected')`).bind("ga4_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16), userId, property_id || null, property_name || null, parsedEmail, parsedKey).run();
+    }
     return jsonResponse({ ok: true });
   }
   if (path === "/api/ga4/data" && method === "GET") {
