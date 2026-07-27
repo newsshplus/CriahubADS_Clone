@@ -2966,6 +2966,10 @@ async function handleMetaAds(request, env, path, method) {
     const results = await env.criahub_db.prepare("SELECT * FROM meta_lead_forms WHERE user_id = ? ORDER BY created_at DESC").bind(userId).all();
     return jsonResponse({ forms: results.results || [] });
   }
+  if (path === "/api/meta-ads/config" && method === "DELETE") {
+    await env.criahub_db.prepare("DELETE FROM meta_ads_configs WHERE user_id = ?").bind(userId).run();
+    return jsonResponse({ ok: true });
+  }
   return jsonResponse({ error: "Not found" }, 404);
 }
 
@@ -3019,6 +3023,10 @@ async function handleGA4(request, env, path, method) {
       WHERE user_id = ? AND date >= ? AND date <= ?
       ORDER BY date DESC LIMIT 200`).bind(userId, dateFrom, dateTo).all();
     return jsonResponse({ data: results.results || [] });
+  }
+  if (path === "/api/ga4/config" && method === "DELETE") {
+    await env.criahub_db.prepare("DELETE FROM ga4_configs WHERE user_id = ?").bind(userId).run();
+    return jsonResponse({ ok: true });
   }
   return jsonResponse({ error: "Not found" }, 404);
 }

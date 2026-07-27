@@ -2804,14 +2804,16 @@ async function renderMetaAds(m){
   const cfg=configs&&configs.config?configs.config:{};
   const ins=insights&&insights.insights?insights.insights:[];
   const fms=forms&&forms.forms?forms.forms:[];
+  const isConnected=cfg.status==='connected';
   m.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
       <h2 style="margin:0">&#128200; Meta Ads</h2>
-      <button class="btn btn-primary btn-sm" onclick="openMetaAdsConfig()">+ Configurar</button>
+      ${isConnected?`<button class="btn btn-danger btn-sm" onclick="disconnectMetaAds()">Desconectar</button>`:
+      `<button class="btn btn-primary btn-sm" onclick="openMetaAdsConfig()">+ Configurar</button>`}
     </div>
     <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px">
-      <div class="stat-card" style="border-left:3px solid ${cfg.enabled?'var(--success)':'var(--accent)'}">
-        <div class="number">${cfg.enabled?'&#10004; Ativo':'&#10006; Inativo'}</div>
+      <div class="stat-card" style="border-left:3px solid ${isConnected?'var(--success)':'var(--accent)'}">
+        <div class="number">${isConnected?'&#10004; Ativo':'&#10006; Inativo'}</div>
         <div class="label">Estado</div>
       </div>
       <div class="stat-card" style="border-left:3px solid #8b5cf6"><div class="number">${ins.length}</div><div class="label">Campanhas</div></div>
@@ -2868,6 +2870,12 @@ async function saveMetaAdsConfig(){
   else toast(r?.error||'Erro ao guardar','error');
 }
 
+async function disconnectMetaAds(){
+  if(!confirm('Desconectar Meta Ads?'))return;
+  const r=await api('DELETE','/api/meta-ads/config');
+  if(r&&r.ok){toast('Meta Ads desconectado','success');loadPage('metaads')}
+}
+
 // ============================================================
 // GA4 ANALYTICS
 // ============================================================
@@ -2878,14 +2886,16 @@ async function renderGA4(m){
   ]);
   const cfg=configs&&configs.config?configs.config:{};
   const anl=analytics&&analytics.data?analytics.data:{};
+  const isConnected=cfg.status==='connected';
   m.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
       <h2 style="margin:0">&#128202; Google Analytics 4</h2>
-      <button class="btn btn-primary btn-sm" onclick="openGA4Config()">+ Configurar</button>
+      ${isConnected?`<button class="btn btn-danger btn-sm" onclick="disconnectGA4()">Desconectar</button>`:
+      `<button class="btn btn-primary btn-sm" onclick="openGA4Config()">+ Configurar</button>`}
     </div>
     <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px">
-      <div class="stat-card" style="border-left:3px solid ${cfg.enabled?'var(--success)':'var(--accent)'}">
-        <div class="number">${cfg.enabled?'&#10004; Ativo':'&#10006; Inativo'}</div>
+      <div class="stat-card" style="border-left:3px solid ${isConnected?'var(--success)':'var(--accent)'}">
+        <div class="number">${isConnected?'&#10004; Ativo':'&#10006; Inativo'}</div>
         <div class="label">Estado</div>
       </div>
       <div class="stat-card" style="border-left:3px solid #8b5cf6"><div class="number">${anl.activeUsers||anl.totalUsers||0}</div><div class="label">Utilizadores Ativos</div></div>
@@ -2917,6 +2927,12 @@ async function saveGA4Config(){
   });
   if(r&&r.ok){closeModal();toast('GA4 configurado!','success');loadPage('ga4')}
   else toast(r?.error||'Erro ao guardar','error');
+}
+
+async function disconnectGA4(){
+  if(!confirm('Desconectar GA4?'))return;
+  const r=await api('DELETE','/api/ga4/config');
+  if(r&&r.ok){toast('GA4 desconectado','success');loadPage('ga4')}
 }
 
 // ============================================================
