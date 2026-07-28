@@ -509,28 +509,41 @@ async function renderDashboard(m){
   const stageMap={entregue:'Entregue',aguardando_quero:'Aguardando',aguardando_follow:'Follow Pendente',follow_pendente:'Follow'};
   const stageColor={entregue:'var(--success)',aguardando_quero:'var(--accent)',aguardando_follow:'var(--warning)',follow_pendente:'var(--warning)'};
 
+  // Build 7-day chart data
+  const dayLabels=[],dayDMs=[],dayComments=[];
+  const ab=a.activityByDay||[];
+  for(let i=6;i>=0;i--){
+    const d=new Date(Date.now()-i*86400000).toISOString().split('T')[0];
+    dayLabels.push(d.slice(5));
+    const dayData=ab.filter(r=>r.day===d);
+    dayDMs.push(dayData.find(r=>r.event_type==='dm_sent')?.count||0);
+    dayComments.push(dayData.find(r=>r.event_type==='comment_received')?.count||0);
+  }
+  const maxDay=Math.max(1,...dayDMs,...dayComments);
+  const chartW=100/Math.max(1,dayLabels.length);
+
   m.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
       <h2 style="margin:0">Dashboard</h2>
       <button class="btn btn-outline btn-sm" onclick="loadPage('dashboard')">&#8635; Atualizar</button>
     </div>
 
-    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px">
+    <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px">
       <div class="stat-card" style="border-left:3px solid var(--accent)">
         <div class="number">${a.connectedAccounts||0}</div>
         <div class="label">Contas Ativas</div>
       </div>
       <div class="stat-card" style="border-left:3px solid var(--success)">
         <div class="number">${a.activeCampaigns||0}</div>
-        <div class="label">Automacoes Ativas</div>
+        <div class="label">Automacoes</div>
       </div>
       <div class="stat-card" style="border-left:3px solid #8b5cf6">
         <div class="number">${a.totalContacts||0}</div>
-        <div class="label">Total Contatos</div>
+        <div class="label">Contactos</div>
       </div>
-      <div class="stat-card" style="border-left:3px solid var(--accent)">
+      <div class="stat-card" style="border-left:3px solid var(--warning)">
         <div class="number">${a.contactsToday||0}</div>
-        <div class="label">Contatos Hoje</div>
+        <div class="label">Novos Hoje</div>
       </div>
       <div class="stat-card" style="border-left:3px solid var(--success)">
         <div class="number">${a.totalDMsSent||0}</div>
@@ -540,13 +553,13 @@ async function renderDashboard(m){
         <div class="number">${a.dmsToday||0}</div>
         <div class="label">DMs Hoje</div>
       </div>
-      <div class="stat-card" style="border-left:3px solid var(--warning)">
+      <div class="stat-card" style="border-left:3px solid #ef4444">
         <div class="number">${a.totalDMsFailed||0}</div>
-        <div class="label">DMs Falharam</div>
+        <div class="label">Falhadas</div>
       </div>
-      <div class="stat-card" style="border-left:3px solid #8b5cf6">
-        <div class="number">${a.totalEmails||0}</div>
-        <div class="label">Emails Coletados</div>
+      <div class="stat-card" style="border-left:3px solid #ec4899">
+        <div class="number">${a.totalComments||0}</div>
+        <div class="label">Comentarios</div>
       </div>
     </div>
 
@@ -554,7 +567,7 @@ async function renderDashboard(m){
       <h3>&#128200; Uso do Plano <span class="badge badge-active" style="font-size:11px;margin-left:8px">${(up.plan_id||'free').toUpperCase()}</span></h3>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-top:16px">
         ${[
-          {label:'Contactos',used:ul.contacts||0,max:up.max_accounts||200},
+          {label:'Contactos',used:ul.contacts||0,max:up.max_contacts||200},
           {label:'Campanhas',used:ul.automations||0,max:up.max_campaigns||3},
           {label:'Contas IG',used:ul.accounts||0,max:up.max_accounts||1}
         ].map(x=>{
@@ -602,6 +615,49 @@ async function renderDashboard(m){
               <span style="font-size:12px;color:var(--text2);width:40px;text-align:right">${s.count}</span>
             </div>`;
           }).join('')}</div>`}
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+      <div class="card">
+        <h3>&#128200; Atividade (7 dias)</h3>
+        <div style="display:flex;align-items:flex-end;gap:6px;padding:16px 0;height:160px;position:relative">
+          ${dayLabels.map((l,i)=>`
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;position:relative">
+              <div style="display:flex;flex-direction:column;align-items:center;gap:2px;width:100%">
+                <div style="width:100%;max-width:32px;height:${Math.round((dayDMs[i]/maxDay)*100)}px;background:var(--accent);border-radius:4px 4px 0 0;opacity:.8;transition:height .3s" title="${dayDMs[i]} DMs"></div>
+                <div style="width:100%;max-width:32px;height:${Math.round((dayComments[i]/maxDay)*60)}px;background:#8b5cf6;border-radius:4px 4px 0 0;opacity:.6;transition:height .3s" title="${dayComments[i]} comentários"></div>
+              </div>
+              <span style="font-size:10px;color:var(--text2);margin-top:6px;position:absolute;bottom:-20px">${l}</span>
+            </div>
+          `).join('')}
+        </div>
+        <div style="display:flex;gap:16px;font-size:11px;color:var(--text2);margin-top:16px;padding-top:8px;border-top:1px solid var(--border)">
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--accent);border-radius:2px;opacity:.8"></span> DMs</span>
+          <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#8b5cf6;border-radius:2px;opacity:.6"></span> Comentários</span>
+          <span style="margin-left:auto">Total: ${dayDMs.reduce((a,b)=>a+b,0)} DMs / ${dayComments.reduce((a,b)=>a+b,0)} coment.</span>
+        </div>
+      </div>
+      <div class="card">
+        <h3>&#128172; Simulador do Direct</h3>
+        <p style="color:var(--text2);font-size:12px;margin:0 0 12px">Veja como a automacao aparece para o cliente no Instagram Direct</p>
+        <div style="background:#f0f0f0;border-radius:16px;padding:16px;max-width:320px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">
+          <div style="background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:12px;max-width:260px;margin-left:0;margin-right:auto">
+            <div style="font-size:12px;color:#999;margin-bottom:4px">CriaHub Automation</div>
+            <div style="font-size:14px;color:#1a1a1a;line-height:1.4">Olá! Obrigado pelo teu comentário!</div>
+            <div style="font-size:14px;color:#1a1a1a;line-height:1.4;margin-top:6px">Gostarias de receber o conteúdo exclusivo?</div>
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+              <div style="background:#e8f4fd;border-radius:20px;padding:8px 16px;font-size:13px;color:#0095f6;font-weight:600;cursor:default" onclick="toast('O cliente veria este botão!','info')">Quero Receber</div>
+              <div style="background:#f5f5f5;border-radius:20px;padding:8px 16px;font-size:13px;color:#666;font-weight:600;cursor:default" onclick="toast('O cliente veria este botão!','info')">Nao Quero Mais</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:11px;color:#666;padding:8px">
+            <div style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:8px;height:8px;background:var(--success);border-radius:50%"></span> <strong style="color:#1a1a1a">1.</strong> Usuário comenta na publicação</div>
+            <div style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:8px;height:8px;background:var(--accent);border-radius:50%"></span> <strong style="color:#1a1a1a">2.</strong> Resposta pública + DM com botões</div>
+            <div style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:8px;height:8px;background:#8b5cf6;border-radius:50%"></span> <strong style="color:#1a1a1a">3.</strong> Botão "Quero Receber" inicia fluxo</div>
+            <div style="display:flex;align-items:center;gap:6px"><span style="display:inline-block;width:8px;height:8px;background:var(--warning);border-radius:50%"></span> <strong style="color:#1a1a1a">4.</strong> Seguir conta e receber conteúdo</div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -672,6 +728,7 @@ async function renderCampaigns(m){
     api('GET','/admin/api/campaigns'),
     api('GET','/admin/api/accounts')
   ]);
+  window._campaignCache=[campaigns,accounts];
   const campList=campaigns||[];
   const accList=accounts||[];
 
@@ -728,6 +785,7 @@ async function renderCampaigns(m){
               <button class="btn btn-outline btn-sm" onclick="testCampaignAI('${c.id}')">&#9881; Testar IA</button>
               <button class="btn btn-outline btn-sm" onclick="editCampaign('${c.id}')">Editar</button>
               <button class="btn btn-success btn-sm" onclick="showCloneCampaign('${c.id}')">Clonar</button>
+              <button class="btn btn-primary btn-sm" onclick="showDMSimulator('${c.id}')">&#128172; Preview</button>
               <button class="btn btn-danger btn-sm" onclick="deleteCampaign('${c.id}')">Excluir</button>
             </div>
           </div>
@@ -2210,6 +2268,66 @@ async function deleteCampaign(id){
   if(!confirm('Tem certeza que deseja excluir esta automacao?'))return;
   const r=await api('DELETE','/admin/api/campaigns/'+id);
   if(r&&r.ok){toast('Automação excluida','success');loadPage('campaigns')}
+}
+
+function showDMSimulator(campaignId){
+  const [campaigns]=window._campaignCache||[];
+  const c=campaigns?campaigns.find(x=>x.id===campaignId):null;
+  const kw=c?esc(c.keyword||'QUERO'):'QUERO';
+  const reply=c?esc(c.private_reply_message||''):'Obrigado pelo comentário! Gostarias de receber o conteúdo exclusivo?';
+  const follow=c?esc(c.follow_request_message||''):'Segue a nossa página para receberes o conteúdo!';
+  const delivery=c?esc(c.delivery_content||''):'Aqui está o conteúdo exclusivo que pediste!';
+
+  showModal(`
+    <h3>&#128172; Simulador do Direct</h3>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Pré-visualização de como a automação aparece ao cliente no Instagram Direct</p>
+    <div style="background:#f0f0f0;border-radius:20px;padding:20px;max-width:340px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;border-bottom:1px solid #ddd;padding-bottom:12px">
+        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#f58529,#dd2a7b);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px">C</div>
+        <div><div style="font-weight:600;font-size:14px;color:#1a1a1a">CriaHub</div><div style="font-size:11px;color:#999">Ativo agora</div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.08);max-width:260px;align-self:flex-start">
+          <div style="font-size:13px;color:#1a1a1a;line-height:1.5">${reply}</div>
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <span style="background:#e8f4fd;border-radius:20px;padding:8px 16px;font-size:13px;color:#0095f6;font-weight:600;border:1px solid #0095f6">Quero Receber</span>
+            <span style="background:#f5f5f5;border-radius:20px;padding:8px 16px;font-size:13px;color:#666;font-weight:600">Nao Quero Mais</span>
+          </div>
+          <div style="font-size:10px;color:#bbb;margin-top:8px">Agora</div>
+        </div>
+        <div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.08);max-width:260px;align-self:flex-start;display:none" id="simFollowMsg">
+          <div style="font-size:13px;color:#1a1a1a;line-height:1.5">${follow}</div>
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <span style="background:#e8f4fd;border-radius:20px;padding:8px 16px;font-size:13px;color:#0095f6;font-weight:600;border:1px solid #0095f6">Ja Segui!</span>
+            <span style="background:#f5f5f5;border-radius:20px;padding:8px 16px;font-size:13px;color:#666;font-weight:600">Nao Quero Mais</span>
+          </div>
+          <div style="font-size:10px;color:#bbb;margin-top:8px">Agora</div>
+        </div>
+        <div style="background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.08);max-width:260px;align-self:flex-start;display:none" id="simDeliveryMsg">
+          <div style="font-size:13px;color:#1a1a1a;line-height:1.5">${delivery}</div>
+          <div style="font-size:10px;color:#bbb;margin-top:8px">Agora</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:16px;border-top:1px solid #ddd;padding-top:12px">
+        <button class="btn btn-primary btn-sm" style="flex:1;font-size:12px" onclick="simStep()">Simular Fluxo</button>
+        <button class="btn btn-outline btn-sm" style="flex:1;font-size:12px" onclick="document.getElementById('simFollowMsg').style.display='';document.getElementById('simDeliveryMsg').style.display=''">Mostrar Tudo</button>
+      </div>
+      <div style="font-size:11px;color:#999;margin-top:12px;text-align:center" id="simHint">Cliq em "Simular Fluxo" para ver a sequência</div>
+    </div>
+  `);
+  window._simStep=0;
+}
+
+function simStep(){
+  window._simStep=(window._simStep||0)+1;
+  const msgs=['simFollowMsg','simDeliveryMsg'];
+  const hints=['Passo 2: Botão "Ja Segui!" aparece após o cliente clicar em "Quero Receber"','Passo 3: Conteúdo entregue após seguir!','Fluxo completo! O cliente recebeu o conteúdo.'];
+  const step=window._simStep;
+  if(step<=2){
+    document.getElementById(msgs[step-1]).style.display='';
+    document.getElementById('simHint').textContent=hints[step-1];
+  }
+  if(step>=3)document.getElementById('simHint').textContent=hints[2];
 }
 
 async function showCloneCampaign(sourceId){
