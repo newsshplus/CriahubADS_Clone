@@ -179,7 +179,8 @@ async function getUserPlanLimits(db, userId) {
 async function getUsageCounts(db, userId) {
   const [contacts, dms, automations, accounts] = await Promise.all([
     db.prepare('SELECT COUNT(*) as c FROM leads WHERE user_id = ?').bind(userId).first(),
-    db.prepare('SELECT COUNT(*) as c FROM saas_users u JOIN leads l ON l.user_id = u.id WHERE u.id = ? AND l.platform = ?').bind(userId, 'instagram').first(),
+    db.prepare(`SELECT COUNT(*) as c FROM activity_log WHERE event_type = 'dm_sent' AND ig_account_id IN
+      (SELECT id FROM ig_accounts WHERE client_id IN (SELECT id FROM clients WHERE email = (SELECT email FROM saas_users WHERE id = ?)))`).bind(userId).first(),
     db.prepare('SELECT COUNT(*) as c FROM campaigns WHERE ig_account_id IN (SELECT id FROM ig_accounts WHERE client_id IN (SELECT id FROM clients WHERE email = (SELECT email FROM saas_users WHERE id = ?)))').bind(userId).first(),
     db.prepare('SELECT COUNT(*) as c FROM ig_accounts WHERE client_id IN (SELECT id FROM clients WHERE email = (SELECT email FROM saas_users WHERE id = ?))').bind(userId).first(),
   ]);
@@ -197,8 +198,8 @@ async function checkPlanLimit(db, userId, type) {
   const usage = await getUsageCounts(db, userId);
   switch(type) {
     case 'contacts':
-      if (plan.max_accounts > 0 && usage.contacts >= plan.max_accounts)
-        return { ok: false, limit: plan.max_accounts, usage: usage.contacts, type: 'contactos' };
+      if (plan.max_contacts > 0 && usage.contacts >= plan.max_contacts)
+        return { ok: false, limit: plan.max_contacts, usage: usage.contacts, type: 'contactos' };
       break;
     case 'automations':
       if (plan.max_campaigns > 0 && usage.automations >= plan.max_campaigns)
@@ -449,6 +450,11 @@ self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;if(e.reques
       // === Leads API ===
       if (path.startsWith("/api/leads")) {
         return handleLeads(request, env, path, method);
+      }
+
+      // === Health Check ===
+      if (path === "/health" || path === "/healthz") {
+        return jsonResponse({ ok: true, status: "healthy", timestamp: new Date().toISOString(), version: "1.0.0" });
       }
 
       // === Contact Form ===
@@ -2734,8 +2740,8 @@ async function handleTikTokWebhook(request, env) {
 
           // Log activity
           await env.criahub_db.prepare(
-            `INSERT INTO activity_log (ig_account_id, type, details, created_at) VALUES (?, 'tiktok_comment', ?, datetime('now'))`
-          ).bind(auto.account_id || "tiktok", JSON.stringify({ video_id: videoId, comment: text.substring(0, 200), reply: responseText.substring(0, 200) })).run();
+            `INSERT INTO activity_log (ig_account_id, event_type, event_detail, status, created_at) VALUES (?, 'tiktok_comment', ?, 'success', datetime('now'))`
+          ).bind(auto.account_id || "tiktok", `TikTok comment on ${videoId}: "${text.substring(0, 100)}" → "${responseText.substring(0, 100)}"`).run();
         }
       }
     }
@@ -2748,8 +2754,7 @@ async function handleTikTokWebhook(request, env) {
 }
 
 async function generateTikTokReply(commentText, automation, env) {
-  // Use Groq AI for TikTok reply (same as Instagram)
-  const groqKey = env.GROQ_API_KEY;
+  const groqKey = await getGroqApiKey(env);
   if (!groqKey) return null;
 
   const systemPrompt = `Responde sempre em português de Portugal (PT-PT). És o assistente de uma empresa chamada CriaHub. Responde de forma breve, simpática e profissional a comentários no TikTok. Máximo 2-3 frases.`;
@@ -3472,7 +3477,11 @@ async function handleGA4(request, env, path, method) {
         .bind(config.account_id || "ga4", dateFrom, dateTo).run();
 
       for (const row of rows) {
-        const date = row.dimensionValues?.[0]?.value || dateFrom;
+        const rawDate = row.dimensionValues?.[0]?.value || dateFrom;
+        // GA4 API returns YYYYMMDD — convert to YYYY-MM-DD for SQL comparison
+        const date = rawDate.length === 8 && !rawDate.includes('-')
+          ? `${rawDate.slice(0,4)}-${rawDate.slice(4,6)}-${rawDate.slice(6,8)}`
+          : rawDate;
         const metrics = row.metricValues || [];
         const metricNames = ["activeUsers", "sessions", "pageViews", "bounceRate", "avgSessionDuration", "conversions"];
 
