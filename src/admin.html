@@ -11,19 +11,9 @@
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
 a{color:var(--accent);text-decoration:none}
 
-.login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#0f0f1a 0%,#1a1a2e 50%,#16213e 100%)}
-[data-theme="light"] .login-wrap{background:linear-gradient(135deg,#f0f2f5 0%,#e8e8e8 50%,#f5f5f5 100%)}
-.login-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:48px 40px;width:420px;max-width:90vw;text-align:center}
-.login-box h1{font-size:28px;margin-bottom:8px;background:linear-gradient(90deg,var(--accent),#ff6b6b);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.login-box p{color:var(--text2);margin-bottom:32px;font-size:14px}
-.login-box input{width:100%;padding:14px 16px;border:1px solid var(--border);border-radius:10px;background:var(--input);color:var(--text);font-size:15px;margin-bottom:16px;outline:none;transition:border .2s}
-.login-box input:focus{border-color:var(--accent)}
-.login-box button{width:100%;padding:14px;border:none;border-radius:10px;background:var(--accent);color:#fff;font-size:16px;font-weight:600;cursor:pointer;transition:opacity .2s}
-.login-box button:hover{opacity:.85}
-.login-error{color:var(--accent);font-size:13px;margin-top:8px;display:none}
 
 .app{display:none;min-height:100vh}
-.sidebar{position:fixed;top:0;left:0;width:240px;height:100vh;background:var(--card);border-right:1px solid var(--border);padding:24px 0;z-index:10;display:flex;flex-direction:column}
+.sidebar{position:fixed;top:0;left:0;width:240px;height:100vh;background:var(--card);border-right:1px solid var(--border);padding:24px 0;z-index:10;display:flex;flex-direction:column;overflow-y:auto}
 .sidebar .logo{padding:0 24px 24px;font-size:22px;font-weight:700;background:linear-gradient(90deg,var(--accent),#ff6b6b);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .sidebar nav{flex:1}
 .sidebar nav a{display:flex;align-items:center;gap:12px;padding:12px 24px;color:var(--text2);font-size:14px;transition:all .2s;border-left:3px solid transparent}
@@ -32,6 +22,18 @@ a{color:var(--accent);text-decoration:none}
 .sidebar nav a .icon{font-size:18px;width:24px;text-align:center}
 .sidebar .logout{padding:12px 24px;border-top:1px solid var(--border);border:none;background:transparent;color:var(--text2);cursor:pointer;font-size:13px;text-align:left;transition:all .2s}
 .sidebar .logout:hover{color:var(--accent)}
+.sidebar .menu-group{margin:0}
+.sidebar .menu-toggle{display:flex;align-items:center;gap:12px;padding:10px 24px;color:var(--text2);font-size:14px;cursor:pointer;transition:all .2s;border-left:3px solid transparent;user-select:none}
+.sidebar .menu-toggle:hover{color:var(--text);background:rgba(233,69,96,.08)}
+.sidebar .menu-toggle .arrow{font-size:9px;margin-left:auto;transition:transform .3s}
+.sidebar .menu-toggle.open .arrow{transform:rotate(180deg)}
+.sidebar .submenu{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.sidebar .submenu.open{max-height:600px}
+.sidebar .submenu a{padding-left:48px;font-size:13px}
+.account-bar{display:flex;align-items:center;gap:12px;margin-bottom:20px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 20px}
+.account-bar label{font-size:13px;color:var(--text2);font-weight:600;white-space:nowrap}
+.account-bar select{flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--input);color:var(--text);font-size:13px;outline:none;cursor:pointer;max-width:400px}
+.account-bar .acc-none{font-size:12px;color:var(--text2);font-style:italic}
 
 .main{margin-left:240px;padding:32px 40px}
 .main h2{font-size:24px;margin-bottom:24px}
@@ -133,7 +135,7 @@ tr:hover td{background:rgba(233,69,96,.03)}
 
 @media(max-width:768px){
   .hamburger{display:flex}
-  .sidebar{position:fixed;top:0;left:-260px;width:240px;transition:left .3s;z-index:100}
+  .sidebar{position:fixed;top:0;left:-260px;width:240px;transition:left .3s;z-index:100;overflow-y:auto}
   .sidebar.open{left:0}
   .sidebar-overlay.show{display:block}
   .sidebar .logout span{display:inline}
@@ -144,9 +146,11 @@ tr:hover td{background:rgba(233,69,96,.03)}
   .campaign-card .texts{grid-template-columns:1fr}
   .campaign-card .top{flex-direction:column}
   .modal{width:95vw;padding:24px}
-  .login-box{padding:32px 24px}
+  .modal{width:95vw;padding:24px}
   table{font-size:13px}
   th,td{padding:8px 10px}
+  .account-bar{flex-wrap:wrap}
+  .account-bar select{max-width:100%}
 }
 @media(max-width:480px){
   .stat-grid{grid-template-columns:1fr}
@@ -155,7 +159,7 @@ tr:hover td{background:rgba(233,69,96,.03)}
 }
 @media(max-width:768px){#hamburgerBtn{display:block!important}}
 @media(max-width:768px){
-  .sidebar{position:fixed;left:-260px;z-index:1000;width:260px;height:100vh;transition:left .3s}
+  .sidebar{position:fixed;left:-260px;z-index:1000;width:260px;height:100vh;transition:left .3s;overflow-y:auto}
   .sidebar.open{left:0}
   .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999}
   .sidebar.open~.sidebar-overlay{display:block}
@@ -174,15 +178,49 @@ tr:hover td{background:rgba(233,69,96,.03)}
 <body>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-<div class="login-wrap" id="loginWrap">
-  <div class="login-box">
-    <h1>CriaHub</h1>
-    <p>Automação Instagram - Painel Admin</p>
-    <input type="password" id="loginPassword" placeholder="Introduza a sua palavra-passe..." onkeydown="if(event.key==='Enter')doLogin()">
-    <button onclick="doLogin()">Entrar</button>
-    <div class="login-error" id="loginError">Palavra-passe incorreta</div>
-  </div>
+<div id="loadingWrap" style="display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;background:var(--bg)">
+  <div class="spinner" style="width:32px;height:32px;border-width:3px"></div>
+  <div style="color:var(--text2);font-size:14px">A verificar sessão...</div>
 </div>
+
+<script>
+(function(){
+  // Force unregister old service worker to bust cache
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.getRegistrations().then(function(regs) {
+      regs.forEach(function(reg) { reg.unregister(); });
+    });
+  }
+  var t = localStorage.getItem('criahub_token');
+  if (!t) { window.location.href = '/auth'; return; }
+  var x = new XMLHttpRequest();
+  x.open('GET', '/admin/api/check');
+  x.setRequestHeader('Authorization', 'Bearer ' + t);
+  x.timeout = 10000;
+  x.onload = function() {
+    if (x.status === 200) {
+      try {
+        var d = JSON.parse(x.responseText);
+        if (!d.isAdmin) { window.location.href = '/dashboard'; return; }
+        window._authHandled = true;
+        // Auth OK — wait for showApp to be available, then call it
+        var iv = setInterval(function(){
+          if (typeof showApp === 'function') { clearInterval(iv); showApp(); }
+        }, 30);
+        setTimeout(function(){ clearInterval(iv); if (typeof showApp !== 'function') { window.location.href = '/auth'; } }, 8000);
+      } catch(e) { window.location.href = '/auth'; }
+    } else {
+      localStorage.removeItem('criahub_token');
+      window.location.href = '/auth';
+    }
+  };
+  x.onerror = x.ontimeout = function() {
+    // Fallback: redirect to auth
+    window.location.href = '/auth';
+  };
+  x.send();
+})();
+</script>
 
 <div class="app" id="appWrap">
   <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()">&#9776;</button>
@@ -201,26 +239,46 @@ tr:hover td{background:rgba(233,69,96,.03)}
     <div id="notifOverlay" onclick="toggleNotifPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199"></div>
     <nav>
       <a href="#" data-page="dashboard" class="active"><span class="icon">&#9632;</span> <span>Dashboard</span></a>
-      <div style="padding:8px 24px 4px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);font-weight:600;margin-top:8px">Instagram</div>
-      <a href="#" data-page="accounts"><span class="icon">&#9775;</span> <span>Contas IG</span></a>
-      <a href="#" data-page="campaigns"><span class="icon">&#9889;</span> <span>Automações</span></a>
-      <a href="#" data-page="contacts"><span class="icon">&#9900;</span> <span>Contatos</span></a>
-      <a href="#" data-page="activity"><span class="icon">&#128337;</span> <span>Atividade</span></a>
-      <a href="#" data-page="emails"><span class="icon">&#9993;</span> <span>Emails</span></a>
-      <div style="padding:8px 24px 4px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);font-weight:600;margin-top:8px">Multi-Canal</div>
-      <a href="#" data-page="whatsapp"><span class="icon">&#128172;</span> <span>WhatsApp</span></a>
-      <a href="#" data-page="tiktok"><span class="icon">&#127916;</span> <span>TikTok</span></a>
-      <a href="#" data-page="leads"><span class="icon">&#127919;</span> <span>Leads</span></a>
-      <div style="padding:8px 24px 4px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);font-weight:600;margin-top:8px">Análises</div>
-      <a href="#" data-page="metaads"><span class="icon">&#128200;</span> <span>Meta Ads</span></a>
-      <a href="#" data-page="ga4"><span class="icon">&#128202;</span> <span>GA4</span></a>
-      <div style="padding:8px 24px 4px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--text2);font-weight:600;margin-top:8px">Administração</div>
-      <a href="#" data-page="finance"><span class="icon">&#128176;</span> <span>Finanças</span></a>
-      <a href="#" data-page="saasusers"><span class="icon">&#128101;</span> <span>Clientes</span></a>
-      <a href="#" data-page="notifications"><span class="icon">&#128276;</span> <span>Notificações</span></a>
-      <a href="#" data-page="smtp"><span class="icon">&#9993;</span> <span>SMTP</span></a>
-      <a href="#" data-page="settings"><span class="icon">&#9881;</span> <span>Config</span></a>
-      <a href="#" data-page="help"><span class="icon">&#10067;</span> <span>Ajuda</span></a>
+      <div class="menu-group">
+        <div class="menu-toggle" data-group="ig"><span class="icon">&#9775;</span> <span>Instagram</span> <span class="arrow">&#9660;</span></div>
+        <div class="submenu" data-group="ig">
+          <a href="#" data-page="accounts"><span class="icon">&#9775;</span> <span>Contas IG</span></a>
+          <a href="#" data-page="campaigns"><span class="icon">&#9889;</span> <span>Automações</span></a>
+          <a href="#" data-page="contacts"><span class="icon">&#9900;</span> <span>Contatos</span></a>
+          <a href="#" data-page="activity"><span class="icon">&#128337;</span> <span>Atividade</span></a>
+          <a href="#" data-page="emails"><span class="icon">&#9993;</span> <span>Emails</span></a>
+        </div>
+      </div>
+      <div class="menu-group">
+        <div class="menu-toggle" data-group="multi"><span class="icon">&#128172;</span> <span>Multi-Canal</span> <span class="arrow">&#9660;</span></div>
+        <div class="submenu" data-group="multi">
+          <a href="#" data-page="whatsapp"><span class="icon">&#128172;</span> <span>WhatsApp</span></a>
+          <a href="#" data-page="tiktok"><span class="icon">&#127916;</span> <span>TikTok</span></a>
+          <a href="#" data-page="inbox"><span class="icon">&#128172;</span> <span>Smart Inbox</span></a>
+          <a href="#" data-page="followups"><span class="icon">&#128197;</span> <span>Follow-ups</span></a>
+          <a href="#" data-page="smartcampaigns"><span class="icon">&#9889;</span> <span>Campanhas IA</span></a>
+          <a href="#" data-page="leads"><span class="icon">&#127919;</span> <span>Leads</span></a>
+        </div>
+      </div>
+      <div class="menu-group">
+        <div class="menu-toggle" data-group="analytics"><span class="icon">&#128200;</span> <span>Análises</span> <span class="arrow">&#9660;</span></div>
+        <div class="submenu" data-group="analytics">
+          <a href="#" data-page="metaads"><span class="icon">&#128200;</span> <span>Meta Ads</span></a>
+          <a href="#" data-page="ga4"><span class="icon">&#128202;</span> <span>GA4</span></a>
+        </div>
+      </div>
+      <div class="menu-group">
+        <div class="menu-toggle" data-group="admin"><span class="icon">&#9881;</span> <span>Administração</span> <span class="arrow">&#9660;</span></div>
+        <div class="submenu" data-group="admin">
+          <a href="#" data-page="finance"><span class="icon">&#128176;</span> <span>Finanças</span></a>
+          <a href="#" data-page="plans"><span class="icon">&#128230;</span> <span>Planos</span></a>
+          <a href="#" data-page="saasusers"><span class="icon">&#128101;</span> <span>Clientes</span></a>
+          <a href="#" data-page="notifications"><span class="icon">&#128276;</span> <span>Notificações</span></a>
+          <a href="#" data-page="smtp"><span class="icon">&#9993;</span> <span>SMTP</span></a>
+          <a href="#" data-page="settings"><span class="icon">&#9881;</span> <span>Config</span></a>
+          <a href="#" data-page="help"><span class="icon">&#10067;</span> <span>Ajuda</span></a>
+        </div>
+      </div>
     </nav>
     <div style="padding:12px 24px;border-top:1px solid var(--border)">
       <div id="langSelector" class="lang-dropdown" style="position:relative;margin-bottom:8px">
@@ -261,18 +319,8 @@ tr:hover td{background:rgba(233,69,96,.03)}
 <script>
 const API = '';
 let TOKEN = localStorage.getItem('criahub_token') || '';
-
-async function doLogin(){
-  const pw = document.getElementById('loginPassword').value;
-  try{
-    const r = await fetch(API+'/admin/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
-    const d = await r.json();
-    if(d.ok){TOKEN=d.token;localStorage.setItem('criahub_token',TOKEN);showApp()}
-    else{document.getElementById('loginError').style.display='block'}
-  }catch(e){document.getElementById('loginError').style.display='block'}
-}
-function doLogout(){TOKEN='';localStorage.removeItem('criahub_token');location.reload()}
 function getToken(){return TOKEN}
+function doLogout(){localStorage.removeItem('criahub_token');window.location.href='/auth'}
 
 // Theme toggle
 function toggleTheme(){
@@ -319,7 +367,7 @@ const adminTranslations={
   pt:{
     dashboard:'Dashboard',accounts:'Contas IG',campaigns:'Automações',contacts:'Contatos',activity:'Atividade',emails:'Emails',
     whatsapp:'WhatsApp',tiktok:'TikTok',leads:'Leads',metaads:'Meta Ads',ga4:'GA4',
-    finance:'Finanças',clientes:'Clientes',notificacoes:'Notificações',smtp:'SMTP',config:'Config',ajuda:'Ajuda',
+    finance:'Finanças',planos:'Planos',clientes:'Clientes',notificacoes:'Notificações',smtp:'SMTP',config:'Config',ajuda:'Ajuda',
     settings:'Definições',logout:'Sair',
     themeLight:'Modo Claro',themeDark:'Modo Escuro',
     igSection:'Instagram',multiCanal:'Multi-Canal',analyses:'Análises',adminSection:'Administração',
@@ -339,7 +387,7 @@ const adminTranslations={
   en:{
     dashboard:'Dashboard',accounts:'IG Accounts',campaigns:'Automations',contacts:'Contacts',activity:'Activity',emails:'Emails',
     whatsapp:'WhatsApp',tiktok:'TikTok',leads:'Leads',metaads:'Meta Ads',ga4:'GA4',
-    finance:'Finance',clientes:'Clients',notificacoes:'Notifications',smtp:'SMTP',config:'Settings',ajuda:'Help',
+    finance:'Finance',planos:'Plans',clientes:'Clients',notificacoes:'Notifications',smtp:'SMTP',config:'Settings',ajuda:'Help',
     settings:'Settings',logout:'Log Out',
     themeLight:'Light Mode',themeDark:'Dark Mode',
     igSection:'Instagram',multiCanal:'Multi-Channel',analyses:'Analytics',adminSection:'Administration',
@@ -359,7 +407,7 @@ const adminTranslations={
   es:{
     dashboard:'Panel',accounts:'Cuentas IG',campaigns:'Automatizaciones',contacts:'Contactos',activity:'Actividad',emails:'Emails',
     whatsapp:'WhatsApp',tiktok:'TikTok',leads:'Leads',metaads:'Meta Ads',ga4:'GA4',
-    finance:'Finanzas',clientes:'Clientes',notificacoes:'Notificaciones',smtp:'SMTP',config:'Configuración',ajuda:'Ayuda',
+    finance:'Finanzas',planos:'Planes',clientes:'Clientes',notificacoes:'Notificaciones',smtp:'SMTP',config:'Configuración',ajuda:'Ayuda',
     settings:'Configuración',logout:'Cerrar Sesión',
     themeLight:'Modo Claro',themeDark:'Modo Oscuro',
     igSection:'Instagram',multiCanal:'Multi-Canal',analyses:'Analíticas',adminSection:'Administración',
@@ -424,23 +472,24 @@ function applyAdminLang(){
     const page=a.dataset.page;
     const span=a.querySelector('span:last-child');
     if(!span)return;
-    const map={dashboard:'dashboard',accounts:'accounts',campaigns:'campaigns',contacts:'contacts',activity:'activity',emails:'emails',whatsapp:'whatsapp',tiktok:'tiktok',leads:'leads',metaads:'metaads',ga4:'ga4',finance:'finance',saasusers:'clientes',notifications:'notificacoes',smtp:'smtp',settings:'config',help:'ajuda'};
+    const map={dashboard:'dashboard',accounts:'accounts',campaigns:'campaigns',contacts:'contacts',activity:'activity',emails:'emails',whatsapp:'whatsapp',tiktok:'tiktok',leads:'leads',metaads:'metaads',ga4:'ga4',finance:'finance',plans:'planos',saasusers:'clientes',notifications:'notificacoes',smtp:'smtp',settings:'config',help:'ajuda'};
     if(map[page])span.textContent=t(map[page]);
   });
-  // Update section headers
-  document.querySelectorAll('#sidebar > div[style]').forEach(d=>{
-    const txt=d.textContent.trim();
-    if(txt==='Instagram')d.textContent=t('igSection');
-    else if(txt==='Multi-Canal'||txt==='Multi-Channel')d.textContent=t('multiCanal');
-    else if(txt==='Análises'||txt==='Analytics')d.textContent=t('analyses');
-    else if(txt==='Administração'||txt==='Administration')d.textContent=t('adminSection');
+  // Update menu toggle labels
+  document.querySelectorAll('.menu-toggle[data-group]').forEach(toggle=>{
+    const span=toggle.querySelector('span:nth-child(2)');
+    if(!span)return;
+    const gmap={ig:'igSection',multi:'multiCanal',analytics:'analyses',admin:'adminSection'};
+    const key=gmap[toggle.dataset.group];
+    if(key)span.textContent=t(key);
   });
   // Update logout button
   const logoutBtn=document.querySelector('.sidebar .logout');
   if(logoutBtn){const span=logoutBtn.querySelector('span:last-child');if(span)span.textContent=t('logout');}
   // Update theme label
   const isLight=document.documentElement.getAttribute('data-theme')==='light';
-  document.getElementById('themeLabel').textContent=isLight?t('themeDark'):t('themeLight');
+  const themeLabel=document.getElementById('themeLabel');
+  if(themeLabel)themeLabel.textContent=isLight?t('themeDark'):t('themeLight');
 }
 
 // Load saved admin language
@@ -479,11 +528,15 @@ async function loadPage(page){
   else if(page==='activity')await renderActivity(m);
   else if(page==='emails')await renderEmails(m);
   else if(page==='finance')await renderFinance(m);
+  else if(page==='plans')await renderPlans(m);
   else if(page==='saasusers')await renderSaasUsers(m);
   else if(page==='notifications')await renderNotifications(m);
   else if(page==='whatsapp')await renderWhatsApp(m);
   else if(page==='tiktok')await renderTikTok(m);
   else if(page==='leads')await renderLeads(m);
+  else if(page==='inbox')await renderSmartInbox(m);
+  else if(page==='followups')await renderFollowups(m);
+  else if(page==='smartcampaigns')await renderSmartCampaigns(m);
   else if(page==='metaads')await renderMetaAds(m);
   else if(page==='ga4')await renderGA4(m);
   else if(page==='smtp')await renderSMTP(m);
@@ -493,18 +546,22 @@ async function loadPage(page){
 
 async function renderDashboard(m){
   m.innerHTML='<div style="text-align:center;padding:40px"><div class="spinner"></div></div>';
+  renderAccountBar(m);
+  const accFilter=getAccFilter();
+  try {
+    const [analytics,activity,usageData,tokenStats]=await Promise.all([
+      api('GET','/admin/api/analytics'+accFilter),
+      api('GET','/admin/api/activity?limit=10'+accFilter.replace('?','&')),
+      api('GET','/api/usage'),
+      api('GET','/admin/api/tokens/stats')
+    ]);
 
-  const [analytics,activity,usageData]=await Promise.all([
-    api('GET','/admin/api/analytics'),
-    api('GET','/admin/api/activity?limit=10'),
-    api('GET','/api/usage')
-  ]);
-
-  const a=analytics||{};
-  const act=(activity&&activity.items)||[];
-  const u=usageData||{};
-  const ul=u.usage||{};
-  const up=u.plan||{};
+    const a=analytics||{};
+    const ts=tokenStats||{};
+    const act=(activity&&activity.items)||[];
+    const u=usageData||{};
+    const ul=u.usage||{};
+    const up=u.plan||{};
 
   const stageMap={entregue:'Entregue',aguardando_quero:'Aguardando',aguardando_follow:'Follow Pendente',follow_pendente:'Follow'};
   const stageColor={entregue:'var(--success)',aguardando_quero:'var(--accent)',aguardando_follow:'var(--warning)',follow_pendente:'var(--warning)'};
@@ -527,6 +584,19 @@ async function renderDashboard(m){
       <h2 style="margin:0">Dashboard</h2>
       <button class="btn btn-outline btn-sm" onclick="loadPage('dashboard')">&#8635; Atualizar</button>
     </div>
+
+    <div class="account-bar" id="accountBarDash">
+      <label>Conta Instagram:</label>
+      <select id="accountSelectDash" onchange="onAccountChangeFromBar(this)">
+        <option value="">Todas as contas</option>
+      </select>
+    </div>
+
+    ${(ts.expiringSoon>0)?`<div style="display:flex;gap:8px;margin-bottom:20px;padding:14px 18px;background:rgba(255,214,0,.08);border:1px solid rgba(255,214,0,.3);border-radius:10px;align-items:center">
+      <span style="font-size:18px">&#9888;</span>
+      <div style="flex:1;font-size:13px"><strong>${ts.expiringSoon} token${ts.expiringSoon>1?'s':''} expiram em breve</strong> — ${ts.expired} já expiraram. <a href="#" onclick="loadPage('accounts');return false" style="color:var(--accent)">Renovar agora</a></div>
+      <span style="font-size:12px;color:var(--text2)">${ts.withPageToken}/${ts.total} com Facebook Page</span>
+    </div>`:''}
 
     <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px">
       <div class="stat-card" style="border-left:3px solid var(--accent)">
@@ -676,6 +746,7 @@ async function renderDashboard(m){
           </div>`;
         }).join('')}</div>`}
     </div>`;
+  }catch(e){m.innerHTML='<div class="card" style="padding:40px;text-align:center"><h3>Erro ao carregar dashboard</h3><p style="color:var(--text2);margin:12px 0">'+e.message+'</p><button class="btn btn-primary" onclick="loadPage(\'dashboard\')">Tentar novamente</button></div>'}
 }
 
 async function renderAccounts(m){
@@ -715,7 +786,7 @@ async function renderAccounts(m){
           ${a.page_access_token?'<span class="badge badge-active" title="Facebook Page Token OK">&#10003; FB Page</span>':'<span class="badge badge-warning" title="Sem Page Token — replies a comentários não funcionam">Sem FB Page</span>'}
         </div>
         <div style="display:flex;gap:4px;flex-wrap:wrap">
-          ${!a.page_access_token?`<button class="btn btn-primary btn-sm" onclick="connectFBPage('${a.ig_user_id}')" title="Ligar Facebook Page para replies">&#128279; FB Page</button>`:''}
+          ${a.page_access_token?`<button class="btn btn-outline btn-sm" onclick="disconnectFBPage('${a.ig_user_id}')" title="Desconectar Facebook Page">&#128279; Desligar FB</button>`:`<button class="btn btn-primary btn-sm" onclick="connectFBPage('${a.ig_user_id}')" title="Ligar Facebook Page para replies">&#128279; FB Page</button>`}
           <button class="btn btn-outline btn-sm" onclick="showUpdateToken('${a.id}','${esc(a.username||a.ig_user_id)}')" title="Atualizar token de acesso">Token</button>
           <button class="btn btn-danger btn-sm" onclick="deleteAccount('${a.id}','${esc(a.username||a.ig_user_id)}')" title="Excluir conta">&#10005;</button>
         </div>
@@ -724,8 +795,10 @@ async function renderAccounts(m){
 }
 
 async function renderCampaigns(m){
+  renderAccountBar(m);
+  const accFilter=getAccFilter();
   const [campaigns,accounts]=await Promise.all([
-    api('GET','/admin/api/campaigns'),
+    api('GET','/admin/api/campaigns'+accFilter),
     api('GET','/admin/api/accounts')
   ]);
   window._campaignCache=[campaigns,accounts];
@@ -782,10 +855,13 @@ async function renderCampaigns(m){
               </div>
             </div>
             <div class="btn-group">
-              <button class="btn btn-outline btn-sm" onclick="testCampaignAI('${c.id}')">&#9881; Testar IA</button>
+              <button class="btn btn-outline btn-sm" onclick="testCampaignAI('${c.id}')">&#9881; IA</button>
+              <button class="btn btn-${c.status==='active'?'warning':'success'} btn-sm" onclick="toggleCampaign('${c.id}','${c.status}')">${c.status==='active'?'&#9208; Pausar':'&#9654; Ativar'}</button>
+              <button class="btn btn-outline btn-sm" onclick="showCampaignAnalytics('${c.id}')">&#128200; Stats</button>
               <button class="btn btn-outline btn-sm" onclick="editCampaign('${c.id}')">Editar</button>
               <button class="btn btn-success btn-sm" onclick="showCloneCampaign('${c.id}')">Clonar</button>
               <button class="btn btn-primary btn-sm" onclick="showDMSimulator('${c.id}')">&#128172; Preview</button>
+              <button class="btn btn-warning btn-sm" onclick="simulateComment('${c.id}')">&#128295; Simular</button>
               <button class="btn btn-danger btn-sm" onclick="deleteCampaign('${c.id}')">Excluir</button>
             </div>
           </div>
@@ -798,7 +874,64 @@ async function renderCampaigns(m){
             <div class="text-block"><div class="lbl">Conteudo entregue</div><div class="val">${esc(c.delivery_content)}</div></div>
           </div>
         </div>`;
-      });
+});
+
+// Submenu toggle
+document.querySelectorAll('.menu-toggle').forEach(el=>{
+  el.onclick=function(e){
+    e.stopPropagation();
+    const group=this.dataset.group;
+    const sub=document.querySelector('.submenu[data-group="'+group+'"]');
+    if(!sub)return;
+    this.classList.toggle('open');
+    sub.classList.toggle('open');
+  };
+});
+
+// Account selector
+let selectedAccountId=localStorage.getItem('criahub_selected_account')||'';
+let _accountsList=[];
+
+function renderAccountBar(container){
+  const div=document.createElement('div');
+  div.className='account-bar';
+  div.id='accountBar';
+  div.innerHTML='<label>Conta Instagram:</label>'+
+    '<select id="accountSelect" onchange="onAccountChange(this)"><option value="">Todas as contas</option></select>';
+  container.prepend(div);
+  loadAccountSelect();
+}
+
+async function loadAccountSelect(){
+  const sel=document.getElementById('accountSelect');
+  if(!sel)return;
+  sel.innerHTML='<option value="">Todas as contas</option>';
+  try{
+    const data=await api('GET','/admin/api/accounts');
+    const accounts=data&&data.accounts?data.accounts:(data||[]);
+    _accountsList=accounts;
+    accounts.forEach(function(a){
+      const opt=document.createElement('option');
+      opt.value=a.id;
+      opt.textContent=a.username||a.igsid||a.id;
+      if(a.id===selectedAccountId)opt.selected=true;
+      sel.appendChild(opt);
+    });
+  }catch(e){}
+}
+
+function onAccountChange(sel){
+  selectedAccountId=sel.value;
+  if(selectedAccountId)localStorage.setItem('criahub_selected_account',selectedAccountId);
+  else localStorage.removeItem('criahub_selected_account');
+  const activeLink=document.querySelector('.sidebar nav a.active');
+  if(activeLink)loadPage(activeLink.dataset.page);
+  else loadPage('dashboard');
+}
+
+function getAccFilter(){
+  return selectedAccountId?'?ig_account_id='+encodeURIComponent(selectedAccountId):'';
+}
       html+=`</div>`;
     });
   }
@@ -814,7 +947,10 @@ async function renderContacts(m){
   (convStates||[]).forEach(c=>{convMap[c.contact_id]=c});
 
   m.innerHTML=`
-    <h2>Contatos</h2>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <h2 style="margin:0">Contatos</h2>
+      <button class="btn btn-outline btn-sm" onclick="exportCSV('contacts')">&#128229; Exportar CSV</button>
+    </div>
     ${(!contacts||!contacts.length)?
     `<div class="card"><div class="empty"><div class="icon">&#9900;</div><p>Nenhum contato registrado ainda</p></div></div>`:
     `<div class="card"><div class="table-wrap"><table>
@@ -834,7 +970,9 @@ async function renderContacts(m){
 }
 
 async function renderActivity(m){
-  const data=await api('GET','/admin/api/activity?limit=50');
+  renderAccountBar(m);
+  const accFilter=getAccFilter();
+  const data=await api('GET','/admin/api/activity?limit=50'+accFilter.replace('?','&'));
   const items=(data&&data.items)||[];
   const total=(data&&data.total)||0;
 
@@ -844,7 +982,10 @@ async function renderActivity(m){
   m.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
       <h2 style="margin:0">Log de Atividade</h2>
-      <span style="color:var(--text2);font-size:13px">${total} registros totais</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span style="color:var(--text2);font-size:13px">${total} registos</span>
+        <button class="btn btn-outline btn-sm" onclick="exportCSV('activity')">&#128229; Exportar CSV</button>
+      </div>
     </div>
     ${!items.length?
       `<div class="card"><div class="empty"><div class="icon">&#128337;</div><p>Nenhuma atividade registrada ainda</p><p style="font-size:13px;color:var(--text2)">As interacoes com comentarios e DMs aparecerao aqui</p></div></div>`:
@@ -2007,6 +2148,13 @@ function connectFBPage(igUserId){
   window.location.href='/fb/connect?ig_user_id='+igUserId;
 }
 
+async function disconnectFBPage(igUserId){
+  if(!confirm('Desconectar Facebook Page desta conta?'))return;
+  const r=await api('POST','/admin/api/accounts/disconnect-fb-page',{ig_user_id:igUserId});
+  if(r&&r.ok){toast('FB Page desligada!','success');loadPage('accounts')}
+  else{toast(r?.error||'Erro ao desligar','error')}
+}
+
 async function deleteAccount(id){
   if(!confirm('Excluir esta conta e todos os dados associados? Esta acao e irreversivel.'))return;
   const r=await api('DELETE','/admin/api/accounts/'+id);
@@ -2270,6 +2418,105 @@ async function deleteCampaign(id){
   if(r&&r.ok){toast('Automação excluida','success');loadPage('campaigns')}
 }
 
+async function toggleCampaign(id,currentStatus){
+  const newStatus=currentStatus==='active'?'paused':'active';
+  const r=await api('PATCH','/admin/api/campaigns/'+id+'/toggle',{status:newStatus});
+  if(r&&r.ok){toast(newStatus==='active'?'Automação ativada':'Automação pausada','success');loadPage('campaigns')}
+  else toast(r?.error||'Erro ao alterar estado','error');
+}
+
+async function showCampaignAnalytics(id){
+  toast('A carregar relatório...','info');
+  const r=await api('GET','/admin/api/campaigns/'+id+'/analytics');
+  if(!r||r.error){toast(r?.error||'Erro ao carregar','error');return}
+  const f=r.funnel||{},s=r.stages||[],db=r.dmsByDay||[],pp=r.perPost||[],pe=r.postEngagement,ct=r.contacts||[];
+
+  const stageRows=s.map(st=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13px"><span>${esc(st.stage||'?')}</span><span style="font-weight:600">${st.count}</span></div>`).join('');
+  const dayChart=db.map(d=>`<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid var(--border)"><span>${d.day||''}</span><span style="font-weight:600">${d.count} DMs</span></div>`).join('');
+  const postRows=pp.map(p=>{
+    const detail=p.event_detail||'';
+    const usernameMatch=detail.match(/^@(\S+)/);
+    const username=usernameMatch?usernameMatch[1]:'?';
+    const commentText=detail.replace(/^@\S+:\s*["']?|["']?$/g,'').substring(0,80);
+    return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600">@${esc(username)}</div>
+        <div style="color:var(--text2);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(commentText)}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;margin-left:12px">
+        <div style="font-size:11px;color:var(--text2)">${p.created_at?fmt(p.created_at):''}</div>
+        ${p.funnel_stage?`<span class="badge badge-stage" style="font-size:10px">${esc(p.funnel_stage)}</span>`:''}
+      </div>
+    </div>`;
+  }).join('');
+
+  const contactsHtml=ct.map(c=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">
+    <span>${esc(c.username||'?')}</span>
+    <div style="display:flex;gap:8px">
+      <span class="badge badge-stage" style="font-size:10px">${esc(c.stage||'?')}</span>
+      <span style="color:var(--text2)">${c.dms_received||0} DMs</span>
+    </div>
+  </div>`).join('');
+
+  const postEngHtml=pe?`
+    <div style="margin-bottom:16px">
+      <h4 style="font-size:14px;margin-bottom:8px;color:var(--text2)">&#128247; Post Vinculado</h4>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px">
+        <div class="stat-card" style="padding:12px"><div class="number" style="font-size:20px">${pe.like_count||'?'}</div><div class="label">Likes</div></div>
+        <div class="stat-card" style="padding:12px"><div class="number" style="font-size:20px;color:var(--accent)">${pe.comments_count||'?'}</div><div class="label">Coment\u00e1rios</div></div>
+        <div class="stat-card" style="padding:12px"><div class="number" style="font-size:20px;color:var(--success)">${f.comments}</div><div class="label">Intera\u00e7\u00f5es</div></div>
+      </div>
+      ${pe.permalink?`<div style="font-size:12px;margin-top:8px"><a href="${pe.permalink}" target="_blank">&#128279; Ver publica\u00e7\u00e3o</a></div>`:''}
+      ${pe.caption?`<div style="font-size:12px;color:var(--text2);margin-top:4px;padding:8px;background:var(--input);border-radius:6px">${esc(pe.caption.substring(0,200))}</div>`:''}
+    </div>`:'<div style="margin-bottom:16px;padding:12px;background:var(--input);border-radius:8px;font-size:13px;color:var(--text2);text-align:center">&#9888; Post n\u00e3o vinculado ou API indispon\u00edvel</div>';
+
+  showModal(`<div style="max-width:700px">
+    <h3 style="margin-bottom:4px">&#128200; Relat\u00f3rio da Automa\u00e7\u00e3o</h3>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px">${esc(r.campaign?.keyword||'')} &middot; @${esc(r.campaign?.username||'')} &middot; ${r.campaign?.status||''}</div>
+
+    ${postEngHtml}
+
+    <h4 style="font-size:14px;margin-bottom:8px;color:var(--text2)">&#128202; Funil de Convers\u00e3o</h4>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px">
+      <div class="stat-card" style="padding:14px;position:relative"><div class="number" style="font-size:22px;color:#64b5f6">${f.comments}</div><div class="label">Coment\u00e1rios</div></div>
+      <div class="stat-card" style="padding:14px;position:relative">
+        <div style="position:absolute;top:-8px;right:8px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px">${f.commentToDmRate||0}%</div>
+        <div class="number" style="font-size:22px;color:var(--success)">${f.dmsSent}</div><div class="label">DMs Enviadas</div>
+      </div>
+      <div class="stat-card" style="padding:14px;position:relative">
+        <div style="position:absolute;top:-8px;right:8px;background:var(--warning);color:#000;font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px">${f.dmToReplyRate||0}%</div>
+        <div class="number" style="font-size:22px;color:var(--warning)">${f.commentReplies||0}</div><div class="label">Responderam</div>
+      </div>
+      <div class="stat-card" style="padding:14px"><div class="number" style="font-size:22px;color:var(--accent)">${f.total}</div><div class="label">Contactos</div></div>
+    </div>
+
+    ${s.length?`<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px">`+
+      s.map(st=>`<div style="flex:1;min-width:80px;padding:8px 12px;background:var(--input);border-radius:8px;text-align:center;font-size:12px"><strong>${st.count}</strong><br><span style="color:var(--text2)">${esc(st.stage||'')}</span></div>`).join('')+
+    `</div>`:''}
+
+    ${db.length?`<div style="margin-bottom:16px"><h4 style="font-size:14px;margin-bottom:8px;color:var(--text2)">&#128197; DMs por Dia (7 dias)</h4>${dayChart}</div>`:''}
+
+    ${pp.length?`<div style="margin-bottom:16px"><h4 style="font-size:14px;margin-bottom:8px;color:var(--text2)">&#128172; &Uacute;ltimos Coment\u00e1rios (${pp.length})</h4>${postRows}</div>`:
+    '<div style="padding:12px;text-align:center;color:var(--text2);font-size:13px;margin-bottom:16px">Nenhum coment\u00e1rio registado</div>'}
+
+    ${ct.length?`<div style="margin-bottom:16px">
+      <h4 style="font-size:14px;margin-bottom:8px;color:var(--text2)">&#128101; Contactos (${ct.length})</h4>
+      ${contactsHtml}
+    </div>`:''}
+
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-outline" onclick="closeModal()">Fechar</button>
+    </div>
+  </div>`);
+}
+
+function exportCSV(type){
+  const names={contacts:'Contactos',activity:'Atividade',leads:'Leads'};
+  toast('A exportar '+names[type]+'...','info');
+  const TOKEN=localStorage.getItem('criahub_admin_session')||localStorage.getItem('criahub_session');
+  window.open('/admin/api/export/'+type+'?token='+TOKEN,'_blank');
+}
+
 function showDMSimulator(campaignId){
   const [campaigns]=window._campaignCache||[];
   const c=campaigns?campaigns.find(x=>x.id===campaignId):null;
@@ -2370,6 +2617,36 @@ async function cloneCampaign(sourceId){
   const r=await api('POST','/admin/api/campaigns/'+sourceId+'/clone',{ig_user_id:targetUserId});
   if(r&&r.ok){closeModal();toast('Automação clonada com sucesso!','success');loadPage('campaigns')}
   else{toast(r?.error||'Erro ao clonar','error')}
+}
+
+async function simulateComment(campaignId){
+  showModal(`
+    <h3>&#128295; Simular Comentario</h3>
+    <p style="color:var(--text2);font-size:13px;margin-bottom:12px">Simula um comentario de um utilizador real. O sistema vai processar como se fosse um webhook do Instagram.</p>
+    <div class="form-group">
+      <label>Texto do comentario</label>
+      <input type="text" id="simCommentText" value="Chat" placeholder="Digite o comentario">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline" onclick="closeModal()">Fechar</button>
+      <button class="btn btn-primary" onclick="runSimulateComment('${campaignId}')">&#9654; Simular</button>
+    </div>
+    <div id="simResult" style="margin-top:12px"></div>`);
+}
+
+async function runSimulateComment(campaignId){
+  const comment=document.getElementById('simCommentText').value.trim()||'Chat';
+  const resultDiv=document.getElementById('simResult');
+  resultDiv.innerHTML='<div style="text-align:center;padding:12px"><div class="spinner"></div> A processar...</div>';
+  try {
+    const r=await api('POST','/admin/api/campaigns/'+campaignId+'/simulate-comment',{comment:comment});
+    if(!r){resultDiv.innerHTML='<div style="color:var(--accent);padding:8px">Erro: API retornou nulo. Sessao expirada ou erro no servidor. Recarrega e faz login em /auth.</div>';return}
+    if(r.error){resultDiv.innerHTML='<div style="color:var(--accent);padding:8px">'+esc(r.error)+'</div>';return}
+    resultDiv.innerHTML='<div style="color:var(--success);padding:8px">'+esc(r.message||'OK')+'</div>';
+    toast('Comentario simulado! Verifica o Instagram.','success');
+  } catch(e) {
+    resultDiv.innerHTML='<div style="color:var(--accent);padding:8px">Erro: '+e.message+'</div>';
+  }
 }
 
 async function testCampaignAI(campaignId){
@@ -2865,42 +3142,66 @@ async function renderLeads(m){
     api('GET','/api/leads/stats')
   ]);
   const leads=leadsData&&leadsData.leads?leadsData.leads:[];
-  const st=stats&&stats.stats?stats.stats:{total:0,by_platform:{},by_status:{},by_funnel:{}};
+  const st=stats||{};
+  const bySource=(st.bySource||[]).reduce((a,{source,count})=>{a[source]=count;return a},{});
+  const byStatusMap=(st.byStatus||[]).reduce((a,{status,count})=>{a[status]=count;return a},{});
   m.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
       <h2 style="margin:0">&#127919; Leads Centralizados</h2>
-      <button class="btn btn-primary btn-sm" onclick="openNewLead()">+ Novo Lead</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="syncLeads('form')">&#128220; Importar Formulário</button>
+        <button class="btn btn-outline btn-sm" onclick="syncLeads('ig')">&#128247; Importar Instagram</button>
+        <button class="btn btn-primary btn-sm" onclick="openNewLead()">+ Novo Lead</button>
+        <button class="btn btn-outline btn-sm" onclick="exportCSV('leads')">&#128229; Exportar CSV</button>
+      </div>
     </div>
     <div class="stat-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:24px">
       <div class="stat-card" style="border-left:3px solid var(--accent)"><div class="number">${st.total||0}</div><div class="label">Total Leads</div></div>
-      <div class="stat-card" style="border-left:3px solid var(--success)"><div class="number">${st.by_status?.new||0}</div><div class="label">Novos</div></div>
-      <div class="stat-card" style="border-left:3px solid #8b5cf6"><div class="number">${st.by_status?.contacted||0}</div><div class="label">Contactados</div></div>
-      <div class="stat-card" style="border-left:3px solid var(--warning)"><div class="number">${st.by_status?.qualified||0}</div><div class="label">Qualificados</div></div>
-      <div class="stat-card" style="border-left:3px solid var(--success)"><div class="number">${st.by_status?.converted||0}</div><div class="label">Convertidos</div></div>
+      <div class="stat-card" style="border-left:3px solid var(--success)"><div class="number">${byStatusMap.new||0}</div><div class="label">Novos</div></div>
+      <div class="stat-card" style="border-left:3px solid #8b5cf6"><div class="number">${byStatusMap.contacted||0}</div><div class="label">Contactados</div></div>
+      <div class="stat-card" style="border-left:3px solid var(--warning)"><div class="number">${byStatusMap.qualified||0}</div><div class="label">Qualificados</div></div>
+      <div class="stat-card" style="border-left:3px solid var(--success)"><div class="number">${byStatusMap.converted||0}</div><div class="label">Convertidos</div></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
-      <div class="card"><h3>&#128202; Por Plataforma</h3>
-        <div style="display:flex;flex-direction:column;gap:8px">${Object.entries(st.by_platform||{}).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--input);border-radius:8px;font-size:13px"><span>${esc(k)}</span><strong>${v}</strong></div>`).join('')||'<div style="color:var(--text2);font-size:13px">Sem dados</div>'}</div>
+      <div class="card"><h3>&#128202; Por Origem</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">${Object.entries(bySource).length?Object.entries(bySource).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--input);border-radius:8px;font-size:13px"><span>${esc(labelSource(k))}</span><strong>${v}</strong></div>`).join(''):'<div style="color:var(--text2);font-size:13px">Sem dados</div>'}</div>
       </div>
-      <div class="card"><h3>&#127919; Por Funil</h3>
-        <div style="display:flex;flex-direction:column;gap:8px">${Object.entries(st.by_funnel||{}).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--input);border-radius:8px;font-size:13px"><span>${esc(k)}</span><strong>${v}</strong></div>`).join('')||'<div style="color:var(--text2);font-size:13px">Sem dados</div>'}</div>
+      <div class="card"><h3>&#127919; Por Estado</h3>
+        <div style="display:flex;flex-direction:column;gap:8px">${Object.entries(byStatusMap).length?Object.entries(byStatusMap).map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--input);border-radius:8px;font-size:13px"><span>${esc(k)}</span><strong>${v}</strong></div>`).join(''):'<div style="color:var(--text2);font-size:13px">Sem dados</div>'}</div>
       </div>
     </div>
     <div class="card">
       <h3>Últimos Leads</h3>
-      ${!leads.length?'<div class="empty"><div class="icon">&#127919;</div><p>Nenhum lead registado ainda.</p></div>':
+      ${!leads.length?'<div class="empty"><div class="icon">&#127919;</div><p>Nenhum lead registado ainda. Use os bot\u00f5es "Importar" acima para importar leads do formul\u00e1rio de contacto ou do Instagram.</p><div style="display:flex;gap:8px;justify-content:center;margin-top:12px"><button class="btn btn-primary" onclick="syncLeads(\'form\')">&#128220; Importar Formul\u00e1rio</button><button class="btn btn-primary" onclick="syncLeads(\'ig\')">&#128247; Importar Instagram</button></div></div>':
       `<div class="table-wrap"><table>
-        <thead><tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Plataforma</th><th>Status</th><th>Data</th></tr></thead>
+        <thead><tr><th>Nome</th><th>Email</th><th>Telefone</th><th>Origem</th><th>Status</th><th>Data</th></tr></thead>
         <tbody>${leads.slice(0,50).map(l=>`<tr>
           <td><strong>${esc(l.name||'-')}</strong></td>
           <td>${esc(l.email||'-')}</td>
           <td>${esc(l.phone||'-')}</td>
-          <td><span class="badge badge-stage">${esc(l.platform||'-')}</span></td>
+          <td><span class="badge badge-stage">${esc(labelSource(l.source))}</span></td>
           <td><span class="badge badge-${l.status==='converted'?'active':l.status==='qualified'?'paused':'stage'}">${esc(l.status||'new')}</span></td>
           <td style="font-size:12px;color:var(--text2)">${fmt(l.created_at)}</td>
         </tr>`).join('')}</tbody>
       </table></div>`}
     </div>`;
+}
+
+function labelSource(s){
+  const map={contact_form:'Formulário de Contacto',instagram:'Instagram',website:'Website',whatsapp:'WhatsApp',tiktok:'TikTok',meta_forms:'Meta Forms',manual:'Manual',other:'Outro'};
+  return map[s]||s||'Desconhecido';
+}
+
+async function syncLeads(type){
+  const labels={form:'Formulário de Contacto',ig:'Instagram'};
+  toast('A importar leads de '+labels[type]+'...', 'info');
+  try{
+    const r=await api('POST','/api/leads/sync-from-'+type);
+    if(r&&r.ok){
+      if(r.imported>0){toast(r.imported+' lead'+(r.imported>1?'s':'')+' importado'+(r.imported>1?'s':'')+' de '+labels[type],'success');loadPage('leads')}
+      else toast('Nenhum lead novo encontrado em '+labels[type],'info');
+    } else toast(r?.error||'Erro ao importar','error');
+  }catch(e){toast('Erro: '+e.message,'error')}
 }
 
 function openNewLead(){
@@ -2929,8 +3230,552 @@ async function saveNewLead(){
 }
 
 // ============================================================
-// META ADS
+// PLANOS — Edição de planos e conteúdos
 // ============================================================
+async function renderPlans(m){
+  try {
+    const plans=await api('GET','/admin/api/plans');
+    if(!plans||!plans.length){m.innerHTML='<div class="card"><p style="color:var(--text2)">Nenhum plano encontrado</p></div>';return}
+    window._plansData=plans;
+    m.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+        <h2 style="margin:0">${t('planos')}</h2>
+        <button class="btn btn-outline btn-sm" onclick="loadPage('plans')">&#8635; Atualizar</button>
+      </div>
+      ${plans.filter(p=>p.id!=='plan_free').map(p=>{
+        const c=p.content?.pt||{description:'',features:'[]',button_text:'',price_label:'',highlight:''};
+        const features=JSON.parse(c.features||'[]');
+        return `<div class="card" style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:start;flex-wrap:wrap;gap:12px">
+            <div style="flex:1;min-width:200px">
+              <h3 style="margin:0 0 4px">${esc(p.name)}</h3>
+              <div style="font-size:13px;color:var(--text2)">${esc(c.description||'')}</div>
+              ${c.highlight?`<span class="badge badge-active">${esc(c.highlight)}</span>`:''}
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:22px;font-weight:700">${c.price_label||p.price_eur_monthly+'€'}</div>
+              <div style="font-size:12px;color:var(--text2)">${esc(c.button_text||'')}</div>
+            </div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin:12px 0">
+            ${features.map(f=>`<span class="badge" style="background:rgba(0,206,209,.1);color:var(--accent)">${esc(f)}</span>`).join('')}
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:12px;color:var(--text2)">
+            <span>Contas: ${p.max_accounts<0?'Ilimitadas':p.max_accounts}</span>
+            <span>DMs/mês: ${p.max_dms_month<0?'Ilimitados':p.max_dms_month}</span>
+            <span>Campanhas: ${p.max_campaigns<0?'Ilimitadas':p.max_campaigns}</span>
+            <span>Contactos: ${p.max_contacts<0?'Ilimitados':p.max_contacts}</span>
+            <span>Utilizadores: ${p.max_users<0?'Ilimitados':p.max_users}</span>
+          </div>
+          <div style="margin-top:12px;display:flex;gap:8px">
+            <button class="btn btn-primary btn-sm" onclick="showEditPlan('${esc(p.id)}')">Editar Plano</button>
+            <button class="btn btn-outline btn-sm" onclick="showEditPlanContent('${esc(p.id)}')">Editar Textos</button>
+          </div>
+        </div>`;
+      }).join('')}
+    `;
+  }catch(e){
+    m.innerHTML='<div class="card"><h3>Erro</h3><p style="color:var(--text2)">'+esc(e.message)+'</p><button class="btn btn-primary btn-sm" onclick="loadPage(\'plans\')">Tentar novamente</button></div>';
+  }
+}
+
+function showEditPlan(planId){
+  const p=window._plansData?.find(x=>x.id===planId);
+  if(!p){toast('Plano nao encontrado','error');return}
+  showModal(`
+    <h3>Editar ${esc(p.name)}</h3>
+    <div class="field"><label>Preço (€/mês)</label><input type="number" step="0.01" id="epPrice" value="${p.price_eur_monthly}"></div>
+    <div class="field"><label>Máx Contas IG</label><input type="number" id="epAccounts" value="${p.max_accounts}"> <small style="color:var(--text2)">-1 = ilimitado</small></div>
+    <div class="field"><label>Máx DMs/mês</label><input type="number" id="epDms" value="${p.max_dms_month}"> <small style="color:var(--text2)">-1 = ilimitado</small></div>
+    <div class="field"><label>Máx Campanhas</label><input type="number" id="epCampaigns" value="${p.max_campaigns}"> <small style="color:var(--text2)">-1 = ilimitado</small></div>
+    <div class="field"><label>Máx Contactos</label><input type="number" id="epContacts" value="${p.max_contacts}"> <small style="color:var(--text2)">-1 = ilimitado</small></div>
+    <div class="field"><label>Máx Utilizadores</label><input type="number" id="epUsers" value="${p.max_users}"> <small style="color:var(--text2)">-1 = ilimitado</small></div>
+    <button class="btn btn-primary" onclick="saveEditPlan('${esc(planId)}')">Guardar</button>
+  `);
+}
+
+async function saveEditPlan(planId){
+  const body={
+    price_eur_monthly: parseFloat(document.getElementById('epPrice').value)||0,
+    max_accounts: parseInt(document.getElementById('epAccounts').value)||1,
+    max_dms_month: parseInt(document.getElementById('epDms').value)||500,
+    max_campaigns: parseInt(document.getElementById('epCampaigns').value)||3,
+    max_contacts: parseInt(document.getElementById('epContacts').value)||200,
+    max_users: parseInt(document.getElementById('epUsers').value)||1
+  };
+  const r=await api('PUT','/admin/api/plans/'+planId,body);
+  if(r&&r.ok){closeModal();toast('Plano atualizado!','success');loadPage('plans')}
+  else{toast(r?.error||'Erro ao guardar','error')}
+}
+
+function showEditPlanContent(planId){
+  const p=window._plansData?.find(x=>x.id===planId);
+  if(!p){toast('Plano nao encontrado','error');return}
+  const c=p.content?.pt||{description:'',features:'[]',button_text:'',price_label:'',highlight:''};
+  const features=JSON.parse(c.features||'[]');
+  showModal(`
+    <h3>Textos - ${esc(p.name)}</h3>
+    <div class="field"><label>Descrição curta</label><input type="text" id="epcDesc" value="${esc(c.description||'')}"></div>
+    <div class="field"><label>Funcionalidades (uma por linha)</label><textarea id="epcFeatures" rows="5">${esc(features.join('\n'))}</textarea></div>
+    <div class="field"><label>Texto do botão</label><input type="text" id="epcBtn" value="${esc(c.button_text||'')}"></div>
+    <div class="field"><label>Label do preço (ex: "9,90€/mês")</label><input type="text" id="epcPrice" value="${esc(c.price_label||'')}"></div>
+    <div class="field"><label>Destaque (ex: "Mais Popular")</label><input type="text" id="epcHighlight" value="${esc(c.highlight||'')}"></div>
+    <button class="btn btn-primary" onclick="saveEditPlanContent('${esc(planId)}')">Guardar</button>
+  `);
+}
+
+async function saveEditPlanContent(planId){
+  const desc=document.getElementById('epcDesc').value;
+  const feats=document.getElementById('epcFeatures').value.split('\n').filter(s=>s.trim());
+  const btn=document.getElementById('epcBtn').value;
+  const price=document.getElementById('epcPrice').value;
+  const hl=document.getElementById('epcHighlight').value;
+  const r=await api('PUT','/admin/api/plans/'+planId,{
+    content: {
+      pt: { description: desc, features: feats, button_text: btn, price_label: price, highlight: hl }
+    }
+  });
+  if(r&&r.ok){closeModal();toast('Textos atualizados!','success');loadPage('plans')}
+  else{toast(r?.error||'Erro ao guardar','error')}
+}
+
+// ============================================================
+// SMART INBOX — Centro de Conversas Unificado com IA
+// ============================================================
+let _inboxCache = null;
+
+async function renderSmartInbox(m){
+  m.innerHTML=`<div style="padding:40px;text-align:center"><div class="spinner"></div><p style="margin-top:16px;color:var(--text2)">A carregar conversas...</p></div>`;
+
+  try {
+    const data = await api('GET','/api/smart-inbox/conversations?limit=100');
+    if (!data || !data.ok || !data.conversations) {
+      m.innerHTML='<div class="card" style="padding:40px;text-align:center"><div style="font-size:48px;margin-bottom:16px">&#128172;</div><h3>Sem conversas ainda</h3><p style="color:var(--text2);margin:8px 0">As conversas aparecerão aqui à medida que receberes interações</p></div>';
+      return;
+    }
+    _inboxCache = data;
+    renderInboxList(m, data.conversations, data.total);
+  } catch(e) {
+    m.innerHTML='<div class="card" style="padding:40px;text-align:center"><h3>Erro ao carregar inbox</h3><p style="color:var(--text2)">'+e.message+'</p></div>';
+  }
+}
+
+function renderInboxList(m, conversations, total){
+  const scoreColor = s => s>=80?'var(--success)':s>=50?'var(--warning)':'var(--text2)';
+  const scoreLabel = s => s>=80?'Quente':s>=50?'Morno':'Frio';
+  const platformIcon = p => ({instagram:'&#128247;',whatsapp:'&#128172;',tiktok:'&#127916;',website:'&#127760;',contact_form:'&#128220;',meta_forms:'&#128200;'})[p]||'&#128172;';
+  const stageBadge = s => {
+    const m={'novo':'badge-stage','entregue':'badge-active','aguardando_quero':'badge-paused','fundo':'badge-active','meio':'badge-stage','topo':'badge-stage'};
+    return '<span class="badge '+(m[s]||'badge-stage')+'">'+esc(s)+'</span>';
+  };
+
+  m.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+      <div>
+        <h2 style="margin:0">&#128172; Smart Inbox</h2>
+        <p style="color:var(--text2);font-size:13px;margin-top:4px">${total} conversas • Ordenadas por score de lead</p>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="inboxSearch" placeholder="Buscar conversas..." style="padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:var(--input);color:var(--text);font-size:13px;width:200px;outline:none" onkeydown="if(event.key==='Enter')renderSmartInbox(document.getElementById('mainContent'))">
+        <button class="btn btn-outline btn-sm" onclick="renderSmartInbox(document.getElementById('mainContent'))">&#8635;</button>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+      <div class="stat-card"><div class="number" style="color:var(--success)">${conversations.filter(c=>c.score>=80).length}</div><div class="label">Leads Quentes</div></div>
+      <div class="stat-card"><div class="number" style="color:var(--warning)">${conversations.filter(c=>c.score>=50&&c.score<80).length}</div><div class="label">Leads Mornos</div></div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${!conversations.length?'<div class="card" style="text-align:center;padding:40px"><div style="font-size:48px;margin-bottom:12px">&#128172;</div><p style="color:var(--text2)">Nenhuma conversa encontrada</p></div>':
+      conversations.map(c=>{
+        const sc=c.score||0;
+        return `<div class="card" style="cursor:pointer;padding:16px 20px;transition:all .15s;border-left:4px solid ${scoreColor(sc)}" onclick="showInboxDetail('${c.id}','${c.type}')" onmouseover="this.style.background='var(--input)'" onmouseout="this.style.background=''">
+          <div style="display:flex;align-items:center;gap:14px">
+            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:18px;color:#fff;font-weight:700;flex-shrink:0">
+              ${c.name?c.name.charAt(0).toUpperCase():'?'}
+            </div>
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <strong style="font-size:15px">${esc(c.name||'Desconhecido')}</strong>
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="font-size:11px;color:var(--text2)">${c.lastActivity?fmt(c.lastActivity):''}</span>
+                  <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${scoreColor(sc)}22;color:${scoreColor(sc)}">${sc} ${scoreLabel(sc)}</span>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+                <span style="font-size:16px">${platformIcon(c.platform)}</span>
+                <span style="font-size:12px;color:var(--accent)">${esc(c.account||c.platform)}</span>
+                ${c.funnelStage?stageBadge(c.funnelStage):''}
+                <span style="font-size:12px;color:var(--text2)">${c.dmCount||0} DMs · ${c.commentCount||0} coment.</span>
+                ${c.email?'<span style="font-size:12px;color:var(--success)">&#9993; Email</span>':''}
+              </div>
+              ${c.lastMessage?`<div style="font-size:13px;color:var(--text2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:400px">${esc(c.lastMessage)}</div>`:''}
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+async function showInboxDetail(convId, type){
+  toast('A carregar conversa...','info');
+  try {
+    const data = await api('GET','/api/smart-inbox/conversations/'+convId);
+    if (!data || !data.ok) { toast('Erro ao carregar conversa','error'); return; }
+    const c = data.conversation;
+    const tl = data.timeline || [];
+
+    const scoreColor = s => s>=80?'var(--success)':s>=50?'var(--warning)':'var(--text2)';
+    const eventIcon = t => ({dm_sent:'&#9993;',dm_failed:'&#10060;',comment_received:'&#128172;',comment_reply:'&#128260;',follow_checked:'&#128100;',email_collected:'&#9993;',tiktok_comment:'&#127916;'})[t]||'&#9679;';
+    const eventColor = t => ({dm_sent:'var(--success)',dm_failed:'var(--accent)',comment_received:'#8b5cf6'})[t]||'var(--text2)';
+
+    const timelineHtml = tl.map(t => {
+      const ic = eventIcon(t.type);
+      const col = eventColor(t.type);
+      return `<div style="display:flex;gap:12px;padding:10px 0;border-left:2px solid var(--border);padding-left:16px;position:relative">
+        <div style="position:absolute;left:-7px;top:14px;width:12px;height:12px;border-radius:50%;background:${col};border:2px solid var(--bg)"></div>
+        <span style="font-size:16px;margin-top:2px">${ic}</span>
+        <div style="flex:1">
+          <div style="font-size:13px;color:var(--text)">${esc(t.detail||t.type)}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:2px">${t.createdAt?fmt(t.createdAt):''} ${t.account?'· '+esc(t.account):''}</div>
+        </div>
+      </div>`;
+    }).join('');
+
+    showModal(`
+      <div style="max-width:600px">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#8b5cf6);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;font-weight:700;flex-shrink:0">
+            ${c.name?c.name.charAt(0).toUpperCase():'?'}
+          </div>
+          <div style="flex:1">
+            <h3 style="margin:0;font-size:18px">${esc(c.name)}</h3>
+            <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">
+              <span style="font-size:12px;color:var(--text2)">&#128247; ${esc(c.platform)}</span>
+              ${c.email?'<span style="font-size:12px;color:var(--text2)">&#9993; '+esc(c.email)+'</span>':''}
+              <span style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:${scoreColor(c.score||0)}22;color:${scoreColor(c.score||0)}">Score: ${c.score||0}</span>
+              <span class="badge badge-stage">${esc(c.leadStatus||'new')}</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+          <div class="stat-card" style="padding:12px"><div class="number" style="font-size:20px">${tl.length}</div><div class="label">Interações</div></div>
+          <div class="stat-card" style="padding:12px"><div class="number" style="font-size:20px;color:var(--success)">${tl.filter(t=>t.type==='dm_sent').length}</div><div class="label">DMs</div></div>
+        </div>
+
+        ${c.notes?'<div style="padding:12px;background:var(--input);border-radius:8px;margin-bottom:16px;font-size:13px"><strong>Notas:</strong> '+esc(c.notes)+'</div>':''}
+
+        <h4 style="font-size:14px;margin-bottom:12px;color:var(--text2)">Timeline da Conversa</h4>
+        <div style="max-height:400px;overflow-y:auto">
+          ${timelineHtml||'<div style="color:var(--text2);font-size:13px;padding:16px;text-align:center">Sem atividade registada</div>'}
+        </div>
+
+        <div class="modal-actions" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+          <button class="btn btn-outline" onclick="closeModal()">Fechar</button>
+          <button class="btn btn-primary" id="suggestReplyBtn" onclick="suggestAIReply('${convId}')">&#129302; Sugerir Resposta</button>
+          <button class="btn btn-outline" onclick="closeModal();openNewFollowup('${c.leadId||''}','${convId}')">&#128197; Agendar Follow-up</button>
+          ${c.leadId?`<button class="btn btn-primary" onclick="closeModal();loadPage('leads')">Ver Lead</button>`:''}
+        </div>
+        <div id="suggestionsBox" style="margin-top:12px;display:none">
+          <div class="spinner" style="margin:12px auto"></div>
+        </div>
+      </div>`);
+  } catch(e) {
+    toast('Erro: '+e.message,'error');
+  }
+}
+
+async function suggestAIReply(convId){
+  const btn=document.getElementById('suggestReplyBtn');
+  const box=document.getElementById('suggestionsBox');
+  if(!btn||!box)return;
+  btn.disabled=true;btn.textContent='A gerar...';
+  box.style.display='block';box.innerHTML='<div class="spinner" style="margin:12px auto"></div>';
+  try {
+    const r=await api('POST','/api/smart-inbox/suggest-reply',{conversationId:convId});
+    if(!r||!r.ok||!r.suggestions||!r.suggestions.length){
+      box.innerHTML='<div style="padding:12px;text-align:center;color:var(--text2);font-size:13px">Não foi possível gerar sugestões</div>';
+      return;
+    }
+    box.innerHTML='<div style="font-size:13px;font-weight:600;margin-bottom:8px;color:var(--text2)">&#129302; Sugestões de Resposta:</div>'+
+      r.suggestions.map((s,i)=>`<div style="padding:10px 14px;background:var(--input);border-radius:8px;margin-bottom:6px;cursor:pointer;font-size:13px;border:1px solid transparent;transition:all.15s" onclick="copySuggestion(this)" title="Clique para copiar" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='transparent'">${esc(s)}</div>`).join('')+
+      '<div style="font-size:11px;color:var(--text2);margin-top:6px;text-align:center">Clique numa sugestão para copiar</div>';
+  } catch(e) {
+    box.innerHTML='<div style="padding:12px;text-align:center;color:var(--accent);font-size:13px">Erro: '+esc(e.message)+'</div>';
+  } finally {
+    btn.disabled=false;btn.textContent='\u{1F916} Sugerir Resposta';
+  }
+}
+
+function copySuggestion(el){
+  const t=el.textContent;
+  navigator.clipboard.writeText(t).then(()=>{toast('Copiado!','success')}).catch(()=>{toast('Erro ao copiar','error')});
+}
+
+// ============================================================
+// SMART CAMPAIGNS — Automações Inteligentes
+// ============================================================
+async function renderSmartCampaigns(m){
+  m.innerHTML=`<div style="padding:40px;text-align:center"><div class="spinner"></div></div>`;
+  try {
+    const data = await api('GET','/api/smart-campaigns');
+    const rules = data?.rules || [];
+    const triggerIcon = t => ({score_threshold:'&#127919;',funnel_stage:'&#128200;',inactivity:'&#9203;','new_conversation':'&#128172;'})[t]||'&#9889;';
+    const actionIcon = a => ({notify_admin:'&#128276;',send_dm:'&#128172;',change_stage:'&#128260;'})[a]||'&#9889;';
+    const triggerLabel = t => ({score_threshold:'Score atinge',funnel_stage:'Funil fica em',inactivity:'Inativo há'})[t]||t;
+    const actionLabel = a => ({notify_admin:'Notificar Admin',send_dm:'Enviar DM (em breve)',change_stage:'Mudar Funil (em breve)'})[a]||a;
+    const valueLabel = (t,v) => {
+      if (t==='score_threshold') return 'Score \u2265 '+v;
+      if (t==='funnel_stage') return ({fundo:'Fundo (quase convers\u00e3o)',entregue:'Entregue',aguardando_quero:'Aguardando "Quero"',meio:'Meio',topo:'Topo'})[v]||v;
+      if (t==='inactivity') return v+' dias sem intera\u00e7\u00e3o';
+      return v;
+    };
+
+    m.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+        <div>
+          <h2 style="margin:0">&#9889; Campanhas Inteligentes</h2>
+          <p style="color:var(--text2);font-size:13px;margin-top:4px">Automatiza\u00e7\u00f5es baseadas no comportamento dos leads</p>
+        </div>
+        <button class="btn btn-primary" onclick="openNewRule()">+ Nova Regra</button>
+      </div>
+      ${!rules.length?'<div class="card" style="text-align:center;padding:60px"><div style="font-size:56px;margin-bottom:16px">&#9889;</div><h3>Nenhuma regra de automa\u00e7\u00e3o</h3><p style="color:var(--text2);margin:8px 0">Cria regras inteligentes para automatizar a\u00e7\u00f5es com base no comportamento dos leads</p><div style="display:flex;gap:12px;justify-content:center;margin-top:16px"><button class="btn btn-primary" onclick="openNewRule()">+ Criar Primeira Regra</button></div></div>':
+      rules.map(r => `
+        <div class="card" style="padding:20px;margin-bottom:16px;border-left:4px solid ${r.status==='active'?'var(--success)':'var(--text2)'}">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <strong style="font-size:16px">${esc(r.name)}</strong>
+              ${r.status==='active'?'<span class="badge badge-active">Activo</span>':'<span class="badge badge-paused">Pausado</span>'}
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-sm ${r.status==='active'?'btn-outline':'btn-primary'}" onclick="toggleRule(${r.id})">${r.status==='active'?'Pausar':'Activar'}</button>
+              <button class="btn btn-sm btn-outline" onclick="deleteRule(${r.id})" style="color:var(--accent)">Excluir</button>
+            </div>
+          </div>
+          ${r.description?'<div style="font-size:13px;color:var(--text2);margin-bottom:16px">'+esc(r.description)+'</div>':''}
+          <div style="display:flex;align-items:stretch;gap:12px;flex-wrap:wrap">
+            <div style="flex:1;min-width:200px;background:var(--input);border-radius:12px;padding:16px">
+              <div style="font-size:28px;margin-bottom:8px">${triggerIcon(r.trigger_type)}</div>
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">CONDI\u00c7\u00c3O</div>
+              <div style="font-size:14px;font-weight:600">${triggerLabel(r.trigger_type)}</div>
+              <div style="font-size:13px;color:var(--accent);margin-top:4px">${valueLabel(r.trigger_type, r.trigger_value)}</div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--text2);padding:0 8px">&#8594;</div>
+            <div style="flex:1;min-width:200px;background:var(--input);border-radius:12px;padding:16px">
+              <div style="font-size:28px;margin-bottom:8px">${actionIcon(r.action_type)}</div>
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);margin-bottom:4px">A\u00c7\u00c3O</div>
+              <div style="font-size:14px;font-weight:600">${actionLabel(r.action_type)}</div>
+              <div style="font-size:12px;color:var(--text2);margin-top:4px">${r.last_triggered_at?'Executado em '+fmt(r.last_triggered_at):'Aguardando condi\u00e7\u00e3o'}</div>
+            </div>
+          </div>
+        </div>`).join('')}
+    `;
+  } catch(e) {
+    m.innerHTML='<div class="card" style="padding:40px;text-align:center"><h3>Erro ao carregar regras</h3><p style="color:var(--text2)">'+esc(e.message)+'</p></div>';
+  }
+}
+
+function openNewRule(){
+  showModal(`
+    <h3 style="margin-bottom:20px">+ Nova Regra de Automa\u00e7\u00e3o</h3>
+    <div class="form-group"><label>Nome da Regra</label><input id="ruleName" placeholder="Ex: Lead quente - DM autom\u00e1tica"></div>
+    <div class="form-group"><label>Descri\u00e7\u00e3o (opcional)</label><input id="ruleDesc" placeholder="Envia DM quando lead atinge score 70+"></div>
+    <div class="form-group"><label>Condi\u00e7\u00e3o</label>
+      <select id="ruleTrigger" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--input);color:var(--text);font-size:14px" onchange="toggleRuleValueOptions()">
+        <option value="score_threshold">Score m\u00ednimo atingido</option>
+        <option value="funnel_stage">Lead entra numa fase do funil</option>
+        <option value="inactivity">Inatividade por X dias</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Valor da condi\u00e7\u00e3o</label>
+      <select id="ruleValue" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--input);color:var(--text);font-size:14px">
+        <option value="70">Score \u2265 70 (Lead Quente)</option>
+        <option value="50">Score \u2265 50 (Lead Morno)</option>
+        <option value="80">Score \u2265 80 (Lead Muito Quente)</option>
+        <option value="fundo">Funil = Fundo (quase convers\u00e3o)</option>
+        <option value="entregue">Funil = Entregue (conte\u00fado entregue)</option>
+        <option value="aguardando_quero">Funil = Aguardando "Quero"</option>
+        <option value="3">Inativo h\u00e1 3 dias</option>
+        <option value="7">Inativo h\u00e1 7 dias</option>
+      </select>
+    </div>
+    <div class="form-group"><label>A\u00e7\u00e3o</label>
+      <select id="ruleAction" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--input);color:var(--text);font-size:14px" onchange="toggleActionConfig()">
+        <option value="notify_admin">Notificar Admin</option>
+        <option value="send_dm">Enviar DM Autom\u00e1tica</option>
+        <option value="change_stage">Mudar fase do funil</option>
+      </select>
+    </div>
+    <div id="actionConfigBox" style="display:none">
+      <div class="form-group"><label>Mensagem da DM</label>
+        <textarea id="ruleDmMessage" rows="4" placeholder="Ol\u00e1! Vi que tens interesse nos nossos servi\u00e7os. Posso ajudar com alguma d\u00favida?" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--input);color:var(--text);font-size:14px;font-family:inherit;resize:vertical"></textarea>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Podes usar vari\u00e1veis: {{nome}}, {{empresa}}, {{email}}</div>
+    </div>
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRule()">Criar Regra</button>
+    </div>
+  `);
+}
+
+function toggleRuleValueOptions(){
+  const t = document.getElementById('ruleTrigger')?.value;
+  const sel = document.getElementById('ruleValue');
+  if (!sel) return;
+  const opts = t === 'score_threshold' ?
+    '<option value="70">Score \u2265 70 (Quente)</option><option value="50">Score \u2265 50 (Morno)</option><option value="80">Score \u2265 80 (Muito Quente)</option>' :
+    t === 'funnel_stage' ?
+    '<option value="fundo">Funil = Fundo (quase convers\u00e3o)</option><option value="entregue">Funil = Entregue</option><option value="aguardando_quero">Funil = Aguardando "Quero"</option>' :
+    '<option value="3">3 dias sem intera\u00e7\u00e3o</option><option value="7">7 dias sem intera\u00e7\u00e3o</option><option value="14">14 dias sem intera\u00e7\u00e3o</option>';
+  sel.innerHTML = opts;
+}
+
+function toggleActionConfig(){
+  const a = document.getElementById('ruleAction')?.value;
+  document.getElementById('actionConfigBox').style.display = a === 'send_dm' ? 'block' : 'none';
+}
+
+async function saveRule(){
+  const name=document.getElementById('ruleName')?.value;
+  if(!name){toast('Nome é obrigatório','error');return}
+  const r=await api('POST','/api/smart-campaigns',{
+    name,
+    description:document.getElementById('ruleDesc')?.value||'',
+    trigger_type:document.getElementById('ruleTrigger')?.value||'score_threshold',
+    trigger_value:document.getElementById('ruleValue')?.value||'70',
+    action_type:document.getElementById('ruleAction')?.value||'notify_admin',
+    action_config:{}
+  });
+  if(r&&r.ok){closeModal();toast('Regra criada!','success');loadPage('smartcampaigns')}
+  else toast(r?.error||'Erro ao criar regra','error');
+}
+
+async function toggleRule(id){
+  const r=await api('POST','/api/smart-campaigns/'+id+'/toggle');
+  if(r&&r.ok){toast(r.status==='active'?'Regra ativada':'Regra pausada','success');loadPage('smartcampaigns')}
+  else toast('Erro ao alternar','error');
+}
+
+async function deleteRule(id){
+  if(!confirm('Tem a certeza?'))return;
+  const r=await api('DELETE','/api/smart-campaigns/'+id);
+  if(r&&r.ok){toast('Regra excluída','success');loadPage('smartcampaigns')}
+  else toast('Erro ao excluir','error');
+}
+
+// ============================================================
+// FOLLOW-UPS — Agenda de Lembretes
+// ============================================================
+async function renderFollowups(m){
+  m.innerHTML=`<div style="padding:40px;text-align:center"><div class="spinner"></div></div>`;
+  try {
+    const [data, leadsData] = await Promise.all([
+      api('GET','/api/followups'),
+      api('GET','/api/leads?limit=200')
+    ]);
+    const items = data?.followups || [];
+    const leads = leadsData?.leads || [];
+    const pending = items.filter(i => i.status==='pending');
+    const completed = items.filter(i => i.status==='completed');
+    const expired = items.filter(i => i.status==='pending' && new Date(i.scheduled_at) < new Date());
+
+    const leadMap = {};
+    leads.forEach(l => { leadMap[l.id] = l; if (l.source_id) leadMap[l.source_id] = l; });
+
+    m.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+        <div>
+          <h2 style="margin:0">&#128197; Follow-ups</h2>
+          <p style="color:var(--text2);font-size:13px;margin-top:4px">${pending.length} pendentes${expired.length?' &middot; <span style="color:var(--accent)">'+expired.length+' atrasados</span>':''}</p>
+        </div>
+        <button class="btn btn-primary" onclick="openNewFollowup()">+ Novo Follow-up</button>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px">
+        <div class="stat-card"><div class="number" style="color:var(--warning)">${pending.length}</div><div class="label">Pendentes</div></div>
+        <div class="stat-card"><div class="number" style="color:var(--accent)">${expired.length}</div><div class="label">Atrasados</div></div>
+        <div class="stat-card"><div class="number" style="color:var(--success)">${completed.length}</div><div class="label">Conclu&iacute;dos</div></div>
+      </div>
+
+      ${!items.length?'<div class="card" style="text-align:center;padding:60px"><div style="font-size:56px;margin-bottom:16px">&#128197;</div><h3>Nenhum follow-up agendado</h3><p style="color:var(--text2);margin:8px 0">Agenda lembretes para seguir com leads importantes</p><button class="btn btn-primary" onclick="openNewFollowup()" style="margin-top:12px">+ Agendar</button></div>':
+      `<div style="display:flex;flex-direction:column;gap:8px">
+        ${items.map(i => {
+          const isExpired = i.status==='pending' && new Date(i.scheduled_at) < new Date();
+          const name = leadMap[i.lead_id||i.contact_id||i.conversation_id]?.name || i.title;
+          return `<div class="card" style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-left:4px solid ${i.status==='completed'?'var(--success)':isExpired?'var(--accent)':'var(--warning)'}">
+            <div style="display:flex;align-items:center;gap:14px;flex:1">
+              <div style="width:36px;height:36px;border-radius:50%;background:${i.status==='completed'?'var(--success)':isExpired?'var(--accent)':'var(--warning)'}22;display:flex;align-items:center;justify-content:center;font-size:16px">${i.status==='completed'?'&#10003;':isExpired?'&#9888;':'&#128197;'}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-weight:600;font-size:14px">${esc(i.title)}</div>
+                <div style="display:flex;gap:12px;font-size:12px;color:var(--text2);margin-top:2px">
+                  <span>${fmt(i.scheduled_at)}</span>
+                  ${name!==i.title?'<span>&middot; '+esc(name)+'</span>':''}
+                  ${i.notes?'<span>&middot; '+esc(i.notes.substring(0,40))+(i.notes.length>40?'...':'')+'</span>':''}
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;flex-shrink:0">
+              ${i.status==='pending'?`<button class="btn btn-sm btn-primary" onclick="completeFollowup(${i.id})">Concluir</button>`:''}
+              <button class="btn btn-sm btn-outline" onclick="deleteFollowup(${i.id})" style="color:var(--accent)">Excluir</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`}
+    `;
+  } catch(e) {
+    m.innerHTML='<div class="card" style="padding:40px;text-align:center"><h3>Erro ao carregar follow-ups</h3><p style="color:var(--text2)">'+esc(e.message)+'</p></div>';
+  }
+}
+
+function openNewFollowup(leadId, convId){
+  showModal(`
+    <h3 style="margin-bottom:20px">+ Novo Follow-up</h3>
+    <div class="form-group"><label>T&iacute;tulo</label><input id="fuTitle" placeholder="Ex: Enviar proposta comercial"></div>
+    <div class="form-group"><label>Data e Hora</label><input id="fuDate" type="datetime-local" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--input);color:var(--text);font-size:14px"></div>
+    <div class="form-group"><label>Notas (opcional)</label><textarea id="fuNotes" rows="3" placeholder="Detalhes do follow-up..." style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--input);color:var(--text);font-size:14px;font-family:inherit;resize:vertical"></textarea></div>
+    <div class="modal-actions" style="margin-top:20px">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveFollowup('${leadId||''}','${convId||''}')">Agendar</button>
+    </div>
+  `);
+  if(leadId||convId) document.getElementById('fuTitle').value='Follow-up: '+(leadId?'Lead':'Conversa');
+  // Set default date to tomorrow
+  const tomorrow = new Date(Date.now() + 86400000);
+  const pad = n => String(n).padStart(2,'0');
+  const dt = tomorrow.getFullYear()+'-'+pad(tomorrow.getMonth()+1)+'-'+pad(tomorrow.getDate())+'T'+pad(tomorrow.getHours())+':'+pad(tomorrow.getMinutes());
+  const el = document.getElementById('fuDate');
+  if(el) el.value = dt;
+}
+
+async function saveFollowup(leadId, convId){
+  const title=document.getElementById('fuTitle')?.value;
+  if(!title){toast('T\u00edtulo \u00e9 obrigat\u00f3rio','error');return}
+  const r=await api('POST','/api/followups',{
+    title,
+    notes:document.getElementById('fuNotes')?.value||'',
+    scheduled_at:document.getElementById('fuDate')?.value||new Date().toISOString(),
+    lead_id: leadId||null,
+    conversation_id: convId||null,
+  });
+  if(r&&r.ok){closeModal();toast('Follow-up agendado!','success');loadPage('followups')}
+  else toast(r?.error||'Erro ao agendar','error');
+}
+
+async function completeFollowup(id){
+  const r=await api('PATCH','/api/followups/'+id,{status:'completed'});
+  if(r&&r.ok){toast('Follow-up conclu\u00eddo!','success');loadPage('followups')}
+  else toast('Erro','error');
+}
+
+async function deleteFollowup(id){
+  if(!confirm('Tem a certeza?'))return;
+  const r=await api('DELETE','/api/followups/'+id);
+  if(r&&r.ok){toast('Follow-up exclu\u00eddo','success');loadPage('followups')}
+  else toast('Erro ao excluir','error');
+}
 async function renderMetaAds(m){
   const today=new Date().toISOString().split('T')[0];
   const thirtyAgo=new Date(Date.now()-30*86400000).toISOString().split('T')[0];
@@ -3250,14 +4095,28 @@ function toast(msg,type){
   setTimeout(()=>{t.style.display='none'},4000);
 }
 
-if(TOKEN){
-  fetch(API+'/admin/api/accounts',{headers:{'Authorization':'Bearer '+TOKEN}}).then(r=>{
-    if(r.ok)showApp();
-    else{TOKEN='';localStorage.removeItem('criahub_token');document.getElementById('loginWrap').style.display='flex'}
-  }).catch(()=>{TOKEN='';localStorage.removeItem('criahub_token');document.getElementById('loginWrap').style.display='flex'});
-}else document.getElementById('loginWrap').style.display='flex';
+if(TOKEN && !window._authHandled){
+  window._authHandled = true;
+  fetch(API+'/admin/api/check',{headers:{'Authorization':'Bearer '+TOKEN}}).then(async r=>{
+    if(r.ok){
+      const d=await r.json();
+      document.getElementById('loadingWrap').style.display='none';
+      if(d.isAdmin){showApp()}
+      else{window.location.href='/dashboard'}
+    }else{
+      // Token invalid — redirect to auth
+      TOKEN='';localStorage.removeItem('criahub_token');
+      window.location.href='/auth'
+    }
+  }).catch(()=>{
+    TOKEN='';localStorage.removeItem('criahub_token');
+    window.location.href='/auth'
+  });
+}else{
+  window.location.href='/auth'
+}
 
-function showApp(){document.getElementById('loginWrap').style.display='none';document.getElementById('appWrap').style.display='block';applyAdminLang();loadPage('dashboard');loadNotifications()}
+function showApp(){document.getElementById('appWrap').style.display='block';applyAdminLang();loadPage('dashboard');loadNotifications();startInboxPolling()}
 
 // ============================================================
 // NOTIFICAÇÕES (Client-Facing Panel)
@@ -3328,6 +4187,41 @@ async function markAllRead(){
   }catch(_){}
 }
 function toggleSidebar(){const s=document.getElementById('sidebar');const o=document.getElementById('sidebarOverlay');s.classList.toggle('open');o.classList.toggle('show')}
+
+// ============================================================
+// INBOX POLLING — Notificações em tempo real
+// ============================================================
+let _inboxPollTimer = null;
+let _lastInboxCheck = new Date().toISOString();
+
+function startInboxPolling(){
+  if(_inboxPollTimer) clearInterval(_inboxPollTimer);
+  _inboxPollTimer = setInterval(pollInbox, 30000);
+  pollInbox();
+}
+
+async function pollInbox(){
+  try {
+    const r = await api('GET','/api/notifications/unread?since='+encodeURIComponent(_lastInboxCheck));
+    if (!r || !r.ok) return;
+    const total = r.total || 0;
+    const link = document.querySelector('[data-page="inbox"]');
+    if (!link) return;
+    let badge = link.querySelector('.inbox-badge');
+    if (total > 0) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'inbox-badge';
+        badge.style.cssText = 'background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:auto;line-height:16px';
+        link.appendChild(badge);
+      }
+      badge.textContent = total > 99 ? '99+' : total;
+    } else if (badge) {
+      badge.remove();
+    }
+    if (r.newConversations > 0) _lastInboxCheck = new Date().toISOString();
+  } catch(_) {}
+}
 </script>
 </body>
 </html>

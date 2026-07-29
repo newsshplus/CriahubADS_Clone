@@ -572,13 +572,13 @@ footer a:hover{color:var(--accent2)}
   </div>
   <div class="pricing-grid">
     <!-- FREE -->
-    <div class="price-card fade-in">
+    <div class="price-card fade-in" data-plan-id="plan_free">
       <div class="price-icon free">&#127380;</div>
       <div class="price-name">Free</div>
       <div class="price-desc">Para experimentar</div>
-      <div class="price-amount"><span class="currency">&euro;</span>0</div>
-      <div class="price-original">&nbsp;</div>
-      <div class="price-annual-note">&nbsp;</div>
+      <div class="price-amount" data-monthly="0" data-annual="0"><span class="currency">&euro;</span><span data-plan="price">0</span><span class="period">/mês</span></div>
+      <div class="price-original" data-plan="original">&nbsp;</div>
+      <div class="price-annual-note" data-plan="annual-note">&nbsp;</div>
       <div class="price-divider"></div>
       <ul class="price-features">
         <li><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> <span class="feat-highlight">200</span> contactos</li>
@@ -590,7 +590,7 @@ footer a:hover{color:var(--accent2)}
       <button class="price-btn price-btn-ghost" onclick="window.location.href='/auth'">Começar Grátis</button>
     </div>
     <!-- STARTER -->
-    <div class="price-card fade-in">
+    <div class="price-card fade-in" data-plan-id="plan_starter">
       <div class="price-icon starter">&#9889;</div>
       <div class="price-name">Starter</div>
       <div class="price-desc">Para quem está a começar</div>
@@ -608,7 +608,7 @@ footer a:hover{color:var(--accent2)}
       <button class="price-btn price-btn-outline" onclick="window.location.href='/auth'">Escolher Starter</button>
     </div>
     <!-- PRO (featured) -->
-    <div class="price-card featured fade-in">
+    <div class="price-card featured fade-in" data-plan-id="plan_pro">
       <div class="price-badge">Mais Popular</div>
       <div class="price-icon pro">&#128640;</div>
       <div class="price-name">Pro</div>
@@ -628,7 +628,7 @@ footer a:hover{color:var(--accent2)}
       <button class="price-btn price-btn-primary" onclick="window.location.href='/auth'">Escolher Pro</button>
     </div>
     <!-- BUSINESS -->
-    <div class="price-card fade-in">
+    <div class="price-card fade-in" data-plan-id="plan_business">
       <div class="price-icon business">&#127970;</div>
       <div class="price-name">Business</div>
       <div class="price-desc">Para agências e multi-marcas</div>
@@ -1206,6 +1206,7 @@ function detectDefaultLang(){
   return 'en';
 }
 let currentLang=localStorage.getItem('criahub_lp_lang')||detectDefaultLang();
+window._plansData=null;
 function toggleLangMenu(ev){
   if(ev)ev.stopPropagation();
   const list=document.getElementById('langDropdownList');
@@ -1278,18 +1279,56 @@ function applyLang(){
   var ml2=document.getElementById('pricing-monthly-label');if(ml2)ml2.textContent=t.monthlyLabel;
   var al=document.getElementById('pricing-annual-label');if(al)al.innerHTML=t.annualLabel+' <span style="background:rgba(16,185,129,.1);color:var(--success);padding:2px 8px;border-radius:50px;font-size:11px;font-weight:700;margin-left:4px">'+t.saveLabel+'</span>';
   var priceCards=document.querySelectorAll('#pricing .price-card');
-  var planKeys=['plan1','plan2','plan3','plan4'];
+  var planKeys=['plan_free','plan_starter','plan_pro','plan_business'];
+  var hardcodedKeys=['plan1','plan2','plan3','plan4'];
   var checkSvg='<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> ';
-  priceCards.forEach(function(card,i){
-    var key=planKeys[i];if(!key)return;
-    var desc=card.querySelector('.price-desc');if(desc)desc.textContent=t[key+'Desc'];
-    var badge=card.querySelector('.price-badge');if(badge)badge.textContent=t.priceBadge;
+  priceCards.forEach(function(card){
+    var pid=card.dataset.planId;
+    if(!pid)return;
+    var idx=planKeys.indexOf(pid);
+    var planObj=null,contentObj=null;
+    if(window._plansData){
+      planObj=window._plansData.find(function(p){return p.id===pid;});
+      if(planObj&&planObj.content&&planObj.content[currentLang])contentObj=planObj.content[currentLang];
+    }
+    var hk=idx>=0?hardcodedKeys[idx]:null;
+    var desc=card.querySelector('.price-desc');
+    if(desc&&contentObj)desc.textContent=contentObj.description;
+    else if(desc&&hk&&t[hk+'Desc'])desc.textContent=t[hk+'Desc'];
+    var badge=card.querySelector('.price-badge');
+    if(badge){
+      if(contentObj&&contentObj.highlight)badge.textContent=contentObj.highlight;
+      else badge.textContent=t.priceBadge;
+    }
     var lis=card.querySelectorAll('.price-features li');
-    lis.forEach(function(li,j){
-      var fkey=key+'F'+(j+1);
-      if(t[fkey])li.innerHTML=checkSvg+t[fkey];
-    });
-    var btn=card.querySelector('.price-btn');if(btn)btn.textContent=t[key+'Btn'];
+    var featArr=null;
+    if(contentObj&&contentObj.features){
+      if(Array.isArray(contentObj.features))featArr=contentObj.features;
+      else try{featArr=JSON.parse(contentObj.features);}catch(e){}
+    }
+    if(featArr&&featArr.length){
+      lis.forEach(function(li,j){
+        if(featArr[j])li.innerHTML=checkSvg+featArr[j];
+        else li.style.display='none';
+      });
+    }else if(hk){
+      lis.forEach(function(li,j){
+        var fkey=hk+'F'+(j+1);
+        if(t[fkey])li.innerHTML=checkSvg+t[fkey];
+      });
+    }
+    var btn=card.querySelector('.price-btn');
+    if(btn&&contentObj)btn.textContent=contentObj.button_text;
+    else if(btn&&hk&&t[hk+'Btn'])btn.textContent=t[hk+'Btn'];
+    var amountEl=card.querySelector('.price-amount');
+    if(amountEl&&planObj){
+      var monthlyPrice=parseFloat(planObj.price_eur_monthly)||0;
+      var annualPrice=planObj.price_eur_annual!==undefined?parseFloat(planObj.price_eur_annual):(monthlyPrice*0.85);
+      amountEl.dataset.monthly=String(monthlyPrice);
+      amountEl.dataset.annual=String(annualPrice.toFixed(2));
+      var priceSpan=amountEl.querySelector('[data-plan="price"]');
+      if(priceSpan)priceSpan.textContent=isAnnual?amountEl.dataset.annual:amountEl.dataset.monthly;
+    }
   });
   var compSection=document.getElementById('compare');
   if(compSection){var col=compSection.querySelector('.section-label');if(col)col.textContent=t.compLabel;var cot=compSection.querySelector('h2');if(cot)cot.textContent=t.compTitle;var cod=compSection.querySelector('p');if(cod)cod.textContent=t.compDesc;var th=compSection.querySelector('th');if(th)th.textContent=t.compFeature;var rows=compSection.querySelectorAll('tr');if(rows[1])rows[1].querySelector('td').textContent=t.compPrice;if(rows[2])rows[2].querySelector('td').textContent=t.compIa;if(rows[3])rows[3].querySelector('td').textContent=t.compContacts;if(rows[4])rows[4].querySelector('td').textContent=t.compChannels;if(rows[5])rows[5].querySelector('td').textContent=t.compFees;if(rows[6])rows[6].querySelector('td').textContent=t.compPtIa;if(rows[7])rows[7].querySelector('td').textContent=t.compFilter;if(rows[8])rows[8].querySelector('td').textContent=t.compEmails;if(rows[9])rows[9].querySelector('td').textContent=t.compSupport;}
@@ -1333,7 +1372,16 @@ document.addEventListener('DOMContentLoaded',function(){
     const btn=document.getElementById('langDropdownLabel');if(btn)btn.textContent=langLabels.pt;
     document.querySelectorAll('.lang-check,.mobile-lang-check').forEach(c=>{c.style.visibility=c.dataset.langCheck==='pt'?'visible':'hidden'});
   }
+  loadPlans();
 });
+async function loadPlans(){
+  try{
+    var r=await fetch('/api/plans');
+    if(!r.ok)return;
+    window._plansData=await r.json();
+    applyLang();
+  }catch(e){}
+}
 </script>
 </body>
 </html>

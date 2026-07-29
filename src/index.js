@@ -4,13 +4,11 @@
 
 import { connect } from "cloudflare:sockets";
 
-const IG_AUTHORIZE_URL = "https://www.instagram.com/oauth/authorize";
-const IG_TOKEN_URL = "https://api.instagram.com/oauth/access_token";
+const FB_GRAPH_BASE = "https://graph.facebook.com/v21.0";
 const IG_GRAPH_BASE = "https://graph.instagram.com/v21.0";
 const IG_SCOPES = [
-  "instagram_business_basic",
-  "instagram_business_manage_messages",
-  "instagram_business_manage_comments",
+  "instagram_manage_comments",
+  "instagram_manage_messages",
   "pages_show_list",
   "pages_read_engagement",
 ].join(",");
@@ -32,6 +30,67 @@ import privacyHtml from "./privacy.html";
 import termsHtml from "./terms.html";
 import contactHtml from "./contact.html";
 import helpTiktokHtml from "./help-tiktok.html";
+
+const clientDashboardHtml = `<!DOCTYPE html>
+<html lang="pt-PT">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>CriaHub - Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f0f1a;--card:#1a1a2e;--accent:#e94560;--text:#eee;--text2:#aaa;--success:#00c853;--warning:#ffd600;--border:#2a2a4a}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.header{display:flex;justify-content:space-between;align-items:center;padding:20px 32px;background:var(--card);border-bottom:1px solid var(--border)}
+.header h1{font-size:20px;background:linear-gradient(90deg,var(--accent),#ff6b6b);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .user{font-size:13px;color:var(--text2)}
+.header button{background:var(--accent);color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px}
+.main{padding:24px 32px;max-width:1200px;margin:0 auto}
+.loading{text-align:center;padding:60px;color:var(--text2)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px}
+.grid .card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center}
+.grid .card .num{font-size:28px;font-weight:700;color:var(--accent)}
+.grid .card .lbl{font-size:12px;color:var(--text2);margin-top:4px}
+.section{margin-bottom:28px}
+.section h3{font-size:16px;margin-bottom:16px;color:var(--text2)}
+.list{display:flex;flex-direction:column;gap:8px}
+.list .item{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px}
+.list .item .tag{font-size:11px;padding:2px 8px;border-radius:4px;background:rgba(0,206,209,.12);color:var(--accent)}
+.empty{text-align:center;padding:40px;color:var(--text2)}
+.error{text-align:center;padding:40px;color:var(--accent)}
+a{color:var(--accent)}
+</style></head>
+<body>
+<div class="header"><h1>CriaHub</h1><div class="user" id="userInfo"></div><button onclick="logout()">Sair</button></div>
+<div class="main" id="app"><div class="loading">Carregando...</div></div>
+<script>
+const TOKEN=localStorage.getItem('criahub_session');
+if(!TOKEN){window.location.href='/auth';}
+async function api(m,u,b){const r=await fetch(u,{method:m||'GET',headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},body:b?JSON.stringify(b):null});return r.json().catch(()=>null)}
+async function loadDashboard(){
+  const d=await api('GET','/api/client/dashboard');
+  if(!d||d.error){document.getElementById('app').innerHTML='<div class="error">Sessão expirada. <a href="/auth">Fazer login</a></div>';return}
+  document.getElementById('userInfo').textContent='Olá, '+(d.user?.name||'')+' ('+(d.user?.plan_id||'free').toUpperCase()+')';
+  const s=d.stats||{};
+  const campaigns=d.campaigns||[];
+  const accounts=d.accounts||[];
+  const activity=d.activity||[];
+  document.getElementById('app').innerHTML=\`
+    <div class="grid">
+      <div class="card"><div class="num">\${s.accounts||0}</div><div class="lbl">Contas</div></div>
+      <div class="card"><div class="num">\${s.campaigns||0}</div><div class="lbl">Automações</div></div>
+      <div class="card"><div class="num">\${s.contacts||0}</div><div class="lbl">Contactos</div></div>
+      <div class="card"><div class="num">\${s.dmsSent||0}</div><div class="lbl">DMs Enviadas</div></div>
+    </div>
+    \${campaigns.length?'<div class="section"><h3>Minhas Automações</h3><div class="list">'+campaigns.map(c=>
+      '<div class="item"><span style="font-weight:600;flex:1">'+(c.keyword||'?')+'</span><span class="tag">'+(c.status||'')+'</span><span style="font-size:12px;color:var(--text2)">@'+(c.username||'?')+'</span></div>'
+    ).join('')+'</div></div>':''}
+    \${activity.length?'<div class="section"><h3>Atividade Recente</h3><div class="list">'+activity.map(a=>
+      '<div class="item"><span style="font-size:12px;flex:1">'+(a.event_detail||a.event_type||'')+'</span>\${a.campaign_keyword?'<span class="tag">'+a.campaign_keyword+'</span>':''}<span style="font-size:11px;color:var(--text2)">'+(a.created_at||'').slice(0,10)+'</span></div>'
+    ).join('')+'</div></div>':''}
+    \${!campaigns.length&&!activity.length?'<div class="empty">Nenhuma atividade ainda. As automações começam a funcionar quando receberes comentários no Instagram.</div>':''}
+  \`;
+}
+function logout(){localStorage.removeItem('criahub_session');window.location.href='/auth'}
+loadDashboard();
+</script></body></html>`;
 
 // ============================================================
 // Raw SMTP via TCP sockets (Cloudflare Workers compatible)
@@ -267,9 +326,10 @@ export default {
         return handleWebhook(new Request(request.url, { method: "POST", body: JSON.stringify(testBody), headers: { "Content-Type": "application/json" } }), env);
       }
 
-      // POST / webhook events
+      // POST / webhook events — return 200 immediately, process async
       if (method === "POST" && path === "/") {
-        return handleWebhook(request, env);
+        ctx.waitUntil(handleWebhook(request, env));
+        return new Response("OK", { status: 200 });
       }
 
       // === PWA: Manifest ===
@@ -295,10 +355,10 @@ export default {
       // === PWA: Service Worker ===
       if (method === "GET" && path === "/sw.js") {
         const swCode = `
-const CACHE_NAME='criahub-v1';
-self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['/','/auth','/admin','/manifest.json'])));self.skipWaiting()});
+const CACHE_NAME='criahub-v3';
+self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE_NAME).then(c=>c.addAll(['/auth'])).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==CACHE_NAME).map(x=>caches.delete(x)))));self.clients.claim()});
-self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;if(e.request.url.includes('/admin/api/')||e.request.url.includes('/auth/')){e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));return}e.respondWith(caches.match(e.request).then(c=>{const f=fetch(e.request).then(r=>{if(r&&r.status===200){const cl=r.clone();caches.open(CACHE_NAME).then(ca=>ca.put(e.request,cl))}return r}).catch(()=>c);return c||f}))});`;
+self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const url=new URL(e.request.url);if(url.pathname==='/admin'||url.pathname==='/dashboard'||url.pathname==='/'||url.pathname==='/sw.js'||url.pathname==='/manifest.json'||url.pathname.startsWith('/admin/api/')||url.pathname.startsWith('/api/')){e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));return}e.respondWith(caches.match(e.request).then(c=>{const f=fetch(e.request).then(r=>{if(r&&r.status===200){const cl=r.clone();caches.open(CACHE_NAME).then(ca=>ca.put(e.request,cl))}return r}).catch(()=>c);return c||f}))});`;
         return new Response(swCode, { headers: { "Content-Type": "application/javascript; charset=utf-8" } });
       }
 
@@ -318,13 +378,20 @@ self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;if(e.reques
       // === ADMIN PANEL ===
       if (method === "GET" && path === "/admin") {
         return new Response(adminHtml, {
-          headers: { "Content-Type": "text/html; charset=utf-8" },
+          headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache, no-store, must-revalidate" },
+        });
+      }
+
+      // === CLIENT DASHBOARD ===
+      if (method === "GET" && path === "/dashboard") {
+        return new Response(clientDashboardHtml, {
+          headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache, no-store, must-revalidate" },
         });
       }
 
       // === ADMIN API ===
       if (path.startsWith("/admin/api/")) {
-        return handleAdminApi(request, env, path, method);
+        return handleAdminApi(request, env, ctx, path, method);
       }
 
       // === LEGACY ROUTES (kept for backwards compat) ===
@@ -375,7 +442,7 @@ self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;if(e.reques
       // === SaaS: Auth Page ===
       if (method === "GET" && path === "/auth") {
         return new Response(authHtml, {
-          headers: { "Content-Type": "text/html; charset=utf-8" },
+          headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache, no-store, must-revalidate" },
         });
       }
 
@@ -400,12 +467,69 @@ self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;if(e.reques
         const authHeader = request.headers.get("Authorization") || "";
         const token = authHeader.replace("Bearer ", "");
         if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
-        const userSession = await env.criahub_db.prepare("SELECT value FROM system_config WHERE key = ?").bind("session_user_" + token).first();
-        if (!userSession) return jsonResponse({ error: "Invalid session" }, 401);
+        // Check system_config first (SaaS users), then processed_events (admin-only tokens)
+        let userSession = await env.criahub_db.prepare("SELECT value FROM system_config WHERE key = ?").bind("session_user_" + token).first();
+        if (!userSession) {
+          const adminOk = await env.criahub_db.prepare("SELECT 1 FROM processed_events WHERE event_id = ?").bind("session_" + token).first();
+          if (!adminOk) return jsonResponse({ error: "Invalid session" }, 401);
+          return jsonResponse({ plan: null, usage: { contacts: 0, automations: 0, accounts: 0 } });
+        }
         const userId = userSession.value;
         const plan = await getUserPlanLimits(env.criahub_db, userId);
         const usage = await getUsageCounts(env.criahub_db, userId);
         return jsonResponse({ plan: plan || { plan_id: 'free', max_accounts: 1, max_dms_month: 500, max_campaigns: 3, price_eur_monthly: 0 }, usage });
+      }
+
+      // GET /api/client/dashboard — client-facing dashboard data
+      if (path === "/api/client/dashboard" && method === "GET") {
+        const authHeader = request.headers.get("Authorization") || "";
+        const token = authHeader.replace("Bearer ", "");
+        if (!token) return jsonResponse({ error: "Unauthorized" }, 401);
+        const userSession = await env.criahub_db.prepare("SELECT value FROM system_config WHERE key = ?").bind("session_user_" + token).first();
+        if (!userSession) return jsonResponse({ error: "Invalid session" }, 401);
+        const userId = userSession.value;
+        const user = await env.criahub_db.prepare("SELECT id, name, email, plan_id, status, created_at FROM saas_users WHERE id = ?").bind(userId).first();
+        if (!user) return jsonResponse({ error: "User not found" }, 404);
+        // Get client/scoped data for this user
+        const accounts = await env.criahub_db.prepare(`
+          SELECT a.* FROM ig_accounts a
+          WHERE a.client_id IN (SELECT id FROM clients WHERE email = ?)
+          ORDER BY a.connected_at DESC
+        `).bind(user.email).all();
+        const accountIds = (accounts.results || []).map(a => a.id);
+        const acctPlaceholders = accountIds.length ? accountIds.map(() => '?').join(',') : '0';
+        const campaigns = accountIds.length ? await env.criahub_db.prepare(`
+          SELECT c.*, a.username FROM campaigns c LEFT JOIN ig_accounts a ON c.ig_account_id = a.id
+          WHERE c.ig_account_id IN (${acctPlaceholders}) ORDER BY c.created_at DESC
+        `).bind(...accountIds).all() : { results: [] };
+        const dmsSent = accountIds.length ? await env.criahub_db.prepare(`
+          SELECT COUNT(*) as count FROM activity_log WHERE ig_account_id IN (${acctPlaceholders}) AND event_type = 'dm_sent'
+        `).bind(...accountIds).first() : { count: 0 };
+        const dmsFailed = accountIds.length ? await env.criahub_db.prepare(`
+          SELECT COUNT(*) as count FROM activity_log WHERE ig_account_id IN (${acctPlaceholders}) AND event_type = 'dm_failed'
+        `).bind(...accountIds).first() : { count: 0 };
+        const contacts = accountIds.length ? await env.criahub_db.prepare(`
+          SELECT COUNT(*) as count FROM contacts WHERE ig_account_id IN (${acctPlaceholders})
+        `).bind(...accountIds).first() : { count: 0 };
+        const activity = accountIds.length ? await env.criahub_db.prepare(`
+          SELECT al.*, camp.keyword as campaign_keyword FROM activity_log al
+          LEFT JOIN campaigns camp ON al.campaign_id = camp.id
+          WHERE al.ig_account_id IN (${acctPlaceholders})
+          ORDER BY al.created_at DESC LIMIT 15
+        `).bind(...accountIds).all() : { results: [] };
+        return jsonResponse({
+          user,
+          accounts: accounts.results || [],
+          campaigns: campaigns.results || [],
+          stats: {
+            accounts: (accounts.results || []).length,
+            campaigns: (campaigns.results || []).length,
+            dmsSent: dmsSent?.count || 0,
+            dmsFailed: dmsFailed?.count || 0,
+            contacts: contacts?.count || 0,
+          },
+          activity: activity.results || [],
+        });
       }
 
       // === SaaS: Client Notifications ===
@@ -537,7 +661,7 @@ async function handleCreateClient(request, env) {
 // ============================================================
 // ADMIN API ROUTER
 // ============================================================
-async function handleAdminApi(request, env, path, method) {
+async function handleAdminApi(request, env, ctx, path, method) {
   // Simple token auth
   const auth = request.headers.get("Authorization") || "";
   const token = auth.replace("Bearer ", "");
@@ -553,6 +677,21 @@ async function handleAdminApi(request, env, path, method) {
       await env.criahub_db.prepare("INSERT OR REPLACE INTO processed_events (event_id) VALUES (?)").bind("session_" + sessionToken).run();
     } catch (_) {}
     return jsonResponse({ ok: true, token: sessionToken });
+  }
+
+  // Session check — validates any existing token from /auth/login or /admin/api/login
+  if (path === "/admin/api/check" && method === "GET") {
+    if (!token || token.length < 10) return jsonResponse({ ok: false, error: "No token" }, 401);
+    const session = await env.criahub_db.prepare("SELECT 1 FROM processed_events WHERE event_id = ?").bind("session_" + token).first();
+    if (!session) return jsonResponse({ ok: false, error: "Invalid session" }, 401);
+    // Check if this session belongs to an admin user
+    const userLink = await env.criahub_db.prepare("SELECT value FROM system_config WHERE key = ?").bind("session_user_" + token).first();
+    let isAdmin = false;
+    if (userLink) {
+      const user = await env.criahub_db.prepare("SELECT role FROM saas_users WHERE id = ?").bind(userLink.value).first();
+      isAdmin = user && user.role === 'admin';
+    }
+    return jsonResponse({ ok: true, isAdmin });
   }
 
   // All other routes require valid session
@@ -623,6 +762,14 @@ async function handleAdminApi(request, env, path, method) {
       ORDER BY a.connected_at DESC
     `).all();
     return jsonResponse(rows.results || []);
+  }
+
+  // POST /admin/api/accounts/disconnect-fb-page — clear page_access_token
+  if (path === "/admin/api/accounts/disconnect-fb-page" && method === "POST") {
+    const body = await request.json().catch(() => null);
+    if (!body || !body.ig_user_id) return jsonResponse({ error: "ig_user_id required" }, 400);
+    await env.criahub_db.prepare("UPDATE ig_accounts SET page_access_token = NULL, page_id = NULL WHERE ig_user_id = ?").bind(body.ig_user_id).run();
+    return jsonResponse({ ok: true });
   }
 
   // POST /admin/api/accounts/manual — add account with token directly
@@ -728,11 +875,16 @@ async function handleAdminApi(request, env, path, method) {
 
   // GET /admin/api/campaigns
   if (path === "/admin/api/campaigns" && method === "GET") {
+    const url = new URL(request.url);
+    const accId = url.searchParams.get("ig_account_id");
+    const whereClause = accId ? " WHERE c.ig_account_id = ?" : "";
+    const bindParams = accId ? [accId] : [];
     const rows = await env.criahub_db.prepare(`
       SELECT c.*, a.username, a.ig_user_id FROM campaigns c
       LEFT JOIN ig_accounts a ON c.ig_account_id = a.id
+      ${whereClause}
       ORDER BY c.created_at DESC
-    `).all();
+    `).bind(...bindParams).all();
     return jsonResponse(rows.results || []);
   }
 
@@ -777,7 +929,92 @@ async function handleAdminApi(request, env, path, method) {
     return jsonResponse({ ok: true });
   }
 
-  // DELETE /admin/api/campaigns/:id
+  // PATCH /admin/api/campaigns/:id/toggle — pause/resume
+  if (path.match(/^\/admin\/api\/campaigns\/[^/]+\/toggle$/) && method === "PATCH") {
+    const id = path.split("/")[4];
+    const body = await request.json().catch(() => ({}));
+    const newStatus = body.status === 'active' ? 'active' : 'paused';
+    await env.criahub_db.prepare("UPDATE campaigns SET status = ? WHERE id = ?").bind(newStatus, id).run();
+    return jsonResponse({ ok: true, status: newStatus });
+  }
+
+  // GET /admin/api/campaigns/:id/analytics — per-campaign funnel stats
+  if (path.match(/^\/admin\/api\/campaigns\/[^/]+\/analytics$/) && method === "GET") {
+    const id = path.split("/")[4];
+    const campaign = await env.criahub_db.prepare("SELECT c.*, a.ig_user_id, a.access_token, a.username FROM campaigns c LEFT JOIN ig_accounts a ON c.ig_account_id = a.id WHERE c.id = ?").bind(id).first();
+    if (!campaign) return jsonResponse({ error: "Not found" }, 404);
+    const totalContacts = await env.criahub_db.prepare("SELECT COUNT(*) as c FROM conversation_state WHERE campaign_id = ?").bind(id).first();
+    const dmsSent = await env.criahub_db.prepare("SELECT COUNT(*) as c FROM activity_log WHERE campaign_id = ? AND event_type = 'dm_sent'").bind(id).first();
+    const dmsFailed = await env.criahub_db.prepare("SELECT COUNT(*) as c FROM activity_log WHERE campaign_id = ? AND event_type = 'dm_failed'").bind(id).first();
+    const comments = await env.criahub_db.prepare("SELECT COUNT(*) as c FROM activity_log WHERE campaign_id = ? AND event_type = 'comment_received'").bind(id).first();
+    const commentReplies = await env.criahub_db.prepare("SELECT COUNT(*) as c FROM activity_log WHERE campaign_id = ? AND event_type = 'comment_reply' AND status = 'success'").bind(id).first();
+    const stages = await env.criahub_db.prepare("SELECT stage, COUNT(*) as count FROM conversation_state WHERE campaign_id = ? GROUP BY stage").bind(id).all();
+    const dmsByDay = await env.criahub_db.prepare(`SELECT date(created_at) as day, COUNT(*) as count FROM activity_log WHERE campaign_id = ? AND event_type = 'dm_sent' AND created_at >= date('now', '-7 days') GROUP BY day ORDER BY day`).bind(id).all();
+    
+    // Per-post breakdown from activity_log
+    const perPost = await env.criahub_db.prepare(`
+      SELECT a.event_detail, a.created_at, cs.stage as funnel_stage,
+        (SELECT COUNT(*) FROM activity_log WHERE campaign_id = ? AND event_type = 'dm_sent' AND id <= a.id) as running_dms
+      FROM activity_log a
+      LEFT JOIN conversation_state cs ON a.contact_id = cs.contact_id AND cs.campaign_id = a.campaign_id
+      WHERE a.campaign_id = ? AND a.event_type = 'comment_received'
+      ORDER BY a.created_at DESC
+      LIMIT 50
+    `).bind(id, id).all();
+
+    // Fetch IG post engagement data if media_id exists
+    let postEngagement = null;
+    if (campaign.media_id && campaign.access_token) {
+      try {
+        const mediaUrl = `https://graph.instagram.com/${campaign.media_id}?fields=id,caption,media_type,permalink,thumbnail_url,timestamp,username,comments_count,like_count&access_token=${campaign.access_token}`;
+        const mediaRes = await fetch(mediaUrl);
+        if (mediaRes.ok) {
+          postEngagement = await mediaRes.json();
+        }
+      } catch (_) {}
+    }
+
+    // Contacts who came from this campaign
+    const contacts = await env.criahub_db.prepare(`
+      SELECT DISTINCT c.id, c.username, c.last_seen_at, cs.stage,
+        (SELECT COUNT(*) FROM activity_log WHERE contact_id = c.id AND campaign_id = ? AND event_type = 'dm_sent') as dms_received,
+        (SELECT MAX(created_at) FROM activity_log WHERE contact_id = c.id AND campaign_id = ? AND event_type = 'dm_sent') as last_dm_at
+      FROM conversation_state cs
+      JOIN contacts c ON cs.contact_id = c.id
+      WHERE cs.campaign_id = ?
+      ORDER BY last_dm_at DESC
+      LIMIT 100
+    `).bind(id, id, id).all();
+
+    const totalComments = comments?.c || 0;
+    const totalDms = dmsSent?.c || 0;
+    const totalReplies = commentReplies?.c || 0;
+
+    return jsonResponse({
+      campaign: { 
+        keyword: campaign.keyword, 
+        status: campaign.status,
+        media_id: campaign.media_id,
+        username: campaign.username,
+        created_at: campaign.created_at,
+      },
+      funnel: {
+        total: totalContacts?.c || 0,
+        comments: totalComments,
+        dmsSent: totalDms,
+        dmsFailed: dmsFailed?.c || 0,
+        commentReplies: totalReplies,
+        commentToDmRate: totalComments > 0 ? Math.round((totalDms / totalComments) * 100) : 0,
+        dmToReplyRate: totalDms > 0 ? Math.round((totalReplies / totalDms) * 100) : 0,
+        conversionRate: totalContacts?.c > 0 ? Math.round(((dmsSent?.c || 0) / totalContacts?.c) * 100) : 0,
+      },
+      postEngagement,
+      stages: stages?.results || [],
+      dmsByDay: dmsByDay?.results || [],
+      perPost: perPost?.results || [],
+      contacts: contacts?.results || [],
+    });
+  }
   if (path.match(/^\/admin\/api\/campaigns\/[^/]+$/) && method === "DELETE") {
     const id = path.split("/").pop();
     await env.criahub_db.prepare("DELETE FROM conversation_state WHERE campaign_id = ?").bind(id).run();
@@ -926,7 +1163,38 @@ async function handleAdminApi(request, env, path, method) {
     return jsonResponse(results);
   }
 
-  // POST /admin/api/campaigns/:id/clone
+  // POST /admin/api/campaigns/:id/simulate-comment — test a comment without another IG account
+  if (path.match(/^\/admin\/api\/campaigns\/[^/]+\/simulate-comment$/) && method === "POST") {
+    const id = path.split("/")[4];
+    const body = await request.json().catch(() => null);
+    const commentText = (body && body.comment) || "Chat";
+    const campaign = await env.criahub_db.prepare(`
+      SELECT c.*, a.username, a.ig_user_id, a.access_token FROM campaigns c
+      LEFT JOIN ig_accounts a ON c.ig_account_id = a.id
+      WHERE c.id = ?
+    `).bind(id).first();
+    if (!campaign) return jsonResponse({ error: "Campanha nao encontrada" }, 404);
+    if (!campaign.ig_user_id || !campaign.access_token) return jsonResponse({ error: "Conta IG nao conectada" }, 400);
+
+    const fakeId = 'sim_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+    const fakeFromId = '888888_' + Date.now(); // different from business ID so self-check passes
+
+    // Process asynchronously
+    ctx.waitUntil((async () => {
+      try {
+        await handleComment({
+          id: fakeId,
+          text: commentText,
+          from: { id: fakeFromId, username: 'teste_criahub' },
+          media: { id: campaign.media_id || '' }
+        }, campaign.ig_user_id, campaign.access_token, env);
+      } catch (e) {
+        console.error('Simulate error:', e.message);
+      }
+    })());
+
+    return jsonResponse({ ok: true, message: 'Comentário simulado em processamento: "' + commentText + '"' });
+  }
   if (path.match(/^\/admin\/api\/campaigns\/[^/]+\/clone$/) && method === "POST") {
     const sourceId = path.split("/")[4];
     const body = await request.json().catch(() => null);
@@ -993,47 +1261,59 @@ async function handleAdminApi(request, env, path, method) {
 
   // GET /admin/api/analytics — dashboard metrics
   if (path === "/admin/api/analytics" && method === "GET") {
-    const totalCampaigns = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM campaigns").first();
-    const activeCampaigns = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM campaigns WHERE status = 'active'").first();
-    const totalContacts = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM contacts").first();
-    const totalDMsSent = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM activity_log WHERE event_type = 'dm_sent'").first();
-    const totalDMsFailed = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM activity_log WHERE event_type = 'dm_failed'").first();
-    const totalComments = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM activity_log WHERE event_type = 'comment_received'").first();
-    const totalEmails = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM collected_emails").first();
+    const url = new URL(request.url);
+    const accId = url.searchParams.get("ig_account_id");
+    const accFilter = accId ? " WHERE ig_account_id = ?" : "";
+    const accBind = accId ? [accId] : [];
+
+    const totalCampaigns = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM campaigns" + accFilter).bind(...accBind).first();
+    const activeCampaigns = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM campaigns WHERE status = 'active'" + (accId ? " AND ig_account_id = ?" : "")).bind(...(accId ? [accId] : [])).first();
+    const totalContacts = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM contacts" + (accId ? " WHERE ig_account_id = ?" : "")).bind(...(accId ? [accId] : [])).first();
+    const totalDMsSent = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM activity_log WHERE event_type = 'dm_sent'" + (accId ? " AND ig_account_id = ?" : "")).bind(...(accId ? [accId] : [])).first();
+    const totalDMsFailed = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM activity_log WHERE event_type = 'dm_failed'" + (accId ? " AND ig_account_id = ?" : "")).bind(...(accId ? [accId] : [])).first();
+    const totalComments = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM activity_log WHERE event_type = 'comment_received'" + (accId ? " AND ig_account_id = ?" : "")).bind(...(accId ? [accId] : [])).first();
+    const totalEmails = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM collected_emails" + (accId ? " WHERE ig_account_id = ?" : "")).bind(...(accId ? [accId] : [])).first();
     const connectedAccounts = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM ig_accounts WHERE status = 'connected'").first();
 
     // Contacts today
-    const contactsToday = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM contacts WHERE first_seen_at >= date('now')").first();
+    const contactsToday = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM contacts WHERE first_seen_at >= date('now')" + (accId ? " AND ig_account_id = ?" : "")).bind(...(accId ? [accId] : [])).first();
 
     // DMs sent today
-    const dmsToday = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM activity_log WHERE event_type = 'dm_sent' AND created_at >= date('now')").first();
+    const dmsToday = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM activity_log WHERE event_type = 'dm_sent' AND created_at >= date('now')" + (accId ? " AND ig_account_id = ?" : "")).bind(...(accId ? [accId] : [])).first();
 
     // Top campaigns by DMs sent
     const topCampaigns = await env.criahub_db.prepare(`
       SELECT c.keyword, COUNT(*) as count
       FROM activity_log al
       JOIN campaigns c ON al.campaign_id = c.id
-      WHERE al.event_type = 'dm_sent'
+      WHERE al.event_type = 'dm_sent'` + (accId ? " AND al.ig_account_id = ?" : "") + `
       GROUP BY al.campaign_id
       ORDER BY count DESC
       LIMIT 5
-    `).all();
+    `).bind(...(accId ? accBind : [])).all();
 
     // Activity last 7 days
     const activityByDay = await env.criahub_db.prepare(`
       SELECT date(created_at) as day, event_type, COUNT(*) as count
       FROM activity_log
-      WHERE created_at >= date('now', '-7 days')
+      WHERE created_at >= date('now', '-7 days')` + (accId ? " AND ig_account_id = ?" : "") + `
       GROUP BY day, event_type
       ORDER BY day
-    `).all();
+    `).bind(...(accId ? accBind : [])).all();
 
     // Conversation stages distribution
-    const stagesDist = await env.criahub_db.prepare(`
+    const stagesQuery = accId ? `
+      SELECT cs.stage, COUNT(*) as count
+      FROM conversation_state cs
+      JOIN campaigns c ON cs.campaign_id = c.id
+      WHERE c.ig_account_id = ?
+      GROUP BY cs.stage
+    ` : `
       SELECT stage, COUNT(*) as count
       FROM conversation_state
       GROUP BY stage
-    `).all();
+    `;
+    const stagesDist = await env.criahub_db.prepare(stagesQuery).bind(...(accId ? [accId] : [])).all();
 
     return jsonResponse({
       totalCampaigns: totalCampaigns?.count || 0,
@@ -1057,16 +1337,139 @@ async function handleAdminApi(request, env, path, method) {
     const url = new URL(request.url);
     const limit = parseInt(url.searchParams.get("limit") || "50");
     const offset = parseInt(url.searchParams.get("offset") || "0");
+    const accId = url.searchParams.get("ig_account_id");
+    const whereClause = accId ? " WHERE al.ig_account_id = ?" : "";
+    const bindParams = accId ? [accId, limit, offset] : [limit, offset];
     const rows = await env.criahub_db.prepare(`
       SELECT al.*, c.username as contact_username, camp.keyword as campaign_keyword
       FROM activity_log al
       LEFT JOIN contacts c ON al.contact_id = c.id
       LEFT JOIN campaigns camp ON al.campaign_id = camp.id
+      ${whereClause}
       ORDER BY al.created_at DESC
       LIMIT ? OFFSET ?
-    `).bind(limit, offset).all();
-    const total = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM activity_log").first();
+    `).bind(...bindParams).all();
+    const countBind = accId ? [accId] : [];
+    const total = await env.criahub_db.prepare("SELECT COUNT(*) as count FROM activity_log" + whereClause).bind(...countBind).first();
     return jsonResponse({ items: rows.results || [], total: total?.count || 0 });
+  }
+
+  // GET /admin/api/export/:type — CSV export
+  if (path.match(/^\/admin\/api\/export\/(contacts|activity|leads)$/) && method === "GET") {
+    const type = path.split("/").pop();
+    let csv = "";
+    switch(type) {
+      case "contacts": {
+        const rows = await env.criahub_db.prepare("SELECT * FROM contacts ORDER BY first_seen_at DESC").all();
+        csv = "id,igsid,username,first_seen_at,last_seen_at\n";
+        (rows.results || []).forEach(r => { csv += `${r.id},${r.igsid},${r.username},${r.first_seen_at},${r.last_seen_at}\n`; });
+        break;
+      }
+      case "activity": {
+        const rows = await env.criahub_db.prepare("SELECT al.*, camp.keyword as campaign_keyword FROM activity_log al LEFT JOIN campaigns camp ON al.campaign_id = camp.id ORDER BY al.created_at DESC LIMIT 5000").all();
+        csv = "id,event_type,event_detail,status,campaign_keyword,created_at\n";
+        (rows.results || []).forEach(r => { csv += `${r.id},${r.event_type},"${(r.event_detail||'').replace(/"/g,'""')}",${r.status||''},${r.campaign_keyword||''},${r.created_at}\n`; });
+        break;
+      }
+      case "leads": {
+        const rows = await env.criahub_db.prepare("SELECT * FROM leads ORDER BY created_at DESC").all();
+        csv = "id,name,email,phone,source,status,created_at\n";
+        (rows.results || []).forEach(r => { csv += `${r.id},"${(r.name||'').replace(/"/g,'""')}","${(r.email||'').replace(/"/g,'""')}","${(r.phone||'').replace(/"/g,'""')}",${r.source||''},${r.status||''},${r.created_at}\n`; });
+        break;
+      }
+    }
+    return new Response(csv, {
+      headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${type}_${new Date().toISOString().split('T')[0]}.csv"` }
+    });
+  }
+
+  // GET /admin/api/tokens/expiring — tokens expiring soon
+  if (path === "/admin/api/tokens/expiring" && method === "GET") {
+    const rows = await env.criahub_db.prepare(`
+      SELECT id, ig_user_id, username, token_expires_at,
+        CAST(julianday(token_expires_at) - julianday('now') AS INTEGER) as days_remaining
+      FROM ig_accounts WHERE status = 'connected' AND token_expires_at IS NOT NULL
+      ORDER BY token_expires_at ASC
+    `).all();
+    const expiringSoon = (rows.results || []).filter(r => r.days_remaining !== null && r.days_remaining < 14);
+    return jsonResponse({ tokens: rows.results || [], expiringSoon });
+  }
+
+  // GET /admin/api/tokens/stats — overall token health
+  if (path === "/admin/api/tokens/stats" && method === "GET") {
+    const total = await env.criahub_db.prepare("SELECT COUNT(*) as c FROM ig_accounts WHERE status = 'connected'").first();
+    const withPageToken = await env.criahub_db.prepare("SELECT COUNT(*) as c FROM ig_accounts WHERE status = 'connected' AND page_access_token IS NOT NULL").first();
+    const expiringSoon = await env.criahub_db.prepare("SELECT COUNT(*) as c FROM ig_accounts WHERE status = 'connected' AND token_expires_at IS NOT NULL AND julianday(token_expires_at) - julianday('now') < 14").first();
+    const expired = await env.criahub_db.prepare("SELECT COUNT(*) as c FROM ig_accounts WHERE status = 'connected' AND token_expires_at IS NOT NULL AND julianday(token_expires_at) - julianday('now') < 1").first();
+    return jsonResponse({
+      total: total?.c || 0,
+      withPageToken: withPageToken?.c || 0,
+      expiringSoon: expiringSoon?.c || 0,
+      expired: expired?.c || 0
+    });
+  }
+
+  // GET /admin/api/plans — get all plans with content
+  if (path === "/admin/api/plans" && method === "GET") {
+    const plans = await env.criahub_db.prepare("SELECT * FROM saas_plans ORDER BY sort_order").all();
+    const content = await env.criahub_db.prepare("SELECT * FROM plan_content ORDER BY plan_id, locale").all();
+    const contentMap = {};
+    for (const c of (content.results || [])) {
+      if (!contentMap[c.plan_id]) contentMap[c.plan_id] = {};
+      contentMap[c.plan_id][c.locale] = c;
+    }
+    for (const p of (plans.results || [])) {
+      p.content = contentMap[p.id] || {};
+    }
+    return jsonResponse(plans.results || []);
+  }
+
+  // PUT /admin/api/plans/:id — update plan
+  if (path.match(/^\/admin\/api\/plans\/[^/]+$/) && method === "PUT") {
+    const planId = path.split("/").pop();
+    const body = await request.json().catch(() => null);
+    if (!body) return jsonResponse({ error: "Invalid body" }, 400);
+    const updates = [];
+    const params = [];
+    if (body.name !== undefined) { updates.push("name = ?"); params.push(body.name); }
+    if (body.price_eur_monthly !== undefined) { updates.push("price_eur_monthly = ?"); params.push(body.price_eur_monthly); }
+    if (body.max_accounts !== undefined) { updates.push("max_accounts = ?"); params.push(body.max_accounts); }
+    if (body.max_dms_month !== undefined) { updates.push("max_dms_month = ?"); params.push(body.max_dms_month); }
+    if (body.max_campaigns !== undefined) { updates.push("max_campaigns = ?"); params.push(body.max_campaigns); }
+    if (body.max_contacts !== undefined) { updates.push("max_contacts = ?"); params.push(body.max_contacts); }
+    if (body.max_users !== undefined) { updates.push("max_users = ?"); params.push(body.max_users); }
+    if (body.active !== undefined) { updates.push("active = ?"); params.push(body.active ? 1 : 0); }
+    if (body.sort_order !== undefined) { updates.push("sort_order = ?"); params.push(body.sort_order); }
+    if (body.features !== undefined) { updates.push("features = ?"); params.push(body.features); }
+    if (updates.length > 0) {
+      params.push(planId);
+      await env.criahub_db.prepare(`UPDATE saas_plans SET ${updates.join(", ")} WHERE id = ?`).bind(...params).run();
+    }
+    // Update plan_content if provided
+    if (body.content) {
+      for (const [locale, data] of Object.entries(body.content)) {
+        if (data._delete) {
+          await env.criahub_db.prepare("DELETE FROM plan_content WHERE plan_id = ? AND locale = ?").bind(planId, locale).run();
+        } else {
+          await env.criahub_db.prepare(`
+            INSERT INTO plan_content (plan_id, locale, description, features, button_text, price_monthly, price_label, highlight)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(plan_id, locale) DO UPDATE SET
+              description = excluded.description, features = excluded.features, button_text = excluded.button_text,
+              price_monthly = excluded.price_monthly, price_label = excluded.price_label, highlight = excluded.highlight
+          `).bind(
+            planId, locale,
+            data.description || '',
+            JSON.stringify(data.features || []),
+            data.button_text || '',
+            data.price_monthly ?? null,
+            data.price_label || '',
+            data.highlight || ''
+          ).run();
+        }
+      }
+    }
+    return jsonResponse({ ok: true });
   }
 
   // GET /admin/api/emails — collected emails
@@ -1622,15 +2025,23 @@ async function handleComment(value, igUserId, token, env) {
   const from = value.from;
   if (!from || !from.id) return;
 
+  // Skip our own comments (prevents infinite loop with webhook echo)
+  if (String(from.id) === String(igUserId)) return;
+
   const igsid = String(from.id);
   const username = from.username || null;
 
-  // Dedup
-  const processed = await env.criahub_db
-    .prepare("SELECT 1 FROM processed_events WHERE event_id = ?")
-    .bind(commentId)
-    .first();
-  if (processed) return;
+  // Cooldown: skip if we processed this user in the last 60s
+  try {
+    const key = 'cd_' + igUserId + '_' + igsid;
+    const recent = await env.criahub_db
+      .prepare("SELECT 1 FROM processed_events WHERE event_id = ? AND processed_at > datetime('now', '-60 seconds')")
+      .bind(key).first();
+    if (recent) return;
+    await env.criahub_db
+      .prepare("INSERT OR REPLACE INTO processed_events (event_id, processed_at) VALUES (?, datetime('now'))")
+      .bind(key).run();
+  } catch (_) {}
 
   // Log activity
   try {
@@ -1679,7 +2090,7 @@ async function handleComment(value, igUserId, token, env) {
     } catch (_) {}
   }
 
-  // Find matching campaign by keyword (optional — any comment triggers response)
+  // Find matching campaign by keyword
   let matchedCampaign = null;
   for (const campaign of campaignList) {
     if (text.includes(campaign.keyword.toLowerCase())) {
@@ -1687,15 +2098,13 @@ async function handleComment(value, igUserId, token, env) {
       break;
     }
   }
-  // If no keyword match, use first active campaign
-  if (!matchedCampaign && campaignList.length > 0) {
-    matchedCampaign = campaignList[0];
-  }
 
-  // === STEP 1: PUBLIC REPLY (visible to everyone) ===
-  const publicReply = await generateCommentReply(text, postCaption, matchedCampaign?.delivery_content || "o conteudo", env);
+  // No matching campaign — skip
+  if (!matchedCampaign) return;
+
+  // === STEP 1: PUBLIC REPLY ===
+  const publicReply = await generateCommentReply(text, postCaption, matchedCampaign.delivery_content || "o conteudo", env);
   if (publicReply) {
-    // Fetch page_access_token for comment reply via graph.facebook.com
     let pageAccessToken = null;
     try {
       const accRow = await env.criahub_db.prepare("SELECT page_access_token FROM ig_accounts WHERE ig_user_id = ?").bind(igUserId).first();
@@ -1709,6 +2118,8 @@ async function handleComment(value, igUserId, token, env) {
           .bind(acc.id, `Reply to @${username || '?'}: "${publicReply.substring(0, 80)}"`, replyOk ? 'success' : 'failed').run();
       }
     } catch (_) {}
+
+    // Proceed to DM flow regardless of reply result
   }
 
   // === STEP 2: CHECK IF ALREADY DELIVERED ===
@@ -1722,70 +2133,39 @@ async function handleComment(value, igUserId, token, env) {
     }
   }
 
-  // === STEP 3: DM with rich format (any comment triggers DM) ===
+  // === STEP 3: DM with rich format ===
   if (matchedCampaign) {
     if (alreadyDelivered) {
-      // Already delivered — send a short thank-you DM instead of full flow
-      const thankMsg = `Obrigado pelo teu comentario! Ja enviámos o conteudo anteriormente no direct. Se precisares de mais alguma coisa, e so dizer!`;
-      await sendDMRich(igsid, thankMsg, [], token);
+      const thankMsg = 'Obrigado pelo teu comentario! Ja enviámos o conteudo anteriormente no direct.';
+      await sendDMRich(igsid, thankMsg, [], token, igUserId);
       try {
-        const acc = await env.criahub_db.prepare("SELECT id FROM ig_accounts WHERE ig_user_id = ?").bind(igUserId).first();
-        if (acc) {
-          await env.criahub_db.prepare(`INSERT INTO activity_log (ig_account_id, contact_id, campaign_id, event_type, event_detail, status) VALUES (?, ?, ?, 'dm_sent', ?, 'success')`)
-            .bind(acc.id, contactId, matchedCampaign.id, `Thank-you DM to @${username || '?'}`).run();
-        }
+        const a = await env.criahub_db.prepare('SELECT id FROM ig_accounts WHERE ig_user_id = ?').bind(igUserId).first();
+        if (a) await env.criahub_db.prepare('INSERT INTO activity_log (ig_account_id, contact_id, campaign_id, event_type, event_detail, status) VALUES (?, ?, ?, \'dm_sent\', ?, \'success\')').bind(a.id, contactId, matchedCampaign.id, 'Thank-you DM to @' + (username || '?')).run();
       } catch (_) {}
     } else {
       const isFollower = await checkFollow(igsid, igUserId, token);
-      const deliveryContent = matchedCampaign.delivery_content || "o conteudo que solicitaste";
-      const campaignKeyword = matchedCampaign.keyword || "QUERO";
+      const deliveryContent = matchedCampaign.delivery_content || 'o conteudo que solicitaste';
+      const campaignKeyword = matchedCampaign.keyword || 'QUERO';
 
       if (isFollower) {
-        // Follower — send rich DM with quick reply buttons
         let dmText;
-        const aiDm = await generateDMMessage("intro", postCaption, { keyword: campaignKeyword, delivery_content: deliveryContent }, null, env);
-        if (aiDm) {
-          dmText = aiDm;
-        } else {
-          dmText = `Ola ${username || ''}! Obrigado pelo teu interesse!\n\n${deliveryContent}\n\nClica num botao abaixo:`;
-        }
-        const buttons = [
-          { title: "Quero Receber", payload: "QUERO" },
-          { title: "Nao Quero Mais", payload: "CANCELAR" }
-        ];
-        await sendDMRich(igsid, dmText, buttons, token);
-
-        // Set conversation state
-        await env.criahub_db
-          .prepare("INSERT OR IGNORE INTO conversation_state (contact_id, campaign_id, stage) VALUES (?, ?, 'aguardando_quero')")
-          .bind(contactId, matchedCampaign.id).run();
-
-        // Log
+        const aiDm = await generateDMMessage('intro', postCaption, { keyword: campaignKeyword, delivery_content: deliveryContent }, null, env);
+        dmText = aiDm || ('Ola ' + (username || '') + '! Obrigado pelo teu interesse!\n\n' + deliveryContent + '\n\nClica num botao abaixo:');
+        const buttons = [{ title: 'Quero Receber', payload: 'QUERO' }, { title: 'Nao Quero Mais', payload: 'CANCELAR' }];
+        await sendDMRich(igsid, dmText, buttons, token, igUserId);
+        await env.criahub_db.prepare("INSERT OR REPLACE INTO conversation_state (contact_id, campaign_id, stage) VALUES (?, ?, 'aguardando_quero')").bind(contactId, matchedCampaign.id).run();
         try {
-          const acc = await env.criahub_db.prepare("SELECT id FROM ig_accounts WHERE ig_user_id = ?").bind(igUserId).first();
-          if (acc) {
-            await env.criahub_db.prepare(`INSERT INTO activity_log (ig_account_id, contact_id, campaign_id, event_type, event_detail, status) VALUES (?, ?, ?, 'dm_sent', ?, 'success')`)
-              .bind(acc.id, contactId, matchedCampaign.id, `Rich DM to @${username || '?'}: "${dmText.substring(0, 80)}..."`).run();
-          }
+          const a = await env.criahub_db.prepare('SELECT id FROM ig_accounts WHERE ig_user_id = ?').bind(igUserId).first();
+          if (a) await env.criahub_db.prepare('INSERT INTO activity_log (ig_account_id, contact_id, campaign_id, event_type, event_detail, status) VALUES (?, ?, ?, \'dm_sent\', ?, \'success\')').bind(a.id, contactId, matchedCampaign.id, 'Rich DM to @' + (username || '?') + ': "' + dmText.substring(0, 80) + '..."').run();
         } catch (_) {}
       } else {
-        // Not a follower — ask to follow with buttons
-        const followMsg = `Ola ${username || ''}! Obrigado pelo comentario!\n\nPara receberes "${deliveryContent}", precisamos que nos sigas primeiro!\n\nDepois de seguir, clica no botao.`;
-        const buttons = [
-          { title: "Ja Segui!", payload: "SEGUI" },
-          { title: "Nao Quero Mais", payload: "CANCELAR" }
-        ];
-        await sendDMRich(igsid, followMsg, buttons, token);
-
-        await env.criahub_db
-          .prepare("INSERT OR IGNORE INTO conversation_state (contact_id, campaign_id, stage) VALUES (?, ?, 'aguardando_follow')")
-          .bind(contactId, matchedCampaign.id).run();
+        const followMsg = 'Ola ' + (username || '') + '! Obrigado pelo comentario!\n\nPara receberes "' + deliveryContent + '", precisamos que nos sigas primeiro!\n\nDepois de seguir, clica no botao.';
+        const buttons = [{ title: 'Ja Segui!', payload: 'SEGUI' }, { title: 'Nao Quero Mais', payload: 'CANCELAR' }];
+        await sendDMRich(igsid, followMsg, buttons, token, igUserId);
+        await env.criahub_db.prepare("INSERT OR REPLACE INTO conversation_state (contact_id, campaign_id, stage) VALUES (?, ?, 'aguardando_follow')").bind(contactId, matchedCampaign.id).run();
       }
     }
   }
-
-  // Mark processed
-  try { await env.criahub_db.prepare("INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)").bind(commentId).run(); } catch (_) {}
 }
 
 // ============================================================
@@ -1806,13 +2186,12 @@ async function handleMessage(msg, igUserId, token, env) {
 
   console.log(`[DM] From ${igsid}: text="${rawText}" payload="${payload}" resolved="${text}"`);
 
-  // Dedup
+  // Atomic dedup
   if (messageId) {
-    const processed = await env.criahub_db
-      .prepare("SELECT 1 FROM processed_events WHERE event_id = ?")
-      .bind(messageId)
-      .first();
-    if (processed) return;
+    try {
+      const r = await env.criahub_db.prepare("INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)").bind(messageId).run();
+      if (r && r.meta && r.meta.changes === 0) return;
+    } catch (_) { return; }
   }
 
   // Find contact
@@ -1842,7 +2221,7 @@ async function handleMessage(msg, igUserId, token, env) {
       let deliveryMsg = conv.delivery_content;
       const aiDelivery = await generateDMMessage("entrega", postCaption, conv, null, env);
       if (aiDelivery) deliveryMsg = aiDelivery + "\n\n" + conv.delivery_content;
-      await sendDM(igsid, deliveryMsg, token);
+      await sendDM(igsid, deliveryMsg, token, igUserId);
       await env.criahub_db
         .prepare("UPDATE conversation_state SET stage = 'entregue', updated_at = datetime('now') WHERE contact_id = ? AND campaign_id = ?")
         .bind(contact.id, conv.campaign_id).run();
@@ -1852,7 +2231,7 @@ async function handleMessage(msg, igUserId, token, env) {
       let followMsg = conv.follow_request_message || "Precisas seguir o nosso perfil para receber o conteudo!";
       const aiFollow = await generateDMMessage("follow", postCaption, conv, null, env);
       if (aiFollow) followMsg = aiFollow;
-      await sendDM(igsid, followMsg, token);
+      await sendDM(igsid, followMsg, token, igUserId);
       await env.criahub_db
         .prepare("UPDATE conversation_state SET stage = 'aguardando_follow', updated_at = datetime('now') WHERE contact_id = ? AND campaign_id = ?")
         .bind(contact.id, conv.campaign_id).run();
@@ -1883,7 +2262,7 @@ async function handleMessage(msg, igUserId, token, env) {
       await env.criahub_db
         .prepare("UPDATE conversation_state SET stage = 'cancelado', updated_at = datetime('now') WHERE contact_id = ? AND campaign_id = ?")
         .bind(contact.id, conv.campaign_id).run();
-      await sendDM(igsid, "Sem problemas! Se mudares de ideias, e so comentares novamente no post. Ate breve! 👋", token);
+      await sendDM(igsid, "Sem problemas! Se mudares de ideias, e so comentares novamente no post. Ate breve! 👋", token, igUserId);
       console.log(`[DM] User ${igsid} cancelled campaign ${conv.campaign_id}`);
       handled = true;
       break;
@@ -1944,23 +2323,14 @@ async function handleMessage(msg, igUserId, token, env) {
       }
     }
   }
-
-  // Mark message processed
-  if (messageId) {
-    try {
-      await env.criahub_db
-        .prepare("INSERT OR IGNORE INTO processed_events (event_id) VALUES (?)")
-        .bind(messageId)
-        .run();
-    } catch (_) {}
-  }
 }
 // ============================================================
 // sendDM — envia mensagem no direct
 // ============================================================
-async function sendDM(recipientId, text, token) {
+async function sendDM(recipientId, text, token, igUserId) {
   try {
-    const res = await fetch(`${IG_GRAPH_BASE}/me/messages`, {
+    const url = igUserId ? `${IG_GRAPH_BASE}/${igUserId}/messages` : `${IG_GRAPH_BASE}/me/messages`;
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1986,7 +2356,7 @@ async function sendDM(recipientId, text, token) {
 // ============================================================
 // sendDMRich — DM with quick reply buttons (better than ManyChat)
 // ============================================================
-async function sendDMRich(recipientId, text, quickReplies, token) {
+async function sendDMRich(recipientId, text, quickReplies, token, igUserId) {
   try {
     const message = { text: text };
     if (quickReplies && quickReplies.length > 0) {
@@ -1996,7 +2366,8 @@ async function sendDMRich(recipientId, text, quickReplies, token) {
         payload: btn.payload
       }));
     }
-    const res = await fetch(`${IG_GRAPH_BASE}/me/messages`, {
+    const url = igUserId ? `${IG_GRAPH_BASE}/${igUserId}/messages` : `${IG_GRAPH_BASE}/me/messages`;
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -2023,27 +2394,47 @@ async function sendDMRich(recipientId, text, quickReplies, token) {
 // postPublicReply — reply publicly to a comment
 // ============================================================
 async function postPublicReply(commentId, text, token, pageAccessToken) {
+  // Try Instagram Graph API first (works with IG token, may need ig_manage_comments)
   try {
-    // Prefer Page Access Token for graph.facebook.com comment replies
-    const fbToken = pageAccessToken || token;
-    const url = `https://graph.facebook.com/v21.0/${commentId}/replies?access_token=${fbToken}`;
-    const res = await fetch(url, {
+    const igUrl = `https://graph.instagram.com/v21.0/${commentId}/replies?access_token=${token}`;
+    const igRes = await fetch(igUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: text })
     });
-    const data = await res.json();
-    if (res.ok) {
-      console.log(`[COMMENT_REPLY] Success for comment ${commentId}`);
+    const igData = await igRes.json();
+    if (igRes.ok) {
+      console.log(`[COMMENT_REPLY] Instagram API success for ${commentId}`);
       return true;
-    } else {
-      console.error(`[COMMENT_REPLY] Failed (code: ${data.error?.code}, type: ${data.error?.type}, msg: ${data.error?.message})`);
-      return false;
     }
+    console.log(`[COMMENT_REPLY] Instagram API failed: ${igData.error?.message || igRes.status}`);
   } catch (err) {
-    console.error(`[COMMENT_REPLY] Exception: ${err.message}`);
-    return false;
+    console.log(`[COMMENT_REPLY] Instagram API exception: ${err.message}`);
   }
+
+  // Fallback: Facebook Graph API with Page Access Token
+  if (pageAccessToken) {
+    try {
+      const fbUrl = `https://graph.facebook.com/v21.0/${commentId}/replies?access_token=${pageAccessToken}`;
+      const fbRes = await fetch(fbUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text })
+      });
+      const fbData = await fbRes.json();
+      if (fbRes.ok) {
+        console.log(`[COMMENT_REPLY] Facebook API success for ${commentId}`);
+        return true;
+      }
+      console.log(`[COMMENT_REPLY] Facebook API failed: ${fbData.error?.message || fbRes.status}`);
+    } catch (err) {
+      console.log(`[COMMENT_REPLY] Facebook API exception: ${err.message}`);
+    }
+  }
+
+  // Both failed
+  console.log(`[COMMENT_REPLY] All reply methods failed for comment ${commentId}`);
+  return false;
 }
 
 // ============================================================
@@ -2320,7 +2711,7 @@ async function handleAdminAccounts(request, env) {
 }
 
 // ------------------------------------------------------------
-// GET /connect?client=ID — redireciona pro Instagram OAuth
+// GET /connect?client=ID — redireciona pro Facebook Login (Instagram Business API)
 // ------------------------------------------------------------
 async function handleConnect(url, env) {
   const clientId = url.searchParams.get("client");
@@ -2339,31 +2730,33 @@ async function handleConnect(url, env) {
 
   const state = await signState(env, { client_id: clientId, nonce: crypto.randomUUID() });
   const redirectUri = `${url.origin}/oauth/callback`;
-  console.log("DEBUG [connect] redirect_uri enviado:", JSON.stringify(redirectUri));
 
-  const authorizeUrl = new URL(IG_AUTHORIZE_URL);
-  authorizeUrl.searchParams.set("client_id", env.IG_APP_ID);
-  authorizeUrl.searchParams.set("redirect_uri", redirectUri);
-  authorizeUrl.searchParams.set("response_type", "code");
-  authorizeUrl.searchParams.set("scope", IG_SCOPES);
-  authorizeUrl.searchParams.set("state", state);
+  const fbAuthUrl = new URL("https://www.facebook.com/v21.0/dialog/oauth");
+  fbAuthUrl.searchParams.set("client_id", env.IG_APP_ID);
+  fbAuthUrl.searchParams.set("redirect_uri", redirectUri);
+  fbAuthUrl.searchParams.set("response_type", "code");
+  fbAuthUrl.searchParams.set("scope", IG_SCOPES);
+  fbAuthUrl.searchParams.set("state", state);
 
-  return Response.redirect(authorizeUrl.toString(), 302);
+  return Response.redirect(fbAuthUrl.toString(), 302);
 }
 
 // ------------------------------------------------------------
-// GET /oauth/callback — troca o code por token e salva a conta
+// GET /oauth/callback — troca o code do Facebook Login por token e salva a conta
 // ------------------------------------------------------------
 async function handleOAuthCallback(url, env) {
+  const fbError = url.searchParams.get("error");
+  const fbErrorDesc = url.searchParams.get("error_description");
+  if (fbError) {
+    return textResponse(`Erro do Facebook: ${fbError} — ${fbErrorDesc || "Tente novamente."}`, 400);
+  }
+
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
-  const errorParam = url.searchParams.get("error");
-
-  if (errorParam) {
-    return textResponse(`O Instagram retornou um erro: ${errorParam}. Tente novamente.`, 400);
-  }
   if (!code || !state) {
-    return textResponse("Parâmetros 'code' ou 'state' ausentes.", 400);
+    const allParams = {};
+    url.searchParams.forEach((v, k) => allParams[k] = v);
+    return textResponse("Parâmetros 'code' ou 'state' ausentes. URL params: " + JSON.stringify(allParams), 400);
   }
 
   const statePayload = await verifyState(env, state);
@@ -2373,103 +2766,65 @@ async function handleOAuthCallback(url, env) {
 
   const clientId = statePayload.client_id;
   const redirectUri = `${url.origin}/oauth/callback`;
-  console.log("DEBUG [callback] redirect_uri enviado:", JSON.stringify(redirectUri));
 
-  console.log("DEBUG [callback] Aguardando 3s antes de trocar o code (teste de race condition)...");
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-
-  // 1) Trocar o "code" por um token de curta duração
-  // IMPORTANTE: a Meta exige multipart/form-data aqui (não urlencoded) —
-  // por isso usamos FormData em vez de URLSearchParams no body.
-  const shortTokenForm = new FormData();
-  shortTokenForm.set("client_id", env.IG_APP_ID);
-  shortTokenForm.set("client_secret", env.IG_APP_SECRET);
-  shortTokenForm.set("grant_type", "authorization_code");
-  shortTokenForm.set("redirect_uri", redirectUri);
-  shortTokenForm.set("code", code);
-
-  const shortTokenRes = await fetch(IG_TOKEN_URL, {
-    method: "POST",
-    body: shortTokenForm,
-  });
-  const shortTokenRaw = await shortTokenRes.json();
-  console.log("DEBUG [callback] resposta bruta do token curto:", JSON.stringify(shortTokenRaw));
-
-  // A resposta de sucesso vem como { data: [ { access_token, user_id, permissions } ] }
-  const shortTokenData = Array.isArray(shortTokenRaw.data) ? shortTokenRaw.data[0] : shortTokenRaw;
-
-  if (!shortTokenRes.ok || !shortTokenData || !shortTokenData.access_token) {
-    console.error("Falha ao trocar code por token curto:", JSON.stringify(shortTokenRaw));
-    return textResponse("Falha ao autorizar com o Instagram. Tente novamente.", 400);
+  // 1) Trocar code por Facebook User Access Token
+  const tokenUrl = `${FB_GRAPH_BASE}/oauth/access_token?client_id=${env.IG_APP_ID}&client_secret=${env.IG_APP_SECRET}&redirect_uri=${encodeURIComponent(redirectUri)}&code=${code}`;
+  const tokenRes = await fetch(tokenUrl);
+  const tokenTxt = await tokenRes.text();
+  if (!tokenRes.ok) {
+    return textResponse("Falha ao obter token: HTTP " + tokenRes.status + " " + tokenTxt.substring(0, 300), 400);
+  }
+  const tokenData = JSON.parse(tokenTxt);
+  if (!tokenData.access_token) {
+    return textResponse("Falha ao obter token: " + (tokenData.error?.message || JSON.stringify(tokenData).substring(0, 200)), 400);
   }
 
-  const shortLivedToken = shortTokenData.access_token;
-  const igUserId = String(shortTokenData.user_id);
+  // 2) Long-lived token
+  const llUrl = `${FB_GRAPH_BASE}/oauth/access_token?grant_type=fb_exchange_token&client_id=${env.IG_APP_ID}&client_secret=${env.IG_APP_SECRET}&fb_exchange_token=${tokenData.access_token}`;
+  const llRes = await fetch(llUrl);
+  const llData = await llRes.json();
+  const longToken = llData.access_token || tokenData.access_token;
+  const expiresIn = llData.expires_in || 60 * 24 * 60 * 60;
+  const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
 
-  // 2) Trocar o token de curta duração por um de longa duração (60 dias)
-  const exchangeUrl = new URL(`${IG_GRAPH_BASE}/access_token`);
-  exchangeUrl.searchParams.set("grant_type", "ig_exchange_token");
-  exchangeUrl.searchParams.set("client_secret", env.IG_APP_SECRET);
-  exchangeUrl.searchParams.set("access_token", shortLivedToken);
-
-  const longTokenRes = await fetch(exchangeUrl.toString());
-  const longTokenData = await longTokenRes.json();
-
-  if (!longTokenRes.ok || !longTokenData.access_token) {
-    console.error("Falha ao trocar por token longo:", JSON.stringify(longTokenData));
-    return textResponse("Falha ao gerar token de longa duração. Tente novamente.", 400);
+  // 3) Get Pages e encontrar a que tem Instagram Business Account
+  const pagesRes = await fetch(`${FB_GRAPH_BASE}/me/accounts?fields=id,name,access_token,instagram_business_account{id,username}&access_token=${longToken}`);
+  const pagesData = await pagesRes.json();
+  if (!pagesRes.ok || !pagesData.data || pagesData.data.length === 0) {
+    return textResponse("Nenhuma Página Facebook encontrada. Cria uma Página e associa à tua conta Instagram.", 400);
   }
 
-  const longLivedToken = longTokenData.access_token;
-  const expiresInSeconds = longTokenData.expires_in || 60 * 24 * 60 * 60; // fallback ~60 dias
-  const expiresAt = new Date(Date.now() + expiresInSeconds * 1000).toISOString();
-
-  // 3) Buscar o username da conta
-  const profileUrl = new URL(`${IG_GRAPH_BASE}/me`);
-  profileUrl.searchParams.set("fields", "id,username");
-  profileUrl.searchParams.set("access_token", longLivedToken);
-
-  const profileRes = await fetch(profileUrl.toString());
-  const profileData = await profileRes.json();
-  const username = profileData.username || null;
-
-  // 3b) Try to get Page Access Token (needed for comment replies)
-  let finalToken = longLivedToken;
-  let detectedPageId = null;
-  try {
-    const pagesRes = await fetch(`https://graph.facebook.com/v21.0/me/accounts?fields=id,name,access_token&access_token=${longLivedToken}`);
-    const pagesData = await pagesRes.json();
-    if (pagesRes.ok && pagesData.data && pagesData.data.length > 0) {
-      finalToken = pagesData.data[0].access_token;
-      detectedPageId = pagesData.data[0].id;
-      console.log(`[OAUTH] Got Page Access Token for page: ${pagesData.data[0].name} (id: ${detectedPageId})`);
-    }
-  } catch (e) {
-    console.log(`[OAUTH] Could not get Page token, using user token: ${e.message}`);
+  const igPage = pagesData.data.find(p => p.instagram_business_account);
+  if (!igPage) {
+    return textResponse("Nenhuma Página Facebook tem uma conta Instagram Business associada. Liga a conta Instagram a uma Página Facebook primeiro.", 400);
   }
 
-  // 4) Salvar (ou atualizar) a conta conectada no banco
+  const pageToken = igPage.access_token;
+  const pageId = igPage.id;
+  const pageName = igPage.name;
+  const igUserId = String(igPage.instagram_business_account.id);
+  const igUsername = igPage.instagram_business_account.username || null;
+
+  // 4) Salvar no banco
   const igAccountId = "ig_" + crypto.randomUUID().replace(/-/g, "").slice(0, 16);
-
-  await env.criahub_db
-    .prepare(
-      `INSERT INTO ig_accounts (id, client_id, ig_user_id, username, access_token, token_expires_at, status, page_id)
-       VALUES (?, ?, ?, ?, ?, ?, 'connected', ?)
-       ON CONFLICT(ig_user_id) DO UPDATE SET
-         client_id = excluded.client_id,
-         username = excluded.username,
-         access_token = excluded.access_token,
-         token_expires_at = excluded.token_expires_at,
-         status = 'connected',
-         page_id = COALESCE(excluded.page_id, ig_accounts.page_id)`
-    )
-    .bind(igAccountId, clientId, igUserId, username, finalToken, expiresAt, detectedPageId)
-    .run();
+  await env.criahub_db.prepare(
+    `INSERT INTO ig_accounts (id, client_id, ig_user_id, username, access_token, token_expires_at, status, page_id, page_access_token)
+     VALUES (?, ?, ?, ?, ?, ?, 'connected', ?, ?)
+     ON CONFLICT(ig_user_id) DO UPDATE SET
+       client_id = excluded.client_id,
+       username = excluded.username,
+       access_token = excluded.access_token,
+       token_expires_at = excluded.token_expires_at,
+       status = 'connected',
+       page_id = excluded.page_id,
+       page_access_token = excluded.page_access_token`
+  ).bind(igAccountId, clientId, igUserId, igUsername, pageToken, expiresAt, pageId, pageToken).run();
 
   return htmlResponse(`
-    <h2>Conta conectada com sucesso!</h2>
-    <p>A conta <strong>@${escapeHtml(username || igUserId)}</strong> foi conectada à automação.</p>
-    <p>Você já pode fechar esta janela.</p>
+    <h2>Conta Instagram conectada!</h2>
+    <p>Instagram: <strong>@${escapeHtml(igUsername || igUserId)}</strong></p>
+    <p>Página Facebook: <strong>${escapeHtml(pageName)}</strong></p>
+    <p>Page Access Token guardado. Pode fechar esta janela.</p>
   `);
 }
 
@@ -2497,9 +2852,13 @@ async function handleFBConnect(url, env) {
 }
 
 async function handleFBCallback(url, env) {
+  const fbError = url.searchParams.get("error");
+  const fbErrorDesc = url.searchParams.get("error_description");
+  if (fbError) return textResponse(`Erro do Facebook: ${fbError} — ${fbErrorDesc || "Sem descrição"}`, 400);
+
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
-  if (!code || !state) return textResponse("Parâmetros ausentes.", 400);
+  if (!code || !state) return textResponse("Parâmetros ausentes. Visite Admin → Contas → clique 'FB Page' na conta desejada, não aceda a /fb/callback diretamente.", 400);
 
   const statePayload = await verifyState(env, state);
   if (!statePayload) return textResponse("State inválido ou expirado.", 400);
@@ -2508,11 +2867,18 @@ async function handleFBCallback(url, env) {
   const redirectUri = `${url.origin}/fb/callback`;
 
   // 1) Exchange code for short-lived token
-  const tokenRes = await fetch(`https://graph.facebook.com/v21.0/oauth/access_token?client_id=${env.IG_APP_ID}&client_secret=${env.IG_APP_SECRET}&redirect_uri=${encodeURIComponent(redirectUri)}&code=${code}`);
-  const tokenData = await tokenRes.json();
+  const tokenUrl = `https://graph.facebook.com/v21.0/oauth/access_token?client_id=${env.IG_APP_ID}&client_secret=${env.IG_APP_SECRET}&redirect_uri=${encodeURIComponent(redirectUri)}&code=${code}`;
+  console.log("[FB_OAUTH] Token URL (secret hidden):", tokenUrl.replace(env.IG_APP_SECRET, "***"));
+  const tokenRes = await fetch(tokenUrl);
+  const tokenText = await tokenRes.text();
+  console.log("[FB_OAUTH] Token response status:", tokenRes.status, "body:", tokenText);
+  if (!tokenRes.ok) {
+    return textResponse("Falha ao obter token do Facebook. HTTP " + tokenRes.status + ": " + tokenText.substring(0, 300), 400);
+  }
+  const tokenData = JSON.parse(tokenText);
   if (!tokenData.access_token) {
     console.error("[FB_OAUTH] Token exchange failed:", JSON.stringify(tokenData));
-    return textResponse("Falha ao obter token do Facebook.", 400);
+    return textResponse("Falha ao obter token do Facebook (resposta inesperada): " + JSON.stringify(tokenData).substring(0, 300), 400);
   }
 
   // 2) Exchange for long-lived token
@@ -2527,9 +2893,20 @@ async function handleFBCallback(url, env) {
   console.log("[FB_OAUTH] Pages:", JSON.stringify(pagesData.data?.map(p => ({ id: p.id, name: p.name })) || []));
 
   if (pagesData.data && pagesData.data.length > 0) {
-    const pageToken = pagesData.data[0].access_token;
-    const pageId = pagesData.data[0].id;
-    const pageName = pagesData.data[0].name;
+    // Try to find the page that matches the Instagram account's linked page_id
+    const account = await env.criahub_db.prepare(
+      "SELECT page_id FROM ig_accounts WHERE ig_user_id = ?"
+    ).bind(igUserId).first();
+
+    let matchedPage = null;
+    if (account && account.page_id) {
+      matchedPage = pagesData.data.find(p => p.id === account.page_id);
+    }
+    if (!matchedPage) matchedPage = pagesData.data[0];
+
+    const pageToken = matchedPage.access_token;
+    const pageId = matchedPage.id;
+    const pageName = matchedPage.name;
 
     // Store page_access_token + page_id for this IG account
     await env.criahub_db.prepare(
@@ -2969,6 +3346,15 @@ async function handleLogout(request, env) {
 
 async function handleGetPlans(env) {
   const plans = await env.criahub_db.prepare("SELECT * FROM saas_plans WHERE active = 1 ORDER BY sort_order").all();
+  const content = await env.criahub_db.prepare("SELECT * FROM plan_content ORDER BY plan_id, locale").all();
+  const contentMap = {};
+  for (const c of (content.results || [])) {
+    if (!contentMap[c.plan_id]) contentMap[c.plan_id] = {};
+    contentMap[c.plan_id][c.locale] = c;
+  }
+  for (const p of (plans.results || [])) {
+    p.content = contentMap[p.id] || {};
+  }
   return jsonResponse(plans.results || []);
 }
 
@@ -3602,13 +3988,512 @@ async function handleLeads(request, env, path, method) {
     await env.criahub_db.prepare("INSERT INTO lead_activities (lead_id, account_id, type, description, performed_by) VALUES (?, ?, ?, ?, ?)").bind(leadId, userId, body.type, body.description, body.performed_by || "user").run();
     return jsonResponse({ ok: true });
   }
+  if (path === "/api/leads/sync-from-form" && method === "POST") {
+    const subs = await env.criahub_db.prepare("SELECT * FROM contact_submissions WHERE status = 'new' ORDER BY created_at ASC").all();
+    let imported = 0;
+    for (const s of (subs.results || [])) {
+      const exists = await env.criahub_db.prepare("SELECT id FROM leads WHERE email = ? AND source = 'contact_form'").bind(s.email).first();
+      if (exists) continue;
+      await env.criahub_db.prepare(`INSERT INTO leads (account_id, user_id, source, source_id, name, email, phone, platform, form_name, tags, notes, status)
+        VALUES (?, ?, 'contact_form', ?, ?, ?, ?, 'website', ?, '[]', ?, 'new')`).bind(
+          userId, userId, String(s.id), s.name, s.email, s.phone || "",
+          s.subject, (s.description || "").substring(0, 500)
+        ).run();
+      await env.criahub_db.prepare("UPDATE contact_submissions SET status = 'imported' WHERE id = ?").bind(s.id).run();
+      imported++;
+    }
+    return jsonResponse({ ok: true, imported, total: (subs.results || []).length });
+  }
+
+  if (path === "/api/leads/sync-from-ig" && method === "POST") {
+    const igAccts = await env.criahub_db.prepare("SELECT id, ig_user_id, platform FROM ig_accounts WHERE user_id = ?").bind(userId).all();
+    const acctIds = (igAccts.results || []).map(a => a.id);
+    if (!acctIds.length) return jsonResponse({ ok: true, imported: 0, total: 0 });
+
+    const placeholders = acctIds.map(() => "?").join(",");
+    // Get DMs with contact_id
+    const activities = await env.criahub_db.prepare(
+      `SELECT DISTINCT a.contact_id, a.ig_account_id, a.event_type, a.event_detail, a.created_at,
+        c.username, c.igsid, ce.email
+       FROM activity_log a
+       LEFT JOIN contacts c ON a.contact_id = c.id
+       LEFT JOIN collected_emails ce ON a.contact_id = ce.contact_id
+       WHERE a.ig_account_id IN (${placeholders})
+        AND a.event_type = 'dm_sent'
+        AND a.contact_id IS NOT NULL AND a.contact_id != ''
+       ORDER BY a.created_at DESC`
+    ).bind(...acctIds).all();
+
+    // Also get comment_received events, match by extracting @username from event_detail
+    const commentRows = await env.criahub_db.prepare(
+      `SELECT a.id, a.ig_account_id, a.event_detail, a.created_at
+       FROM activity_log a
+       WHERE a.ig_account_id IN (${placeholders})
+        AND a.event_type = 'comment_received'
+        AND (a.contact_id IS NULL OR a.contact_id = '')
+       ORDER BY a.created_at DESC`
+    ).bind(...acctIds).all();
+
+    const seen = new Set();
+    let imported = 0;
+
+    // Process DMs
+    for (const act of (activities.results || [])) {
+      if (seen.has(act.contact_id)) continue;
+      seen.add(act.contact_id);
+      const exists = await env.criahub_db.prepare("SELECT id FROM leads WHERE source_id = ? AND source = 'instagram'").bind(act.contact_id).first();
+      if (exists) { seen.delete(act.contact_id); continue; }
+      const igAcct = (igAccts.results || []).find(a => a.id === act.ig_account_id);
+      await env.criahub_db.prepare(`INSERT INTO leads (account_id, user_id, source, source_id, name, email, phone, platform, tags, notes, status)
+        VALUES (?, ?, 'instagram', ?, ?, ?, '', ?, '[]', ?, 'new')`).bind(
+          userId, userId, act.contact_id,
+          act.username || "ig_user_" + (act.igsid || "").substring(0, 8),
+          act.email || "", igAcct?.platform || "instagram",
+          "Importado via DM em " + (act.created_at || "").substring(0, 10)
+        ).run();
+      imported++;
+    }
+
+    // Process comments without contact_id by matching @username
+    for (const c of (commentRows.results || [])) {
+      const unameMatch = c.event_detail?.match(/^@(\S+)/);
+      if (!unameMatch) continue;
+      const username = unameMatch[1];
+      // Find contact by username + ig_account_id
+      const contact = await env.criahub_db.prepare(
+        "SELECT id, username, igsid FROM contacts WHERE ig_account_id = ? AND username = ? ORDER BY last_seen_at DESC LIMIT 1"
+      ).bind(c.ig_account_id, username).first();
+      if (!contact || seen.has(contact.id)) continue;
+      seen.add(contact.id);
+      const exists = await env.criahub_db.prepare("SELECT id FROM leads WHERE source_id = ? AND source = 'instagram'").bind(contact.id).first();
+      if (exists) continue;
+      const igAcct = (igAccts.results || []).find(a => a.id === c.ig_account_id);
+      await env.criahub_db.prepare(`INSERT INTO leads (account_id, user_id, source, source_id, name, email, phone, platform, tags, notes, status)
+        VALUES (?, ?, 'instagram', ?, ?, '', '', ?, '[]', ?, 'new')`).bind(
+          userId, userId, contact.id,
+          contact.username || "ig_user_" + (contact.igsid || "").substring(0, 8),
+          igAcct?.platform || "instagram",
+          "Importado de comentário em " + (c.created_at || "").substring(0, 10)
+        ).run();
+      imported++;
+    }
+
+    return jsonResponse({ ok: true, imported, total: seen.size });
+  }
+
   if (path === "/api/leads/stats" && method === "GET") {
     const total = await env.criahub_db.prepare("SELECT COUNT(*) as total FROM leads WHERE user_id = ?").bind(userId).first();
     const bySource = await env.criahub_db.prepare("SELECT source, COUNT(*) as count FROM leads WHERE user_id = ? GROUP BY source").bind(userId).all();
     const byStatus = await env.criahub_db.prepare("SELECT status, COUNT(*) as count FROM leads WHERE user_id = ? GROUP BY status").bind(userId).all();
     return jsonResponse({ total: total?.total || 0, bySource: bySource.results || [], byStatus: byStatus.results || [] });
   }
+
+  // === SMART INBOX — Unified conversation center with AI lead scoring ===
+  if (path === "/api/smart-inbox/conversations" && method === "GET") {
+    const url = new URL(request.url);
+    const channel = url.searchParams.get("channel") || "";
+    const status = url.searchParams.get("status") || "";
+    const search = url.searchParams.get("search") || "";
+    const limit = parseInt(url.searchParams.get("limit")) || 50;
+    const offset = parseInt(url.searchParams.get("offset")) || 0;
+
+    const conversations = [];
+    const seen = new Set();
+
+    // 1. Instagram contacts with activity
+    const igAccts = await env.criahub_db.prepare("SELECT id, ig_user_id, username, platform FROM ig_accounts WHERE user_id = ?").bind(userId).all();
+    const acctIds = (igAccts.results || []).map(a => a.id);
+
+    if (acctIds.length && (!channel || channel === "instagram")) {
+      const placeholders = acctIds.map(() => "?").join(",");
+      const igConversations = await env.criahub_db.prepare(`
+        SELECT c.id as contact_id, c.username, c.igsid, c.last_seen_at,
+          a.ig_account_id, ig.username as account_username,
+          (SELECT COUNT(*) FROM activity_log WHERE contact_id = c.id AND event_type = 'dm_sent') as dm_count,
+          (SELECT COUNT(*) FROM activity_log WHERE contact_id = c.id AND event_type = 'comment_received') as comment_count,
+          (SELECT MAX(created_at) FROM activity_log WHERE contact_id = c.id) as last_activity,
+          (SELECT event_detail FROM activity_log WHERE contact_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message,
+          ce.email,
+          cs.stage as funnel_stage,
+          l.status as lead_status, l.id as lead_id, l.score as lead_score
+        FROM contacts c
+        LEFT JOIN activity_log a ON c.id = a.contact_id
+        LEFT JOIN ig_accounts ig ON a.ig_account_id = ig.id
+        LEFT JOIN collected_emails ce ON c.id = ce.contact_id
+        LEFT JOIN conversation_state cs ON c.id = cs.contact_id
+        LEFT JOIN leads l ON l.source_id = c.id AND l.source = 'instagram'
+        WHERE a.ig_account_id IN (${placeholders})
+        GROUP BY c.id
+        ORDER BY last_activity DESC
+        LIMIT ? OFFSET ?
+      `).bind(...acctIds, limit, offset).all();
+
+      for (const conv of (igConversations.results || [])) {
+        if (!conv.contact_id || seen.has(conv.contact_id)) continue;
+        seen.add(conv.contact_id);
+        const totalInteractions = (conv.dm_count || 0) + (conv.comment_count || 0);
+        const score = calcLeadScore({ interactions: totalInteractions, hasEmail: !!conv.email, funnelStage: conv.funnel_stage, recency: conv.last_activity });
+        conversations.push({
+          id: conv.contact_id,
+          type: "instagram",
+          name: conv.username || "ig_" + (conv.igsid || "").substring(0, 8),
+          avatar: conv.username ? `https://instagram.com/${conv.username}/` : null,
+          platform: "instagram",
+          account: conv.account_username || "",
+          lastMessage: conv.last_message?.substring(0, 150) || "",
+          lastActivity: conv.last_activity,
+          funnelStage: conv.funnel_stage || "novo",
+          dmCount: conv.dm_count || 0,
+          commentCount: conv.comment_count || 0,
+          email: conv.email || "",
+          leadStatus: conv.lead_status || "new",
+          leadId: conv.lead_id,
+          score,
+          tags: [],
+        });
+      }
+    }
+
+    // 2. Leads (form submissions, website, etc.)
+    if (!channel || channel !== "instagram") {
+      const leadsQuery = ["SELECT * FROM leads WHERE user_id = ?"];
+      const leadParams = [userId];
+      if (channel) { leadsQuery[0] += " AND source = ?"; leadParams.push(channel); }
+      if (status) { leadsQuery[0] += " AND status = ?"; leadParams.push(status); }
+      if (search) { leadsQuery[0] += " AND (name LIKE ? OR email LIKE ?)"; leadParams.push("%" + search + "%", "%" + search + "%"); }
+      leadsQuery[0] += " ORDER BY created_at DESC LIMIT ? OFFSET ?";
+      leadParams.push(limit, offset);
+
+      const leads = await env.criahub_db.prepare(leadsQuery[0]).bind(...leadParams).all();
+      for (const l of (leads.results || [])) {
+        if (seen.has("lead_" + l.id)) continue;
+        seen.add("lead_" + l.id);
+        conversations.push({
+          id: "lead_" + l.id,
+          type: "lead",
+          name: l.name || l.email || "Lead #" + l.id,
+          avatar: null,
+          platform: l.source || l.platform || "website",
+          account: l.campaign_name || "",
+          lastMessage: l.notes || "",
+          lastActivity: l.created_at,
+          funnelStage: l.funnel_stage || "topo",
+          dmCount: 0,
+          commentCount: 0,
+          email: l.email || "",
+          phone: l.phone || "",
+          leadStatus: l.status || "new",
+          leadId: l.id,
+          score: l.score || 50,
+          tags: l.tags ? JSON.parse(l.tags) : [],
+        });
+      }
+    }
+
+    // Sort by score desc, then by lastActivity desc
+    conversations.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return (b.lastActivity || "").localeCompare(a.lastActivity || "");
+    });
+
+    const total = conversations.length;
+    return jsonResponse({ ok: true, conversations: conversations.slice(0, limit), total });
+  }
+
+  // GET single conversation detail with timeline
+  if (path.startsWith("/api/smart-inbox/conversations/") && method === "GET") {
+    const convId = path.split("/")[4]; // /api/smart-inbox/conversations/:id
+    if (!convId) return jsonResponse({ error: "Missing conversation id" }, 400);
+
+    let timeline = [];
+
+    // If it's an Instagram contact
+    if (!convId.startsWith("lead_")) {
+      const activities = await env.criahub_db.prepare(`
+        SELECT a.*, ig.username as account_username
+        FROM activity_log a
+        LEFT JOIN ig_accounts ig ON a.ig_account_id = ig.id
+        WHERE a.contact_id = ?
+        ORDER BY a.created_at ASC
+      `).bind(convId).all();
+
+      const contact = await env.criahub_db.prepare("SELECT * FROM contacts WHERE id = ?").bind(convId).first();
+      const email = await env.criahub_db.prepare("SELECT email FROM collected_emails WHERE contact_id = ? ORDER BY created_at DESC LIMIT 1").bind(convId).first();
+      const lead = await env.criahub_db.prepare("SELECT * FROM leads WHERE source_id = ? AND source = 'instagram'").bind(convId).first();
+
+      timeline = (activities.results || []).map(a => ({
+        id: a.id,
+        type: a.event_type,
+        detail: a.event_detail,
+        status: a.status,
+        campaignKeyword: null,
+        createdAt: a.created_at,
+        account: a.account_username || "",
+      }));
+
+      return jsonResponse({
+        ok: true,
+        conversation: {
+          id: convId,
+          type: "instagram",
+          name: contact?.username || "",
+          platform: "instagram",
+          email: email?.email || "",
+          leadStatus: lead?.status || "new",
+          leadId: lead?.id || null,
+          score: lead?.score || 0,
+          tags: lead?.tags ? JSON.parse(lead.tags) : [],
+          notes: lead?.notes || "",
+          firstSeen: contact?.first_seen_at,
+          lastSeen: contact?.last_seen_at,
+        },
+        timeline,
+      });
+    }
+
+    return jsonResponse({ ok: false, error: "Conversation not found" }, 404);
+  }
+
+  // POST update lead score
+  if (path.startsWith("/api/smart-inbox/score/") && method === "POST") {
+    const leadId = path.split("/")[4];
+    const body = await request.json().catch(() => ({}));
+    const score = parseInt(body.score) || 0;
+    if (!leadId) return jsonResponse({ error: "Missing lead id" }, 400);
+    await env.criahub_db.prepare("UPDATE leads SET score = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?").bind(score, leadId, userId).run();
+    return jsonResponse({ ok: true });
+  }
+
+  // POST — Sugerir resposta com IA para uma conversa
+  if (path === "/api/smart-inbox/suggest-reply" && method === "POST") {
+    try {
+      const body = await request.json().catch(() => ({}));
+      const { conversationId, type, message } = body;
+      if (!conversationId) return jsonResponse({ error: "Missing conversationId" }, 400);
+
+      // Build context from conversation history
+      let context = message || "";
+      if (!context) {
+        const acts = await env.criahub_db.prepare(`
+          SELECT event_detail, event_type, created_at FROM activity_log
+          WHERE contact_id = ? ORDER BY created_at DESC LIMIT 15
+        `).bind(conversationId).all();
+        context = (acts.results || []).map(a => `[${a.created_at}] ${a.event_type}: ${a.event_detail}`).join("\n");
+      }
+
+      const groqKey = await getGroqApiKey(env);
+      if (!groqKey) return jsonResponse({ error: "Groq API key not configured" }, 500);
+
+      const prompt = `Eres um assistente de marketing digital especializado em responder a leads e clientes no Instagram.
+Contexto da conversa (últimas mensagens):
+${context || "Nenhum contexto disponível"}
+
+Com base no contexto acima, sugere 3 respostas curtas e eficazes para dar seguimento à conversa.
+As respostas devem ser em português de Portugal, naturais e persuasivas, com o objetivo de converter ou engajar o lead.
+Responde APENAS com um array JSON de 3 strings, sem texto adicional. Exemplo: ["Resposta 1", "Resposta 2", "Resposta 3"]`;
+
+      const aiRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + groqKey, "Content-Type": "application/json" },
+        body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: prompt }], temperature: 0.7, max_tokens: 500 }),
+      });
+
+      if (!aiRes.ok) {
+        const errText = await aiRes.text();
+        return jsonResponse({ error: "AI API error: " + errText }, 502);
+      }
+
+      const aiData = await aiRes.json();
+      const text = aiData.choices?.[0]?.message?.content || "";
+      let suggestions;
+      try { suggestions = JSON.parse(text); } catch (e) {
+        // Try to extract JSON array from text
+        const match = text.match(/\[[\s\S]*?\]/);
+        suggestions = match ? JSON.parse(match[0]) : [text];
+      }
+      if (!Array.isArray(suggestions)) suggestions = [text];
+      return jsonResponse({ ok: true, suggestions: suggestions.slice(0, 3) });
+    } catch (e) {
+      return jsonResponse({ error: e.message }, 500);
+    }
+  }
+
+  // === SMART CAMPAIGNS — Regras de automação inteligentes ===
+  if (path === "/api/smart-campaigns" && method === "GET") {
+    const rules = await env.criahub_db.prepare(
+      "SELECT * FROM automation_rules WHERE user_id = ? ORDER BY created_at DESC"
+    ).bind(userId).all();
+    return jsonResponse({ ok: true, rules: rules.results || [] });
+  }
+
+  if (path === "/api/smart-campaigns" && method === "POST") {
+    const body = await request.json().catch(() => ({}));
+    if (!body.name || !body.trigger_type || !body.trigger_value || !body.action_type)
+      return jsonResponse({ error: "Campos obrigatórios: name, trigger_type, trigger_value, action_type" }, 400);
+    const r = await env.criahub_db.prepare(
+      `INSERT INTO automation_rules (user_id, name, description, trigger_type, trigger_value, action_type, action_config)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    ).bind(userId, body.name, body.description || "", body.trigger_type, body.trigger_value, body.action_type, JSON.stringify(body.action_config || {})).run();
+    return jsonResponse({ ok: true, id: r.meta?.last_row_id });
+  }
+
+  if (path.startsWith("/api/smart-campaigns/") && method === "PATCH") {
+    const parts = path.split("/");
+    const ruleId = parts[3];
+    if (!ruleId) return jsonResponse({ error: "Missing rule id" }, 400);
+    const body = await request.json().catch(() => ({}));
+    const fields = [];
+    const params = [];
+    if (body.name !== undefined) { fields.push("name = ?"); params.push(body.name); }
+    if (body.description !== undefined) { fields.push("description = ?"); params.push(body.description); }
+    if (body.trigger_type !== undefined) { fields.push("trigger_type = ?"); params.push(body.trigger_type); }
+    if (body.trigger_value !== undefined) { fields.push("trigger_value = ?"); params.push(body.trigger_value); }
+    if (body.action_type !== undefined) { fields.push("action_type = ?"); params.push(body.action_type); }
+    if (body.action_config !== undefined) { fields.push("action_config = ?"); params.push(JSON.stringify(body.action_config)); }
+    if (!fields.length) return jsonResponse({ error: "No fields to update" }, 400);
+    fields.push("updated_at = datetime('now')");
+    params.push(ruleId, userId);
+    await env.criahub_db.prepare(
+      `UPDATE automation_rules SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`
+    ).bind(...params).run();
+    return jsonResponse({ ok: true });
+  }
+
+  if (path.startsWith("/api/smart-campaigns/") && method === "DELETE") {
+    const ruleId = path.split("/")[3];
+    if (!ruleId) return jsonResponse({ error: "Missing rule id" }, 400);
+    await env.criahub_db.prepare("DELETE FROM automation_rules WHERE id = ? AND user_id = ?").bind(ruleId, userId).run();
+    return jsonResponse({ ok: true });
+  }
+
+  if (path.startsWith("/api/smart-campaigns/") && path.endsWith("/toggle") && method === "POST") {
+    const ruleId = path.split("/")[3];
+    if (!ruleId) return jsonResponse({ error: "Missing rule id" }, 400);
+    const rule = await env.criahub_db.prepare("SELECT status FROM automation_rules WHERE id = ? AND user_id = ?").bind(ruleId, userId).first();
+    if (!rule) return jsonResponse({ error: "Rule not found" }, 404);
+    const newStatus = rule.status === "active" ? "paused" : "active";
+    await env.criahub_db.prepare("UPDATE automation_rules SET status = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?").bind(newStatus, ruleId, userId).run();
+    return jsonResponse({ ok: true, status: newStatus });
+  }
+
+  // Check trigger conditions when score is updated
+  if (path.startsWith("/api/smart-inbox/score/") && method === "POST") {
+    const leadId = path.split("/")[4];
+    const body = await request.json().catch(() => ({}));
+    const score = parseInt(body.score) || 0;
+    if (!leadId) return jsonResponse({ error: "Missing lead id" }, 400);
+    await env.criahub_db.prepare("UPDATE leads SET score = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?").bind(score, leadId, userId).run();
+
+    // Check automation rules
+    try {
+      const rules = await env.criahub_db.prepare(
+        "SELECT * FROM automation_rules WHERE user_id = ? AND status = 'active' AND trigger_type = 'score_threshold'"
+      ).bind(userId).all();
+      for (const rule of (rules.results || [])) {
+        const threshold = parseInt(rule.trigger_value) || 0;
+        if (score >= threshold) {
+          await env.criahub_db.prepare("UPDATE automation_rules SET last_triggered_at = datetime('now') WHERE id = ?").bind(rule.id).run();
+          // Log the trigger
+          await env.criahub_db.prepare(
+            "INSERT INTO activity_log (ig_account_id, event_type, event_detail, status, created_at) VALUES (?, 'automation_triggered', ?, 'success', datetime('now'))"
+          ).bind(0, `Regra "${rule.name}" acionada — score ${score} >= ${threshold}`).run();
+        }
+      }
+    } catch (_) {}
+
+    return jsonResponse({ ok: true });
+  }
+
+  // GET — Notificações não lidas (para polling)
+  if (path === "/api/notifications/unread" && method === "GET") {
+    const url = new URL(request.url);
+    const since = url.searchParams.get("since") || new Date(Date.now() - 86400000).toISOString();
+    const igAccts = await env.criahub_db.prepare("SELECT id FROM ig_accounts WHERE user_id = ?").bind(userId).all();
+    const acctIds = (igAccts.results || []).map(a => a.id);
+    let newConversations = 0;
+    if (acctIds.length) {
+      const placeholders = acctIds.map(() => "?").join(",");
+      const recent = await env.criahub_db.prepare(`
+        SELECT COUNT(DISTINCT contact_id) as count FROM activity_log
+        WHERE ig_account_id IN (${placeholders}) AND created_at > ?
+      `).bind(...acctIds, since).first();
+      newConversations = recent?.count || 0;
+    }
+    const pendingFollowups = await env.criahub_db.prepare(
+      "SELECT COUNT(*) as count FROM followups WHERE user_id = ? AND status = 'pending' AND scheduled_at <= datetime('now')"
+    ).bind(userId).first();
+    return jsonResponse({
+      ok: true,
+      newConversations,
+      pendingFollowups: pendingFollowups?.count || 0,
+      total: newConversations + (pendingFollowups?.count || 0),
+    });
+  }
+
+  // === FOLLOW-UPS — Agenda de lembretes ===
+  if (path === "/api/followups" && method === "GET") {
+    const url = new URL(request.url);
+    const status = url.searchParams.get("status") || "";
+    let query = "SELECT * FROM followups WHERE user_id = ?";
+    const params = [userId];
+    if (status) { query += " AND status = ?"; params.push(status); }
+    query += " ORDER BY scheduled_at ASC";
+    const items = await env.criahub_db.prepare(query).bind(...params).all();
+    return jsonResponse({ ok: true, followups: items.results || [] });
+  }
+
+  if (path === "/api/followups" && method === "POST") {
+    const body = await request.json().catch(() => ({}));
+    if (!body.title || !body.scheduled_at)
+      return jsonResponse({ error: "Campos obrigatorios: title, scheduled_at" }, 400);
+    const r = await env.criahub_db.prepare(
+      "INSERT INTO followups (user_id, lead_id, conversation_id, contact_id, title, notes, scheduled_at) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    ).bind(userId, body.lead_id || null, body.conversation_id || null, body.contact_id || null, body.title, body.notes || "", body.scheduled_at).run();
+    return jsonResponse({ ok: true, id: r.meta?.last_row_id });
+  }
+
+  if (path.startsWith("/api/followups/") && method === "PATCH") {
+    const id = path.split("/")[3];
+    if (!id) return jsonResponse({ error: "Missing id" }, 400);
+    const body = await request.json().catch(() => ({}));
+    const fields = []; const params = [];
+    if (body.title !== undefined) { fields.push("title = ?"); params.push(body.title); }
+    if (body.notes !== undefined) { fields.push("notes = ?"); params.push(body.notes); }
+    if (body.scheduled_at !== undefined) { fields.push("scheduled_at = ?"); params.push(body.scheduled_at); }
+    if (body.status !== undefined) { fields.push("status = ?"); params.push(body.status); }
+    if (!fields.length) return jsonResponse({ error: "No fields to update" }, 400);
+    fields.push("updated_at = datetime('now')");
+    params.push(id, userId);
+    await env.criahub_db.prepare(`UPDATE followups SET ${fields.join(", ")} WHERE id = ? AND user_id = ?`).bind(...params).run();
+    return jsonResponse({ ok: true });
+  }
+
+  if (path.startsWith("/api/followups/") && method === "DELETE") {
+    const id = path.split("/")[3];
+    if (!id) return jsonResponse({ error: "Missing id" }, 400);
+    await env.criahub_db.prepare("DELETE FROM followups WHERE id = ? AND user_id = ?").bind(id, userId).run();
+    return jsonResponse({ ok: true });
+  }
+
   return jsonResponse({ error: "Not found" }, 404);
+}
+
+// Helper: calculate lead score based on engagement signals
+function calcLeadScore({ interactions = 0, hasEmail = false, funnelStage = "", recency = "" }) {
+  let score = 30; // base score
+  score += Math.min(interactions * 5, 30); // +up to 30 for interactions
+  if (hasEmail) score += 15; // +15 for having email
+  if (funnelStage === "fundo" || funnelStage === "entregue") score += 15;
+  else if (funnelStage === "meio" || funnelStage === "aguardando_quero") score += 10;
+  else if (funnelStage === "topo") score += 5;
+  // Recency bonus
+  if (recency) {
+    const days = (Date.now() - new Date(recency).getTime()) / 86400000;
+    if (days < 1) score += 10;
+    else if (days < 3) score += 7;
+    else if (days < 7) score += 5;
+  }
+  return Math.min(Math.max(score, 0), 100);
 }
 
 // ------------------------------------------------------------
@@ -3621,7 +4506,7 @@ function textResponse(text, status = 200) {
 function jsonResponse(obj, status = 200) {
   return new Response(JSON.stringify(obj, null, 2), {
     status,
-    headers: { "Content-Type": "application/json; charset=utf-8" },
+    headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store, no-cache, must-revalidate" },
   });
 }
 
