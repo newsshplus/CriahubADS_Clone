@@ -546,7 +546,6 @@ async function loadPage(page){
 
 async function renderDashboard(m){
   m.innerHTML='<div style="text-align:center;padding:40px"><div class="spinner"></div></div>';
-  renderAccountBar(m);
   const accFilter=getAccFilter();
   try {
     const [analytics,activity,usageData,tokenStats]=await Promise.all([
@@ -746,6 +745,7 @@ async function renderDashboard(m){
           </div>`;
         }).join('')}</div>`}
     </div>`;
+  populateAccountSelect('accountSelectDash');
   }catch(e){m.innerHTML='<div class="card" style="padding:40px;text-align:center"><h3>Erro ao carregar dashboard</h3><p style="color:var(--text2);margin:12px 0">'+e.message+'</p><button class="btn btn-primary" onclick="loadPage(\'dashboard\')">Tentar novamente</button></div>'}
 }
 
@@ -795,7 +795,6 @@ async function renderAccounts(m){
 }
 
 async function renderCampaigns(m){
-  renderAccountBar(m);
   const accFilter=getAccFilter();
   const [campaigns,accounts]=await Promise.all([
     api('GET','/admin/api/campaigns'+accFilter),
@@ -806,6 +805,12 @@ async function renderCampaigns(m){
   const accList=accounts||[];
 
   let html=`
+    <div class="account-bar">
+      <label>Conta Instagram:</label>
+      <select id="accountSelectCamps" onchange="onAccountChangeFromBar(this)">
+        <option value="">Todas as contas</option>
+      </select>
+    </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
       <h2 style="margin:0">Automacoes</h2>
       <div class="btn-group">
@@ -883,27 +888,40 @@ document.querySelectorAll('.menu-toggle').forEach(el=>{
     const group=this.dataset.group;
     const sub=document.querySelector('.submenu[data-group="'+group+'"]');
     if(!sub)return;
+    const isOpen=this.classList.contains('open');
     this.classList.toggle('open');
     sub.classList.toggle('open');
+    // Save state
+    var saved=JSON.parse(localStorage.getItem('criahub_submenus')||'{}');
+    saved[group]=!isOpen;
+    localStorage.setItem('criahub_submenus',JSON.stringify(saved));
   };
 });
+
+// Restore submenu state
+(function(){
+  try{
+    var saved=JSON.parse(localStorage.getItem('criahub_submenus')||'{}');
+    Object.keys(saved).forEach(function(group){
+      if(saved[group]){
+        var toggle=document.querySelector('.menu-toggle[data-group="'+group+'"]');
+        var sub=document.querySelector('.submenu[data-group="'+group+'"]');
+        if(toggle&&sub){toggle.classList.add('open');sub.classList.add('open');}
+      }
+    });
+  }catch(e){}
+})();
 
 // Account selector
 let selectedAccountId=localStorage.getItem('criahub_selected_account')||'';
 let _accountsList=[];
 
-function renderAccountBar(container){
-  const div=document.createElement('div');
-  div.className='account-bar';
-  div.id='accountBar';
-  div.innerHTML='<label>Conta Instagram:</label>'+
-    '<select id="accountSelect" onchange="onAccountChange(this)"><option value="">Todas as contas</option></select>';
-  container.prepend(div);
-  loadAccountSelect();
+function getAccFilter(){
+  return selectedAccountId?'?ig_account_id='+encodeURIComponent(selectedAccountId):'';
 }
 
-async function loadAccountSelect(){
-  const sel=document.getElementById('accountSelect');
+async function populateAccountSelect(selectId){
+  const sel=document.getElementById(selectId);
   if(!sel)return;
   sel.innerHTML='<option value="">Todas as contas</option>';
   try{
@@ -920,7 +938,7 @@ async function loadAccountSelect(){
   }catch(e){}
 }
 
-function onAccountChange(sel){
+function onAccountChangeFromBar(sel){
   selectedAccountId=sel.value;
   if(selectedAccountId)localStorage.setItem('criahub_selected_account',selectedAccountId);
   else localStorage.removeItem('criahub_selected_account');
@@ -928,20 +946,18 @@ function onAccountChange(sel){
   if(activeLink)loadPage(activeLink.dataset.page);
   else loadPage('dashboard');
 }
-
-function getAccFilter(){
-  return selectedAccountId?'?ig_account_id='+encodeURIComponent(selectedAccountId):'';
-}
       html+=`</div>`;
     });
   }
   m.innerHTML=html;
+  populateAccountSelect('accountSelectCamps');
 }
 
 async function renderContacts(m){
+  const accFilter=getAccFilter();
   const [contacts,convStates]=await Promise.all([
-    api('GET','/admin/api/contacts'),
-    api('GET','/admin/api/conversations')
+    api('GET','/admin/api/contacts'+accFilter),
+    api('GET','/admin/api/conversations'+accFilter)
   ]);
   const convMap={};
   (convStates||[]).forEach(c=>{convMap[c.contact_id]=c});
@@ -950,6 +966,12 @@ async function renderContacts(m){
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
       <h2 style="margin:0">Contatos</h2>
       <button class="btn btn-outline btn-sm" onclick="exportCSV('contacts')">&#128229; Exportar CSV</button>
+    </div>
+    <div class="account-bar">
+      <label>Conta Instagram:</label>
+      <select id="accountSelectContacts" onchange="onAccountChangeFromBar(this)">
+        <option value="">Todas as contas</option>
+      </select>
     </div>
     ${(!contacts||!contacts.length)?
     `<div class="card"><div class="empty"><div class="icon">&#9900;</div><p>Nenhum contato registrado ainda</p></div></div>`:
@@ -970,7 +992,6 @@ async function renderContacts(m){
 }
 
 async function renderActivity(m){
-  renderAccountBar(m);
   const accFilter=getAccFilter();
   const data=await api('GET','/admin/api/activity?limit=50'+accFilter.replace('?','&'));
   const items=(data&&data.items)||[];
@@ -986,6 +1007,12 @@ async function renderActivity(m){
         <span style="color:var(--text2);font-size:13px">${total} registos</span>
         <button class="btn btn-outline btn-sm" onclick="exportCSV('activity')">&#128229; Exportar CSV</button>
       </div>
+    </div>
+    <div class="account-bar">
+      <label>Conta Instagram:</label>
+      <select id="accountSelectActivity" onchange="onAccountChangeFromBar(this)">
+        <option value="">Todas as contas</option>
+      </select>
     </div>
     ${!items.length?
       `<div class="card"><div class="empty"><div class="icon">&#128337;</div><p>Nenhuma atividade registrada ainda</p><p style="font-size:13px;color:var(--text2)">As interacoes com comentarios e DMs aparecerao aqui</p></div></div>`:
@@ -1004,10 +1031,12 @@ async function renderActivity(m){
           <span style="font-size:12px;color:var(--text2);white-space:nowrap">${fmt(item.created_at)}</span>
         </div>`;
       }).join('')}</div></div>`}`;
+  populateAccountSelect('accountSelectActivity');
 }
 
 async function renderEmails(m){
-  const emails=await api('GET','/admin/api/emails');
+  const accFilter=getAccFilter();
+  const emails=await api('GET','/admin/api/emails'+accFilter);
   const emailList=emails||[];
 
   m.innerHTML=`
@@ -1016,6 +1045,12 @@ async function renderEmails(m){
       <div class="btn-group">
         ${emailList.length?'<button class="btn btn-outline btn-sm" onclick="exportEmailsCSV()">&#128229; Exportar CSV</button>':''}
       </div>
+    </div>
+    <div class="account-bar">
+      <label>Conta Instagram:</label>
+      <select id="accountSelectEmails" onchange="onAccountChangeFromBar(this)">
+        <option value="">Todas as contas</option>
+      </select>
     </div>
     ${!emailList.length?
       `<div class="card"><div class="empty"><div class="icon">&#9993;</div>    <p>Nenhum email recolhido ainda</p><p style="font-size:13px;color:var(--text2)">Ative o Email Gate nas automações para recolher emails</p></div></div>`:
@@ -1027,7 +1062,8 @@ async function renderEmails(m){
           <td><span class="badge badge-active">${esc(e.campaign_keyword||'-')}</span></td>
           <td>${fmt(e.created_at)}</td>
         </tr>`).join('')}
-      </table></div></div>`}`;
+    </table></div></div>`}`;
+  populateAccountSelect('accountSelectEmails');
 }
 
 function exportEmailsCSV(){

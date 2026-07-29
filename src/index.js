@@ -1249,13 +1249,26 @@ async function handleAdminApi(request, env, ctx, path, method) {
 
   // GET /admin/api/contacts
   if (path === "/admin/api/contacts" && method === "GET") {
-    const rows = await env.criahub_db.prepare("SELECT * FROM contacts ORDER BY last_seen_at DESC LIMIT 200").all();
+    const url = new URL(request.url);
+    const accId = url.searchParams.get("ig_account_id");
+    const whereClause = accId ? " WHERE ig_account_id = ?" : "";
+    const bindParams = accId ? [accId] : [];
+    const rows = await env.criahub_db.prepare("SELECT * FROM contacts" + whereClause + " ORDER BY last_seen_at DESC LIMIT 200").bind(...bindParams).all();
     return jsonResponse(rows.results || []);
   }
 
   // GET /admin/api/conversations
   if (path === "/admin/api/conversations" && method === "GET") {
-    const rows = await env.criahub_db.prepare("SELECT * FROM conversation_state ORDER BY updated_at DESC LIMIT 200").all();
+    const url = new URL(request.url);
+    const accId = url.searchParams.get("ig_account_id");
+    let query = "SELECT cs.* FROM conversation_state cs";
+    const bindParams = [];
+    if (accId) {
+      query += " JOIN campaigns c ON cs.campaign_id = c.id WHERE c.ig_account_id = ?";
+      bindParams.push(accId);
+    }
+    query += " ORDER BY cs.updated_at DESC LIMIT 200";
+    const rows = await env.criahub_db.prepare(query).bind(...bindParams).all();
     return jsonResponse(rows.results || []);
   }
 
@@ -1474,14 +1487,19 @@ async function handleAdminApi(request, env, ctx, path, method) {
 
   // GET /admin/api/emails — collected emails
   if (path === "/admin/api/emails" && method === "GET") {
+    const url = new URL(request.url);
+    const accId = url.searchParams.get("ig_account_id");
+    const whereClause = accId ? " WHERE ce.ig_account_id = ?" : "";
+    const bindParams = accId ? [accId] : [];
     const rows = await env.criahub_db.prepare(`
       SELECT ce.*, c.username as contact_username, camp.keyword as campaign_keyword
       FROM collected_emails ce
       LEFT JOIN contacts c ON ce.contact_id = c.id
       LEFT JOIN campaigns camp ON ce.campaign_id = camp.id
+      ${whereClause}
       ORDER BY ce.created_at DESC
       LIMIT 200
-    `).all();
+    `).bind(...bindParams).all();
     return jsonResponse(rows.results || []);
   }
 
